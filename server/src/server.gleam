@@ -96,7 +96,7 @@ fn handle_request(
   use req <- app_middleware(req, static_directory)
 
   case req.method, wisp.path_segments(req) {
-    Get, [] -> serve_index()
+    Get, [] -> serve_index(req)
     Get, ["auth", "signup"] -> serve_signup(None)
     Post, ["auth", "signup"] -> handle_signup(db, req)
     Get, ["auth", "login"] -> serve_login(None)
@@ -199,19 +199,24 @@ fn auth_shell(contents, error_msg) {
   |> wisp.html_response(200)
 }
 
-fn serve_index() -> Response {
-  let html =
-    h.html([], [
-      h.head([], [
-        h.script([a.type_("module"), a.src("/static/potato.js")], ""),
-        ..potatoemr()
-      ]),
-      h.body([], [h.div([a.id("app")], [])]),
-    ])
+fn serve_index(request) -> Response {
+  case wisp.get_cookie(request:, name: "username", security: wisp.Signed) {
+    Error(_) -> wisp.redirect(to: "/auth/login")
+    Ok(username) -> {
+      let html =
+        h.html([], [
+          h.head([], [
+            h.script([a.type_("module"), a.src("/static/potato.js")], ""),
+            ..potatoemr()
+          ]),
+          h.body([], [h.div([a.id("app")], [])]),
+        ])
 
-  html
-  |> element.to_document_string
-  |> wisp.html_response(200)
+      html
+      |> element.to_document_string
+      |> wisp.html_response(200)
+    }
+  }
 }
 
 fn serve_signup(error_msg: Option(String)) -> Response {
@@ -270,7 +275,7 @@ fn handle_signup(db: storail.Collection(User), req: Request) -> Response {
   let password_hash = hashes.encoded_hash
   let new_user = User(password_hash:, id: "idk xd", role: Practitioner)
   case write_user(db, new_user, username) {
-    Ok(_) -> serve_index() |> set_user_cookie(req, username)
+    Ok(_) -> wisp.redirect("/") |> set_user_cookie(req, username)
     Error(err) ->
       serve_signup(
         Some(case err {
@@ -290,7 +295,7 @@ fn handle_login(db: storail.Collection(User), req: Request) -> Response {
   case read_user(db, username) {
     Ok(user) -> {
       case argus.verify(user.password_hash, password) {
-        Ok(True) -> serve_index() |> set_user_cookie(req, username)
+        Ok(True) -> wisp.redirect("/") |> set_user_cookie(req, username)
         _ -> not_found()
       }
     }
