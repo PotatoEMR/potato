@@ -24,6 +24,7 @@ gleam_json = ">= 3.1.0 and < 4.0.0"
 gleam_http = ">= 4.4.0 and < 5.0.0"
 hl7_fhir_us_core_7_0_0 = { git = "https://github.com/PotatoEMR/generated", ref = "main", path = "hl7_fhir_us_core_7_0_0" }
 hl7_fhir_us_core_7_0_0_client_httpc = { git = "https://github.com/PotatoEMR/generated", ref = "main", path = "hl7_fhir_us_core_7_0_0_client_httpc" }
+gleam_httpc = ">= 5.0.0 and < 6.0.0"
 
 [dev_dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

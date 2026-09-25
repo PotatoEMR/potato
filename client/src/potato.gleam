@@ -35,7 +35,7 @@ type Model {
 }
 
 fn init(_) -> #(Model, Effect(Msg)) {
-  let assert Ok(client) = sansio.fhirclient_new("127.0.0.1:8080/fhir")
+  let assert Ok(client) = sansio.fhirclient_new("127.0.0.1:3000/api")
   let model = Model(route: RouteNoId(Index), searched_patients: Ok([]), client:)
   #(model, effect.none())
 }

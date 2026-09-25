@@ -6,10 +6,15 @@ import fhir/hl7_fhir_us_core_7_0_0/sansio
 import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/http.{Get, Post}
+import gleam/http/request
+import gleam/http/response
+import gleam/httpc
+import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/string
 import lustre/attribute as a
 import lustre/element
 import lustre/element/html as h
@@ -62,12 +67,12 @@ pub fn main() {
   wisp.configure_logger()
   let secret_key_base = wisp.random_string(64)
 
-  let assert Ok(user_db) = setup_user_database()
+  let assert Ok(users) = setup_user_database()
 
   let assert Ok(priv_directory) = wisp.priv_directory("server")
 
   let assert Ok(_) =
-    handle_request(user_db, priv_directory, _)
+    handle_request(users, priv_directory, _)
     |> wisp_mist.handler(secret_key_base)
     |> mist.new
     |> mist.port(3000)
@@ -93,20 +98,89 @@ fn app_middleware(
 }
 
 fn handle_request(
-  db: storail.Collection(User),
+  users: storail.Collection(User),
   static_directory: String,
-  req: Request,
+  request: Request,
 ) -> Response {
-  use req <- app_middleware(req, static_directory)
+  use request <- app_middleware(request, static_directory)
 
-  case req.method, wisp.path_segments(req) {
-    Get, [] -> serve_index(req)
+  case request.method, wisp.path_segments(request) {
+    Get, [] -> serve_index(request)
     Get, ["auth", "signup"] -> serve_signup(None)
-    Post, ["auth", "signup"] -> handle_signup(db, req)
+    Post, ["auth", "signup"] -> handle_signup(users, request)
     Get, ["auth", "login"] -> serve_login(None)
-    Post, ["auth", "login"] -> handle_login(db, req)
+    Post, ["auth", "login"] -> handle_login(users, request)
+    _, ["api", ..rest_path] -> {
+      case wisp.get_cookie(request:, name: "username", security: wisp.Signed) {
+        Error(_) -> simple_resp("need to log in", 401)
+        Ok(username) -> {
+          case read_user(users, username) {
+            Ok(user) ->
+              case user.role {
+                Practitioner -> {
+                  forward_to_fhir_server(request, rest_path)
+                }
+                Patient -> {
+                  echo "need to check if allowed maybe start with https://hl7.org/fhir/R4/compartmentdefinition.html#bnr"
+                  todo
+                }
+              }
+            Error(_) -> simple_resp("invalid cookie username", 500)
+          }
+        }
+      }
+    }
     _, _ -> wisp.not_found()
   }
+}
+
+fn forward_to_fhir_server(
+  from original: request.Request(wisp.Connection),
+  to_fhir_endpoint rest_path: List(String),
+) -> response.Response(wisp.Body) {
+  use body <- wisp.require_string_body(original)
+  // copying or not copying host/port explicitly
+  // https://discord.com/channels/768594524158427167/1047099923897794590/threads/1553011371073867876
+  case
+    request.Request(
+      method: original.method,
+      query: original.query,
+      body:,
+      // need to get rid of this header
+      // #("accept-encoding", "gzip, deflate, br, zstd")
+      // otherwise fhir server returns some non utf-8 response which httpc errors on
+      // although maybe keeping response compressed from fhir server -> wisp server -> back to client would perform better
+      // if it's supported in httpc or another http client
+      headers: [
+        #("accept", "application/fhir+json"),
+        #("content-type", "application/fhir+json"),
+      ],
+      path: ["fhir", ..rest_path] |> string.join("/"),
+      scheme: http.Http,
+      host: "localhost",
+      port: Some(8080),
+    )
+    |> httpc.send
+  {
+    Ok(fhir_response) ->
+      wisp.json_response(fhir_response.body, fhir_response.status)
+    Error(err) ->
+      case err {
+        httpc.InvalidUtf8Response ->
+          simple_resp("invalid utf-8 from fhir server", 502)
+        httpc.FailedToConnect(_ip4, _ip6) ->
+          simple_resp("could not connect to fhir server", 502)
+        httpc.ResponseTimeout ->
+          simple_resp("timed out connecting to fhir server", 504)
+      }
+  }
+}
+
+fn simple_resp(text: String, status: Int) {
+  text
+  |> json.string
+  |> json.to_string
+  |> wisp.json_response(status)
 }
 
 const full = [
@@ -307,7 +381,7 @@ fn as_list1(item) {
   List1(first: item, rest: [])
 }
 
-fn handle_signup(db: storail.Collection(User), req: Request) -> Response {
+fn handle_signup(users: storail.Collection(User), req: Request) -> Response {
   use form <- wisp.require_form(req)
   use #(username, password) <- require_username_password(form)
   let assert Ok(client) = sansio.fhirclient_new("127.0.0.1:8080/fhir")
@@ -355,7 +429,7 @@ fn handle_signup(db: storail.Collection(User), req: Request) -> Response {
                 |> argus.hash(password)
               let password_hash = hashes.encoded_hash
               let new_user = User(password_hash:, id:, role: Practitioner)
-              case write_user(db, new_user, username) {
+              case write_user(users, new_user, username) {
                 Ok(_) -> wisp.redirect("/") |> set_user_cookie(req, username)
                 Error(err) ->
                   serve_signup(
@@ -377,10 +451,10 @@ fn handle_signup(db: storail.Collection(User), req: Request) -> Response {
   }
 }
 
-fn handle_login(db: storail.Collection(User), req: Request) -> Response {
+fn handle_login(users: storail.Collection(User), req: Request) -> Response {
   use form <- wisp.require_form(req)
   use #(username, password) <- require_username_password(form)
-  case read_user(db, username) {
+  case read_user(users, username) {
     Ok(user) -> {
       case argus.verify(user.password_hash, password) {
         Ok(True) -> wisp.redirect("/") |> set_user_cookie(req, username)
@@ -428,17 +502,17 @@ type WriteUsernameError {
 }
 
 fn write_user(
-  db db: storail.Collection(User),
-  new user: User,
+  to users: storail.Collection(User),
+  write user: User,
   new_username username: String,
 ) -> Result(Nil, WriteUsernameError) {
-  let key = storail.key(db, username)
+  let key = storail.key(users, username)
   case storail.read(key) {
     Ok(_) -> Error(UsernameExists)
     Error(_) -> storail.write(key, user) |> result.map_error(StorailError)
   }
 }
 
-fn read_user(db: storail.Collection(User), username: String) {
-  storail.key(db, username) |> storail.read
+fn read_user(from users: storail.Collection(User), read username: String) {
+  storail.key(users, username) |> storail.read
 }
