@@ -1,4 +1,8 @@
 import argus
+import fhir/hl7_fhir_us_core_7_0_0/client_httpc
+import fhir/hl7_fhir_us_core_7_0_0/complex_types.{List1}
+import fhir/hl7_fhir_us_core_7_0_0/resources
+import fhir/hl7_fhir_us_core_7_0_0/sansio
 import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/http.{Get, Post}
@@ -126,73 +130,80 @@ fn potatoemr() {
 
 fn auth_shell(contents, error_msg) {
   let html =
-    h.html([a.styles(full)], [
-      h.head([], potatoemr()),
-      h.body(
-        [
-          a.style(
-            "font-family",
-            "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
-          ),
-          a.style("background-image", "url('/static/potato-bg.jpg')"),
-          a.style("background-repeat", "no-repeat"),
-          a.style("background-attachment", "fixed"),
-          a.style("background-size", "cover"),
-          a.style("display", "flex"),
-          a.style("justify-content", "center"),
-          a.style("align-items", "center"),
-          a.styles(full),
-        ],
-        [
-          h.main(
-            [
-              a.style("padding", "2em"),
-              a.style("border-radius", "0.5em"),
-              a.style("background-color", "white"),
-              a.style("box-shadow", "0 0 5px rgba(0, 0, 0, 0.8)"),
-            ],
-            [
-              h.h1([], [h.text("PotatoEMR")]),
-              h.form(
-                [
-                  a.method("post"),
-                  a.style("display", "flex"),
-                  a.style("flex-direction", "column"),
-                  a.style("gap", "5px"),
-                ],
-                [
-                  h.input([
-                    a.style("padding", "5px"),
-                    a.name("username"),
-                    a.placeholder("username"),
-                  ]),
-                  h.input([
-                    a.style("padding", "5px"),
-                    a.name("password"),
-                    a.type_("password"),
-                    a.placeholder("password"),
-                  ]),
-                  ..contents
-                ],
-              ),
-              h.p(
-                [
-                  a.style("height", "3em"),
-                  a.style("width", "10em"),
-                  a.style("color", "red"),
-                ],
-                [
-                  case error_msg {
-                    None -> element.none()
-                    Some(error_msg) -> h.text(error_msg)
-                  },
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    ])
+    h.html(
+      [
+        a.styles(full),
+        a.style(
+          "font-family",
+          "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+        ),
+        a.style("background-image", "url('/static/potato-bg.jpg')"),
+        a.style("background-repeat", "no-repeat"),
+        a.style("background-attachment", "fixed"),
+        a.style("background-size", "cover"),
+      ],
+      [
+        h.head([], potatoemr()),
+        h.body(
+          [
+            a.style("display", "flex"),
+            a.style("justify-content", "center"),
+            a.style("align-items", "center"),
+            a.styles(full),
+          ],
+          [
+            h.main(
+              [
+                a.style("width", "20em"),
+                a.style("height", "20em"),
+                a.style("padding", "2em"),
+                a.style("border-radius", "0.5em"),
+                a.style("background-color", "white"),
+                a.style("box-shadow", "0 0 5px rgba(0, 0, 0, 0.8)"),
+              ],
+              [
+                h.h1([], [h.text("PotatoEMR")]),
+                h.form(
+                  [
+                    a.method("post"),
+                    a.style("display", "flex"),
+                    a.style("flex-direction", "column"),
+                    a.style("gap", "5px"),
+                  ],
+                  [
+                    h.input([
+                      a.required(True),
+                      a.style("padding", "5px"),
+                      a.name("username"),
+                      a.placeholder("username"),
+                    ]),
+                    h.input([
+                      a.required(True),
+                      a.style("padding", "5px"),
+                      a.name("password"),
+                      a.type_("password"),
+                      a.placeholder("password"),
+                    ]),
+                    ..contents
+                  ],
+                ),
+                h.p(
+                  [
+                    a.style("color", "red"),
+                  ],
+                  [
+                    case error_msg {
+                      None -> element.none()
+                      Some(error_msg) -> h.text(error_msg)
+                    },
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    )
 
   html
   |> element.to_document_string
@@ -222,6 +233,29 @@ fn serve_index(request) -> Response {
 fn serve_signup(error_msg: Option(String)) -> Response {
   auth_shell(
     [
+      h.div(
+        [
+          a.style("display", "flex"),
+          a.style("gap", "5px"),
+        ],
+        [
+          h.input([
+            a.style("flex", "1"),
+            a.style("min-width", "0"),
+            a.style("padding", "5px"),
+            a.name("first_name"),
+            a.placeholder("firstname"),
+          ]),
+          h.input([
+            a.style("flex", "1"),
+            a.style("min-width", "0"),
+            a.style("padding", "5px"),
+            a.name("last_name"),
+            a.placeholder("lastname"),
+            a.required(True),
+          ]),
+        ],
+      ),
       h.button(
         [
           a.style("padding", "5px"),
@@ -250,48 +284,102 @@ fn serve_login(error_msg: Option(String)) -> Response {
 }
 
 fn require_username_password(
-  request: Request,
+  form: wisp.FormData,
   next: fn(#(String, String)) -> Response,
 ) -> Response {
-  use form <- wisp.require_form(request)
   case
     find_form_name(form.values, "username"),
     find_form_name(form.values, "password")
   {
-    Ok(username), Ok(password) -> next(#(username.1, password.1))
+    Ok(username), Ok(password) -> next(#(username, password))
     _, _ -> wisp.bad_request("wrong params")
   }
 }
 
 fn find_form_name(values: List(#(String, String)), name) {
-  list.find(values, fn(value) { value.0 == name })
+  case list.find(values, fn(value) { value.0 == name && value.1 != "" }) {
+    Ok(val) -> Ok(val.1)
+    Error(_) -> Error(Nil)
+  }
+}
+
+fn as_list1(item) {
+  List1(first: item, rest: [])
 }
 
 fn handle_signup(db: storail.Collection(User), req: Request) -> Response {
-  use #(username, password) <- require_username_password(req)
-  let assert Ok(hashes) =
-    argus.hasher()
-    |> argus.hash(password)
-  let password_hash = hashes.encoded_hash
-  let new_user = User(password_hash:, id: "idk xd", role: Practitioner)
-  case write_user(db, new_user, username) {
-    Ok(_) -> wisp.redirect("/") |> set_user_cookie(req, username)
-    Error(err) ->
-      serve_signup(
-        Some(case err {
-          UsernameExists -> "username exists"
-          StorailError(err) ->
-            case err {
-              storail.ObjectNotFound(_, _) -> "username not found"
-              _ -> "internal sever error"
+  use form <- wisp.require_form(req)
+  use #(username, password) <- require_username_password(form)
+  let assert Ok(client) = sansio.fhirclient_new("127.0.0.1:8080/fhir")
+  let client =
+    sansio.FhirClient(..client, print_sent_requests: sansio.LoggingOn)
+  let potatoemr_username =
+    resources.us_core_practitioner_identifier_new(
+      "https://potatoemr.com/system/username",
+      username,
+    )
+    |> resources.UsCorePractitionerIdentifierComponentOpen
+    |> as_list1
+  case find_form_name(form.values, "last_name") {
+    Error(_) -> serve_signup(Some("last name required"))
+    Ok(last_name) -> {
+      let given = find_form_name(form.values, "first_name")
+      let name = resources.us_core_practitioner_name_new(family: last_name)
+      let name =
+        case given {
+          Error(_) -> name
+          Ok(first_name) ->
+            resources.UsCorePractitionerName(..name, given: [first_name])
+        }
+        |> as_list1
+      let new_practitioner =
+        echo resources.us_core_practitioner_new(potatoemr_username, name)
+      let new_practitioner =
+        client_httpc.us_core_practitioner_create(new_practitioner, client)
+      case new_practitioner {
+        Error(err) -> {
+          echo err
+          serve_signup(Some(
+            "Unable to create new user. Perhaps FHIR server is not running. Try /potato/hapi/download_and_run.sh",
+          ))
+        }
+        Ok(new_practitioner) -> {
+          case new_practitioner.id {
+            None ->
+              serve_signup(Some(
+                "very strange, FHIR server created practitioner but did not assign ID",
+              ))
+            Some(id) -> {
+              let assert Ok(hashes) =
+                argus.hasher()
+                |> argus.hash(password)
+              let password_hash = hashes.encoded_hash
+              let new_user = User(password_hash:, id:, role: Practitioner)
+              case write_user(db, new_user, username) {
+                Ok(_) -> wisp.redirect("/") |> set_user_cookie(req, username)
+                Error(err) ->
+                  serve_signup(
+                    Some(case err {
+                      UsernameExists -> "username exists"
+                      StorailError(err) ->
+                        case err {
+                          storail.ObjectNotFound(_, _) -> "username not found"
+                          _ -> "internal sever error"
+                        }
+                    }),
+                  )
+              }
             }
-        }),
-      )
+          }
+        }
+      }
+    }
   }
 }
 
 fn handle_login(db: storail.Collection(User), req: Request) -> Response {
-  use #(username, password) <- require_username_password(req)
+  use form <- wisp.require_form(req)
+  use #(username, password) <- require_username_password(form)
   case read_user(db, username) {
     Ok(user) -> {
       case argus.verify(user.password_hash, password) {
