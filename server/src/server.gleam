@@ -100,25 +100,35 @@ fn app_middleware(
 fn handle_request(
   users: storail.Collection(User),
   static_directory: String,
-  request: Request,
+  client_request: Request,
 ) -> Response {
-  use request <- app_middleware(request, static_directory)
+  use client_request <- app_middleware(client_request, static_directory)
 
-  case request.method, wisp.path_segments(request) {
-    Get, [] -> serve_index(request)
+  echo client_request.method
+  echo wisp.path_segments(client_request)
+  case client_request.method, wisp.path_segments(client_request) {
+    Get, [] -> serve_index(client_request)
     Get, ["auth", "signup"] -> serve_signup(None)
-    Post, ["auth", "signup"] -> handle_signup(users, request)
+    Post, ["auth", "signup"] -> handle_signup(users, client_request)
     Get, ["auth", "login"] -> serve_login(None)
-    Post, ["auth", "login"] -> handle_login(users, request)
+    Post, ["auth", "login"] -> handle_login(users, client_request)
+    Get, ["auth", "logout"] ->
+      serve_login(None) |> logout_user_cookie(client_request)
     _, ["api", ..rest_path] -> {
-      case wisp.get_cookie(request:, name: "username", security: wisp.Signed) {
+      case
+        wisp.get_cookie(
+          request: client_request,
+          name: cookie_name,
+          security: wisp.Signed,
+        )
+      {
         Error(_) -> simple_resp("need to log in", 401)
         Ok(username) -> {
           case read_user(users, username) {
             Ok(user) ->
               case user.role {
                 Practitioner -> {
-                  forward_to_fhir_server(request, rest_path)
+                  forward_to_fhir_server(client_request, rest_path)
                 }
                 Patient -> {
                   echo "need to check if allowed maybe start with https://hl7.org/fhir/R4/compartmentdefinition.html#bnr"
@@ -285,7 +295,7 @@ fn auth_shell(contents, error_msg) {
 }
 
 fn serve_index(request) -> Response {
-  case wisp.get_cookie(request:, name: "username", security: wisp.Signed) {
+  case wisp.get_cookie(request:, name: cookie_name, security: wisp.Signed) {
     Error(_) -> wisp.redirect(to: "/auth/login")
     Ok(username) -> {
       let html =
@@ -469,14 +479,27 @@ fn not_found() {
   serve_login(Some("username/password not found"))
 }
 
+const cookie_name = "potato_username"
+
 fn set_user_cookie(response, request, username) {
   wisp.set_cookie(
     response:,
     request:,
-    name: "username",
+    name: cookie_name,
     value: username,
     security: wisp.Signed,
     max_age: 60 * 60 * 24 * 365,
+  )
+}
+
+fn logout_user_cookie(response, request) {
+  wisp.set_cookie(
+    response:,
+    request:,
+    name: cookie_name,
+    value: "",
+    security: wisp.Signed,
+    max_age: 0,
   )
 }
 
