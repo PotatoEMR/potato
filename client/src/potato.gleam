@@ -16,9 +16,6 @@ import modem
 // MAIN ------------------------------------------------------------------------
 
 pub fn main() {
-  // when user clicks a link in app, send msg to update fn
-  let modem_effect =
-    modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
   let app = lustre.application(init, update, view)
   let assert Ok(_) = lustre.start(app, "#app", Nil)
   Nil
@@ -26,18 +23,26 @@ pub fn main() {
 
 // MODEL -----------------------------------------------------------------------
 
-type Model {
+type Model(msg401) {
   Model(
     route: Route,
     searched_patients: Result(List(resources.UsCorePatient), String),
-    client: sansio.FhirClient,
+    client: client_rsvp.FhirClient(msg401),
   )
 }
 
-fn init(_) -> #(Model, Effect(Msg)) {
-  let assert Ok(client) = sansio.fhirclient_new("127.0.0.1:3000/api")
+fn init(_) -> #(Model(Msg), Effect(Msg)) {
+  let assert Ok(client) = client_rsvp.fhirclient_new("127.0.0.1:3000/api")
+  let client =
+    client_rsvp.FhirClient(
+      ..client,
+      handle_unauthorized: Some(ServerReturned401),
+    )
+  // when user clicks a link in app, send msg to update fn
+  let modem_effect =
+    modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
   let model = Model(route: RouteNoId(Index), searched_patients: Ok([]), client:)
-  #(model, effect.none())
+  #(model, modem_effect)
 }
 
 // ROUTING ---------------------------------------------------------------------
@@ -73,22 +78,31 @@ pub fn uri_to_route(uri: Uri) -> Route {
   }
 }
 
+fn user_navigated_to(route, model) {
+  case route {
+    RouteNoId(page:) -> #(Model(..model, route:), effect.none())
+  }
+}
+
 // UPDATE ----------------------------------------------------------------------
 
 type Msg {
   UserNavigatedTo(route: Route)
+  ServerReturned401(err: sansio.ErrResp)
   UserTypedSearchPatient(String)
   ServerReturnedSearchPatients(
     Result(List(resources.UsCorePatient), client_rsvp.Err),
   )
 }
 
-fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
+fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
   case message {
-    UserNavigatedTo(route:) ->
-      case route {
-        RouteNoId(page:) -> #(Model(..model, route:), effect.none())
-      }
+    UserNavigatedTo(route:) -> user_navigated_to(route, model)
+    ServerReturned401(_) -> {
+      let assert Ok(url) = uri.parse("/auth/login")
+      let send_to_login = modem.load(url)
+      #(model, send_to_login)
+    }
     ServerReturnedSearchPatients(patient_result) ->
       case patient_result {
         Ok(patients) -> {
@@ -121,7 +135,7 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
 
 // VIEW ------------------------------------------------------------------------
 
-fn view(model: Model) -> Element(Msg) {
+fn view(model: Model(Msg)) -> Element(Msg) {
   let patient_results = case model.searched_patients {
     Ok(patients) ->
       list.map(patients, fn(patient) {

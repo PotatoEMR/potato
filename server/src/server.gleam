@@ -23,6 +23,10 @@ import storail
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
 
+const fhir_server_path = "fhir"
+
+const fhir_server_port = 8080
+
 type Role {
   Practitioner
   Patient
@@ -165,10 +169,10 @@ fn forward_to_fhir_server(
         #("accept", "application/fhir+json"),
         #("content-type", "application/fhir+json"),
       ],
-      path: ["fhir", ..rest_path] |> string.join("/"),
+      path: [fhir_server_path, ..rest_path] |> string.join("/"),
       scheme: http.Http,
       host: "localhost",
-      port: Some(8080),
+      port: Some(fhir_server_port),
     )
     |> httpc.send
   {

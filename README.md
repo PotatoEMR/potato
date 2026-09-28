@@ -1,3 +1,5 @@
+./build_and_run.sh
+
 client - lustre SPA, actual application
 
 server - wisp server, authenticates users
