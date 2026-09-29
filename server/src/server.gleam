@@ -107,9 +107,6 @@ fn handle_request(
   client_request: Request,
 ) -> Response {
   use client_request <- app_middleware(client_request, static_directory)
-
-  echo client_request.method
-  echo wisp.path_segments(client_request)
   case client_request.method, wisp.path_segments(client_request) {
     Get, [] -> serve_index(client_request)
     Get, ["auth", "signup"] -> serve_signup(None)
@@ -243,7 +240,7 @@ fn auth_shell(contents, error_msg) {
             h.main(
               [
                 a.style("width", "20em"),
-                a.style("height", "20em"),
+                a.style("height", "30em"),
                 a.style("padding", "2em"),
                 a.style("border-radius", "0.5em"),
                 a.style("background-color", "white"),
@@ -261,13 +258,15 @@ fn auth_shell(contents, error_msg) {
                   [
                     h.input([
                       a.required(True),
-                      a.style("padding", "5px"),
+                      pad(),
+                      font_large(),
                       a.name("username"),
                       a.placeholder("username"),
                     ]),
                     h.input([
                       a.required(True),
-                      a.style("padding", "5px"),
+                      pad(),
+                      font_large(),
                       a.name("password"),
                       a.type_("password"),
                       a.placeholder("password"),
@@ -330,14 +329,16 @@ fn serve_signup(error_msg: Option(String)) -> Response {
           h.input([
             a.style("flex", "1"),
             a.style("min-width", "0"),
-            a.style("padding", "5px"),
+            pad(),
+            font_large(),
             a.name("first_name"),
             a.placeholder("firstname"),
           ]),
           h.input([
             a.style("flex", "1"),
             a.style("min-width", "0"),
-            a.style("padding", "5px"),
+            pad(),
+            font_large(),
             a.name("last_name"),
             a.placeholder("lastname"),
             a.required(True),
@@ -346,7 +347,8 @@ fn serve_signup(error_msg: Option(String)) -> Response {
       ),
       h.button(
         [
-          a.style("padding", "5px"),
+          pad(),
+          font_large(),
         ],
         [h.text("Sign Up")],
       ),
@@ -356,12 +358,21 @@ fn serve_signup(error_msg: Option(String)) -> Response {
   )
 }
 
+fn pad() {
+  a.style("padding", "25px")
+}
+
+fn font_large() {
+  a.style("font-size", "18px")
+}
+
 fn serve_login(error_msg: Option(String)) -> Response {
   auth_shell(
     [
       h.button(
         [
-          a.style("padding", "5px"),
+          pad(),
+          font_large(),
         ],
         [h.text("Log In")],
       ),

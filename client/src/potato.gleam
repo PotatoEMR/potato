@@ -12,6 +12,7 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event
 import modem
+import utils
 
 // MAIN ------------------------------------------------------------------------
 
@@ -139,12 +140,7 @@ fn view(model: Model(Msg)) -> Element(Msg) {
   let patient_results = case model.searched_patients {
     Ok(patients) ->
       list.map(patients, fn(patient) {
-        h.div([], [
-          h.text(case patient.id {
-            None -> "no id"
-            Some(id) -> id
-          }),
-        ])
+        h.div([], [h.text(utils.humannames_to_single_name_string(patient.name))])
       })
     Error(err) -> [h.div([], [h.text(err)])]
   }
