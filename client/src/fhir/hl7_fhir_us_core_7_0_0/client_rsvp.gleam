@@ -412,6 +412,61 @@ pub fn operationoutcome_delete(
   }
 }
 
+pub fn us_core_allergyintolerance_create(
+  resource: resources.UsCoreAllergyintolerance,
+  client: FhirClient(msg),
+  handle_response: fn(Result(resources.UsCoreAllergyintolerance, Err)) -> msg,
+) -> Effect(msg) {
+  any_create(
+    resources.us_core_allergyintolerance_to_json(resource),
+    resources.RtAllergyintolerance,
+    resources.us_core_allergyintolerance_decoder(),
+    client,
+    handle_response,
+  )
+}
+
+pub fn us_core_allergyintolerance_read(
+  id: String,
+  client: FhirClient(msg),
+  handle_response: fn(Result(resources.UsCoreAllergyintolerance, Err)) -> msg,
+) -> Effect(msg) {
+  any_read(
+    id,
+    resources.RtAllergyintolerance,
+    resources.us_core_allergyintolerance_decoder(),
+    client,
+    handle_response,
+  )
+}
+
+pub fn us_core_allergyintolerance_update(
+  resource: resources.UsCoreAllergyintolerance,
+  client: FhirClient(msg),
+  handle_response: fn(Result(resources.UsCoreAllergyintolerance, Err)) -> msg,
+) -> Result(Effect(msg), ErrNoId) {
+  any_update(
+    resource.id,
+    resources.us_core_allergyintolerance_to_json(resource),
+    resources.RtAllergyintolerance,
+    resources.us_core_allergyintolerance_decoder(),
+    client,
+    handle_response,
+  )
+}
+
+pub fn us_core_allergyintolerance_delete(
+  resource: resources.UsCoreAllergyintolerance,
+  client: FhirClient(msg),
+  handle_response: fn(Result(sansio.OperationoutcomeOrHTTP, Err)) -> msg,
+) -> Result(Effect(msg), ErrNoId) {
+  case resource.id {
+    Some(id) ->
+      Ok(any_delete(id, resources.RtAllergyintolerance, client, handle_response))
+    None -> Error(ErrNoId)
+  }
+}
+
 pub fn us_core_patient_create(
   resource: resources.UsCorePatient,
   client: FhirClient(msg),
@@ -512,6 +567,35 @@ pub fn operationoutcome_search(
     handle_response(case resp {
       Ok(bundle) ->
         Ok({ bundle |> sansio.bundle_to_groupedresources }.operationoutcome)
+      Error(error) -> Error(error)
+    })
+  })
+}
+
+pub fn us_core_allergyintolerance_search_bundled(
+  sp: search_params.UsCoreAllergyintolerance,
+  client: FhirClient(msg),
+  handle_response: fn(Result(resources.Bundle, Err)) -> msg,
+) -> Effect(msg) {
+  search_params.to_string([
+    #("clinical-status", sp.clinical_status),
+    #("patient", sp.patient),
+  ])
+  |> search_any(resources.RtAllergyintolerance, client, handle_response)
+}
+
+pub fn us_core_allergyintolerance_search(
+  sp: search_params.UsCoreAllergyintolerance,
+  client: FhirClient(msg),
+  handle_response: fn(Result(List(resources.UsCoreAllergyintolerance), Err)) ->
+    msg,
+) -> Effect(msg) {
+  us_core_allergyintolerance_search_bundled(sp, client, fn(resp) {
+    handle_response(case resp {
+      Ok(bundle) ->
+        Ok(
+          { bundle |> sansio.bundle_to_groupedresources }.us_core_allergyintolerance,
+        )
       Error(error) -> Error(error)
     })
   })

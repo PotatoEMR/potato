@@ -1695,6 +1695,620 @@ pub fn parameters_decoder() -> Decoder(Parameters) {
   decode.success(Parameters(parameter:, language:, implicit_rules:, meta:, id:))
 }
 
+pub type UsCoreAllergyintolerance {
+  UsCoreAllergyintolerance(
+    id: Option(String),
+    meta: Option(ct.Meta),
+    implicit_rules: Option(String),
+    language: Option(String),
+    text: Option(ct.Narrative),
+    contained: List(Resource),
+    extension: List(ct.Extension),
+    modifier_extension: List(ct.Extension),
+    identifier: List(ct.Identifier),
+    clinical_status: Option(
+      ct.BoundCodeableconcept(valuesets.Allergyintoleranceclinical),
+    ),
+    verification_status: Option(
+      ct.BoundCodeableconcept(valuesets.Allergyintoleranceverification),
+    ),
+    type_: Option(valuesets.Allergyintolerancetype),
+    category: List(valuesets.Allergyintolerancecategory),
+    criticality: Option(valuesets.Allergyintolerancecriticality),
+    code: ct.Codeableconcept,
+    patient: ct.Reference,
+    encounter: Option(ct.Reference),
+    onset: Option(UsCoreAllergyintoleranceOnset),
+    recorded_date: Option(DateTime),
+    recorder: Option(ct.Reference),
+    asserter: Option(ct.Reference),
+    last_occurrence: Option(DateTime),
+    note: List(ct.Annotation),
+    reaction: List(UsCoreAllergyintoleranceReaction),
+  )
+}
+
+pub fn us_core_allergyintolerance_new(
+  code code: ct.Codeableconcept,
+  patient patient: ct.Reference,
+) -> UsCoreAllergyintolerance {
+  UsCoreAllergyintolerance(
+    id: None,
+    meta: Some(
+      ct.Meta(
+        id: None,
+        extension: [],
+        version_id: None,
+        last_updated: None,
+        source: None,
+        profile: [
+          "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance",
+        ],
+        security: [],
+        tag: [],
+      ),
+    ),
+    implicit_rules: None,
+    language: None,
+    text: None,
+    contained: [],
+    extension: [],
+    modifier_extension: [],
+    identifier: [],
+    clinical_status: None,
+    verification_status: None,
+    type_: None,
+    category: [],
+    criticality: None,
+    code:,
+    patient:,
+    encounter: None,
+    onset: None,
+    recorded_date: None,
+    recorder: None,
+    asserter: None,
+    last_occurrence: None,
+    note: [],
+    reaction: [],
+  )
+}
+
+pub type UsCoreAllergyintoleranceOnset {
+  UsCoreAllergyintoleranceOnsetDatetime(value: DateTime)
+  UsCoreAllergyintoleranceOnsetAge(value: ct.Age)
+  UsCoreAllergyintoleranceOnsetPeriod(value: ct.Period)
+  UsCoreAllergyintoleranceOnsetRange(value: ct.Range)
+  UsCoreAllergyintoleranceOnsetString(value: String)
+}
+
+pub type UsCoreAllergyintoleranceReaction {
+  UsCoreAllergyintoleranceReaction(
+    id: Option(String),
+    extension: List(ct.Extension),
+    modifier_extension: List(ct.Extension),
+    substance: Option(ct.Codeableconcept),
+    manifestation: List1(ct.Codeableconcept),
+    description: Option(String),
+    onset: Option(DateTime),
+    severity: Option(valuesets.Reactioneventseverity),
+    exposure_route: Option(ct.Codeableconcept),
+    note: List(ct.Annotation),
+  )
+}
+
+pub fn us_core_allergyintolerance_reaction_new(
+  manifestation manifestation: List1(ct.Codeableconcept),
+) -> UsCoreAllergyintoleranceReaction {
+  UsCoreAllergyintoleranceReaction(
+    id: None,
+    extension: [],
+    modifier_extension: [],
+    substance: None,
+    manifestation:,
+    description: None,
+    onset: None,
+    severity: None,
+    exposure_route: None,
+    note: [],
+  )
+}
+
+pub fn us_core_allergyintolerance_to_json(
+  us_core_allergyintolerance: UsCoreAllergyintolerance,
+) -> Json {
+  let UsCoreAllergyintolerance(
+    reaction:,
+    note:,
+    last_occurrence:,
+    asserter:,
+    recorder:,
+    recorded_date:,
+    onset:,
+    encounter:,
+    patient:,
+    code:,
+    criticality:,
+    category:,
+    type_:,
+    verification_status:,
+    clinical_status:,
+    identifier:,
+    modifier_extension:,
+    extension:,
+    contained:,
+    text:,
+    language:,
+    implicit_rules:,
+    meta:,
+    id:,
+  ) = us_core_allergyintolerance
+  let fields = [
+    #("patient", ct.reference_to_json(patient)),
+    #("code", ct.codeableconcept_to_json(code)),
+  ]
+  let fields = case reaction {
+    [] -> fields
+    values -> [
+      #(
+        "reaction",
+        json.array(values, us_core_allergyintolerance_reaction_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case note {
+    [] -> fields
+    values -> [#("note", json.array(values, ct.annotation_to_json)), ..fields]
+  }
+  let fields = case last_occurrence {
+    Some(v) -> [#("lastOccurrence", pt.datetime_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case asserter {
+    Some(v) -> [#("asserter", ct.reference_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case recorder {
+    Some(v) -> [#("recorder", ct.reference_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case recorded_date {
+    Some(v) -> [#("recordedDate", pt.datetime_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case onset {
+    Some(v) -> [
+      #(
+        "onset"
+          <> case v {
+          UsCoreAllergyintoleranceOnsetDatetime(_) -> "DateTime"
+          UsCoreAllergyintoleranceOnsetAge(_) -> "Age"
+          UsCoreAllergyintoleranceOnsetPeriod(_) -> "Period"
+          UsCoreAllergyintoleranceOnsetRange(_) -> "Range"
+          UsCoreAllergyintoleranceOnsetString(_) -> "String"
+        },
+        us_core_allergyintolerance_onset_to_json(v),
+      ),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case encounter {
+    Some(v) -> [#("encounter", ct.reference_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case criticality {
+    Some(v) -> [
+      #("criticality", valuesets.allergyintolerancecriticality_to_json(v)),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case category {
+    [] -> fields
+    values -> [
+      #(
+        "category",
+        json.array(values, valuesets.allergyintolerancecategory_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case type_ {
+    Some(v) -> [
+      #("type", valuesets.allergyintolerancetype_to_json(v)),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case verification_status {
+    Some(v) -> [
+      #(
+        "verificationStatus",
+        ct.bound_codeableconcept_to_json(
+          v,
+          valuesets.allergyintoleranceverification_to_code,
+          valuesets.allergyintoleranceverification_system,
+        ),
+      ),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case clinical_status {
+    Some(v) -> [
+      #(
+        "clinicalStatus",
+        ct.bound_codeableconcept_to_json(
+          v,
+          valuesets.allergyintoleranceclinical_to_code,
+          valuesets.allergyintoleranceclinical_system,
+        ),
+      ),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case identifier {
+    [] -> fields
+    values -> [
+      #("identifier", json.array(values, ct.identifier_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case modifier_extension {
+    [] -> fields
+    values -> [
+      #("modifierExtension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case extension {
+    [] -> fields
+    values -> [
+      #("extension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case contained {
+    [] -> fields
+    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+  }
+  let fields = case text {
+    Some(v) -> [#("text", ct.narrative_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case language {
+    Some(v) -> [#("language", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case implicit_rules {
+    Some(v) -> [#("implicitRules", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case meta {
+    Some(v) -> [#("meta", ct.meta_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = [#("resourceType", json.string("AllergyIntolerance")), ..fields]
+  json.object(fields)
+}
+
+pub fn us_core_allergyintolerance_onset_to_json(
+  value: UsCoreAllergyintoleranceOnset,
+) -> Json {
+  case value {
+    UsCoreAllergyintoleranceOnsetDatetime(value) -> pt.datetime_to_json(value)
+    UsCoreAllergyintoleranceOnsetAge(value) -> ct.age_to_json(value)
+    UsCoreAllergyintoleranceOnsetPeriod(value) -> ct.period_to_json(value)
+    UsCoreAllergyintoleranceOnsetRange(value) -> ct.range_to_json(value)
+    UsCoreAllergyintoleranceOnsetString(value) -> json.string(value)
+  }
+}
+
+pub fn us_core_allergyintolerance_reaction_to_json(
+  us_core_allergyintolerance_reaction: UsCoreAllergyintoleranceReaction,
+) -> Json {
+  let UsCoreAllergyintoleranceReaction(
+    note:,
+    exposure_route:,
+    severity:,
+    onset:,
+    description:,
+    manifestation:,
+    substance:,
+    modifier_extension:,
+    extension:,
+    id:,
+  ) = us_core_allergyintolerance_reaction
+  let fields = [
+    #("manifestation", list1_to_json(manifestation, ct.codeableconcept_to_json)),
+  ]
+  let fields = case note {
+    [] -> fields
+    values -> [#("note", json.array(values, ct.annotation_to_json)), ..fields]
+  }
+  let fields = case exposure_route {
+    Some(v) -> [#("exposureRoute", ct.codeableconcept_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case severity {
+    Some(v) -> [
+      #("severity", valuesets.reactioneventseverity_to_json(v)),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case onset {
+    Some(v) -> [#("onset", pt.datetime_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case description {
+    Some(v) -> [#("description", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case substance {
+    Some(v) -> [#("substance", ct.codeableconcept_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case modifier_extension {
+    [] -> fields
+    values -> [
+      #("modifierExtension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case extension {
+    [] -> fields
+    values -> [
+      #("extension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  json.object(fields)
+}
+
+pub fn us_core_allergyintolerance_reaction_decoder() -> Decoder(
+  UsCoreAllergyintoleranceReaction,
+) {
+  use <- decode.recursive
+  use note <- decode.optional_field(
+    "note",
+    [],
+    decode.list(ct.annotation_decoder()),
+  )
+  use exposure_route <- decode.optional_field(
+    "exposureRoute",
+    None,
+    decode.optional(ct.codeableconcept_decoder()),
+  )
+  use severity <- decode.optional_field(
+    "severity",
+    None,
+    decode.optional(valuesets.reactioneventseverity_decoder()),
+  )
+  use onset <- decode.optional_field(
+    "onset",
+    None,
+    decode.optional(pt.datetime_decoder()),
+  )
+  use description <- decode.optional_field(
+    "description",
+    None,
+    decode.optional(decode.string),
+  )
+  use manifestation <- list1_decoder(
+    "manifestation",
+    ct.codeableconcept_decoder(),
+  )
+  use substance <- decode.optional_field(
+    "substance",
+    None,
+    decode.optional(ct.codeableconcept_decoder()),
+  )
+  use modifier_extension <- decode.optional_field(
+    "modifierExtension",
+    [],
+    decode.list(ct.extension_decoder()),
+  )
+  use extension <- decode.optional_field(
+    "extension",
+    [],
+    decode.list(ct.extension_decoder()),
+  )
+  use id <- decode.optional_field("id", None, decode.optional(decode.string))
+  let placeholder =
+    UsCoreAllergyintoleranceReaction(
+      note:,
+      exposure_route:,
+      severity:,
+      onset:,
+      description:,
+      manifestation:,
+      substance:,
+      modifier_extension:,
+      extension:,
+      id:,
+    )
+  decode.success(placeholder)
+}
+
+pub fn us_core_allergyintolerance_onset_decoder() -> Decoder(
+  UsCoreAllergyintoleranceOnset,
+) {
+  decode.one_of(
+    decode.field("onsetDateTime", pt.datetime_decoder(), decode.success)
+      |> decode.map(UsCoreAllergyintoleranceOnsetDatetime),
+    [
+      decode.field("onsetAge", ct.age_decoder(), decode.success)
+        |> decode.map(UsCoreAllergyintoleranceOnsetAge),
+      decode.field("onsetPeriod", ct.period_decoder(), decode.success)
+        |> decode.map(UsCoreAllergyintoleranceOnsetPeriod),
+      decode.field("onsetRange", ct.range_decoder(), decode.success)
+        |> decode.map(UsCoreAllergyintoleranceOnsetRange),
+      decode.field("onsetString", decode.string, decode.success)
+        |> decode.map(UsCoreAllergyintoleranceOnsetString),
+    ],
+  )
+}
+
+pub fn us_core_allergyintolerance_decoder() -> Decoder(UsCoreAllergyintolerance) {
+  use <- decode.recursive
+  use reaction <- decode.optional_field(
+    "reaction",
+    [],
+    decode.list(us_core_allergyintolerance_reaction_decoder()),
+  )
+  use note <- decode.optional_field(
+    "note",
+    [],
+    decode.list(ct.annotation_decoder()),
+  )
+  use last_occurrence <- decode.optional_field(
+    "lastOccurrence",
+    None,
+    decode.optional(pt.datetime_decoder()),
+  )
+  use asserter <- decode.optional_field(
+    "asserter",
+    None,
+    decode.optional(ct.reference_decoder()),
+  )
+  use recorder <- decode.optional_field(
+    "recorder",
+    None,
+    decode.optional(ct.reference_decoder()),
+  )
+  use recorded_date <- decode.optional_field(
+    "recordedDate",
+    None,
+    decode.optional(pt.datetime_decoder()),
+  )
+  use onset <- decode.then(
+    none_if_omitted(us_core_allergyintolerance_onset_decoder()),
+  )
+  use encounter <- decode.optional_field(
+    "encounter",
+    None,
+    decode.optional(ct.reference_decoder()),
+  )
+  use patient <- decode.field("patient", ct.reference_decoder())
+  use code <- decode.field("code", ct.codeableconcept_decoder())
+  use criticality <- decode.optional_field(
+    "criticality",
+    None,
+    decode.optional(valuesets.allergyintolerancecriticality_decoder()),
+  )
+  use category <- decode.optional_field(
+    "category",
+    [],
+    decode.list(valuesets.allergyintolerancecategory_decoder()),
+  )
+  use type_ <- decode.optional_field(
+    "type",
+    None,
+    decode.optional(valuesets.allergyintolerancetype_decoder()),
+  )
+  use verification_status <- decode.optional_field(
+    "verificationStatus",
+    None,
+    decode.optional(ct.bound_codeableconcept_decoder(
+      valuesets.allergyintoleranceverification_from_code_and_system,
+      valuesets.AllergyintoleranceverificationUnconfirmed,
+    )),
+  )
+  use clinical_status <- decode.optional_field(
+    "clinicalStatus",
+    None,
+    decode.optional(ct.bound_codeableconcept_decoder(
+      valuesets.allergyintoleranceclinical_from_code_and_system,
+      valuesets.AllergyintoleranceclinicalActive,
+    )),
+  )
+  use identifier <- decode.optional_field(
+    "identifier",
+    [],
+    decode.list(ct.identifier_decoder()),
+  )
+  use modifier_extension <- decode.optional_field(
+    "modifierExtension",
+    [],
+    decode.list(ct.extension_decoder()),
+  )
+  use extension <- decode.optional_field(
+    "extension",
+    [],
+    decode.list(ct.extension_decoder()),
+  )
+  use contained <- decode.optional_field(
+    "contained",
+    [],
+    decode.list(resource_decoder()),
+  )
+  use text <- decode.optional_field(
+    "text",
+    None,
+    decode.optional(ct.narrative_decoder()),
+  )
+  use language <- decode.optional_field(
+    "language",
+    None,
+    decode.optional(decode.string),
+  )
+  use implicit_rules <- decode.optional_field(
+    "implicitRules",
+    None,
+    decode.optional(decode.string),
+  )
+  use meta <- decode.optional_field(
+    "meta",
+    None,
+    decode.optional(ct.meta_decoder()),
+  )
+  use id <- decode.optional_field("id", None, decode.optional(decode.string))
+  let placeholder =
+    UsCoreAllergyintolerance(
+      reaction:,
+      note:,
+      last_occurrence:,
+      asserter:,
+      recorder:,
+      recorded_date:,
+      onset:,
+      encounter:,
+      patient:,
+      code:,
+      criticality:,
+      category:,
+      type_:,
+      verification_status:,
+      clinical_status:,
+      identifier:,
+      modifier_extension:,
+      extension:,
+      contained:,
+      text:,
+      language:,
+      implicit_rules:,
+      meta:,
+      id:,
+    )
+  use resource_type_value <- decode.field("resourceType", decode.string)
+  use <- bool.guard(
+    resource_type_value != "AllergyIntolerance",
+    decode.failure(placeholder, "resourceType"),
+  )
+  decode.success(placeholder)
+}
+
 pub type UsCorePatient {
   UsCorePatient(
     id: Option(String),
@@ -3273,6 +3887,7 @@ pub type ResourceType {
   RtBundle
   RtOperationoutcome
   RtParameters
+  RtAllergyintolerance
   RtPatient
 }
 
@@ -3281,6 +3896,7 @@ pub fn resource_type_to_string(resource_type: ResourceType) -> String {
     RtBundle -> "Bundle"
     RtOperationoutcome -> "OperationOutcome"
     RtParameters -> "Parameters"
+    RtAllergyintolerance -> "AllergyIntolerance"
     RtPatient -> "Patient"
   }
 }
@@ -3289,6 +3905,7 @@ pub type Resource {
   ResourceBundle(Bundle)
   ResourceOperationoutcome(Operationoutcome)
   ResourceParameters(Parameters)
+  ResourceUsCoreAllergyintolerance(UsCoreAllergyintolerance)
   ResourceUsCorePatient(UsCorePatient)
 }
 
@@ -3297,6 +3914,8 @@ pub fn resource_to_json(resource: Resource) {
     ResourceBundle(resource) -> bundle_to_json(resource)
     ResourceOperationoutcome(resource) -> operationoutcome_to_json(resource)
     ResourceParameters(resource) -> parameters_to_json(resource)
+    ResourceUsCoreAllergyintolerance(resource) ->
+      us_core_allergyintolerance_to_json(resource)
     ResourceUsCorePatient(resource) -> us_core_patient_to_json(resource)
   }
 }
@@ -3308,6 +3927,9 @@ pub fn resource_decoder() -> Decoder(Resource) {
     "OperationOutcome" ->
       operationoutcome_decoder() |> decode.map(ResourceOperationoutcome)
     "Parameters" -> parameters_decoder() |> decode.map(ResourceParameters)
+    "AllergyIntolerance" ->
+      us_core_allergyintolerance_decoder()
+      |> decode.map(ResourceUsCoreAllergyintolerance)
     "Patient" -> us_core_patient_decoder() |> decode.map(ResourceUsCorePatient)
     _ ->
       decode.failure(ResourceParameters(parameters_new()), expected: "")

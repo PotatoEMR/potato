@@ -3,6 +3,7 @@
 /build
 erl_crash.dump
 /downloads
+current_profile
 
 #Added automatically by Lustre Dev Tools
 /.lustre

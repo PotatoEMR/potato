@@ -132,6 +132,289 @@ pub fn administrativegender_decoder() -> Decoder(Administrativegender) {
   }
 }
 
+pub type Allergyintolerancecategory {
+  AllergyintolerancecategoryFood
+  AllergyintolerancecategoryMedication
+  AllergyintolerancecategoryEnvironment
+  AllergyintolerancecategoryBiologic
+}
+
+pub fn allergyintolerancecategory_to_json(
+  allergyintolerancecategory: Allergyintolerancecategory,
+) -> Json {
+  json.string(allergyintolerancecategory_to_code(allergyintolerancecategory))
+}
+
+pub fn allergyintolerancecategory_to_code(
+  allergyintolerancecategory: Allergyintolerancecategory,
+) -> String {
+  case allergyintolerancecategory {
+    AllergyintolerancecategoryFood -> "food"
+    AllergyintolerancecategoryMedication -> "medication"
+    AllergyintolerancecategoryEnvironment -> "environment"
+    AllergyintolerancecategoryBiologic -> "biologic"
+  }
+}
+
+pub fn allergyintolerancecategory_from_code(
+  code: String,
+) -> Result(Allergyintolerancecategory, Nil) {
+  case code {
+    "food" -> Ok(AllergyintolerancecategoryFood)
+    "medication" -> Ok(AllergyintolerancecategoryMedication)
+    "environment" -> Ok(AllergyintolerancecategoryEnvironment)
+    "biologic" -> Ok(AllergyintolerancecategoryBiologic)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn allergyintolerancecategory_decoder() -> Decoder(
+  Allergyintolerancecategory,
+) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "food" -> decode.success(AllergyintolerancecategoryFood)
+    "medication" -> decode.success(AllergyintolerancecategoryMedication)
+    "environment" -> decode.success(AllergyintolerancecategoryEnvironment)
+    "biologic" -> decode.success(AllergyintolerancecategoryBiologic)
+    _ ->
+      decode.failure(
+        AllergyintolerancecategoryFood,
+        "Allergyintolerancecategory",
+      )
+  }
+}
+
+pub type Allergyintoleranceclinical {
+  AllergyintoleranceclinicalActive
+  AllergyintoleranceclinicalInactive
+  AllergyintoleranceclinicalResolved
+}
+
+pub fn allergyintoleranceclinical_to_json(
+  allergyintoleranceclinical: Allergyintoleranceclinical,
+) -> Json {
+  json.string(allergyintoleranceclinical_to_code(allergyintoleranceclinical))
+}
+
+pub fn allergyintoleranceclinical_to_code(
+  allergyintoleranceclinical: Allergyintoleranceclinical,
+) -> String {
+  case allergyintoleranceclinical {
+    AllergyintoleranceclinicalActive -> "active"
+    AllergyintoleranceclinicalInactive -> "inactive"
+    AllergyintoleranceclinicalResolved -> "resolved"
+  }
+}
+
+pub fn allergyintoleranceclinical_from_code_and_system(
+  code code: String,
+  system system: String,
+) -> Result(Allergyintoleranceclinical, Nil) {
+  case code, system {
+    "active",
+      "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"
+    -> Ok(AllergyintoleranceclinicalActive)
+    "inactive",
+      "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"
+    -> Ok(AllergyintoleranceclinicalInactive)
+    "resolved",
+      "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"
+    -> Ok(AllergyintoleranceclinicalResolved)
+    _, _ -> Error(Nil)
+  }
+}
+
+pub fn allergyintoleranceclinical_decoder() -> Decoder(
+  Allergyintoleranceclinical,
+) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "active" -> decode.success(AllergyintoleranceclinicalActive)
+    "inactive" -> decode.success(AllergyintoleranceclinicalInactive)
+    "resolved" -> decode.success(AllergyintoleranceclinicalResolved)
+    _ ->
+      decode.failure(
+        AllergyintoleranceclinicalActive,
+        "Allergyintoleranceclinical",
+      )
+  }
+}
+
+pub fn allergyintoleranceclinical_system(
+  _allergyintoleranceclinical: Allergyintoleranceclinical,
+) -> String {
+  "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"
+}
+
+pub type Allergyintolerancecriticality {
+  AllergyintolerancecriticalityLow
+  AllergyintolerancecriticalityHigh
+  AllergyintolerancecriticalityUnabletoassess
+}
+
+pub fn allergyintolerancecriticality_to_json(
+  allergyintolerancecriticality: Allergyintolerancecriticality,
+) -> Json {
+  json.string(allergyintolerancecriticality_to_code(
+    allergyintolerancecriticality,
+  ))
+}
+
+pub fn allergyintolerancecriticality_to_code(
+  allergyintolerancecriticality: Allergyintolerancecriticality,
+) -> String {
+  case allergyintolerancecriticality {
+    AllergyintolerancecriticalityLow -> "low"
+    AllergyintolerancecriticalityHigh -> "high"
+    AllergyintolerancecriticalityUnabletoassess -> "unable-to-assess"
+  }
+}
+
+pub fn allergyintolerancecriticality_from_code(
+  code: String,
+) -> Result(Allergyintolerancecriticality, Nil) {
+  case code {
+    "low" -> Ok(AllergyintolerancecriticalityLow)
+    "high" -> Ok(AllergyintolerancecriticalityHigh)
+    "unable-to-assess" -> Ok(AllergyintolerancecriticalityUnabletoassess)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn allergyintolerancecriticality_decoder() -> Decoder(
+  Allergyintolerancecriticality,
+) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "low" -> decode.success(AllergyintolerancecriticalityLow)
+    "high" -> decode.success(AllergyintolerancecriticalityHigh)
+    "unable-to-assess" ->
+      decode.success(AllergyintolerancecriticalityUnabletoassess)
+    _ ->
+      decode.failure(
+        AllergyintolerancecriticalityLow,
+        "Allergyintolerancecriticality",
+      )
+  }
+}
+
+pub type Allergyintolerancetype {
+  AllergyintolerancetypeAllergy
+  AllergyintolerancetypeIntolerance
+}
+
+pub fn allergyintolerancetype_to_json(
+  allergyintolerancetype: Allergyintolerancetype,
+) -> Json {
+  json.string(allergyintolerancetype_to_code(allergyintolerancetype))
+}
+
+pub fn allergyintolerancetype_to_code(
+  allergyintolerancetype: Allergyintolerancetype,
+) -> String {
+  case allergyintolerancetype {
+    AllergyintolerancetypeAllergy -> "allergy"
+    AllergyintolerancetypeIntolerance -> "intolerance"
+  }
+}
+
+pub fn allergyintolerancetype_from_code(
+  code: String,
+) -> Result(Allergyintolerancetype, Nil) {
+  case code {
+    "allergy" -> Ok(AllergyintolerancetypeAllergy)
+    "intolerance" -> Ok(AllergyintolerancetypeIntolerance)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn allergyintolerancetype_decoder() -> Decoder(Allergyintolerancetype) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "allergy" -> decode.success(AllergyintolerancetypeAllergy)
+    "intolerance" -> decode.success(AllergyintolerancetypeIntolerance)
+    _ -> decode.failure(AllergyintolerancetypeAllergy, "Allergyintolerancetype")
+  }
+}
+
+pub type Allergyintoleranceverification {
+  AllergyintoleranceverificationUnconfirmed
+  AllergyintoleranceverificationPresumed
+  AllergyintoleranceverificationConfirmed
+  AllergyintoleranceverificationRefuted
+  AllergyintoleranceverificationEnteredinerror
+}
+
+pub fn allergyintoleranceverification_to_json(
+  allergyintoleranceverification: Allergyintoleranceverification,
+) -> Json {
+  json.string(allergyintoleranceverification_to_code(
+    allergyintoleranceverification,
+  ))
+}
+
+pub fn allergyintoleranceverification_to_code(
+  allergyintoleranceverification: Allergyintoleranceverification,
+) -> String {
+  case allergyintoleranceverification {
+    AllergyintoleranceverificationUnconfirmed -> "unconfirmed"
+    AllergyintoleranceverificationPresumed -> "presumed"
+    AllergyintoleranceverificationConfirmed -> "confirmed"
+    AllergyintoleranceverificationRefuted -> "refuted"
+    AllergyintoleranceverificationEnteredinerror -> "entered-in-error"
+  }
+}
+
+pub fn allergyintoleranceverification_from_code_and_system(
+  code code: String,
+  system system: String,
+) -> Result(Allergyintoleranceverification, Nil) {
+  case code, system {
+    "unconfirmed",
+      "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
+    -> Ok(AllergyintoleranceverificationUnconfirmed)
+    "presumed",
+      "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
+    -> Ok(AllergyintoleranceverificationPresumed)
+    "confirmed",
+      "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
+    -> Ok(AllergyintoleranceverificationConfirmed)
+    "refuted",
+      "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
+    -> Ok(AllergyintoleranceverificationRefuted)
+    "entered-in-error",
+      "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
+    -> Ok(AllergyintoleranceverificationEnteredinerror)
+    _, _ -> Error(Nil)
+  }
+}
+
+pub fn allergyintoleranceverification_decoder() -> Decoder(
+  Allergyintoleranceverification,
+) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "unconfirmed" -> decode.success(AllergyintoleranceverificationUnconfirmed)
+    "presumed" -> decode.success(AllergyintoleranceverificationPresumed)
+    "confirmed" -> decode.success(AllergyintoleranceverificationConfirmed)
+    "refuted" -> decode.success(AllergyintoleranceverificationRefuted)
+    "entered-in-error" ->
+      decode.success(AllergyintoleranceverificationEnteredinerror)
+    _ ->
+      decode.failure(
+        AllergyintoleranceverificationUnconfirmed,
+        "Allergyintoleranceverification",
+      )
+  }
+}
+
+pub fn allergyintoleranceverification_system(
+  _allergyintoleranceverification: Allergyintoleranceverification,
+) -> String {
+  "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
+}
+
 pub type Alltypes {
   AlltypesAddress
   AlltypesAge
@@ -11827,6 +12110,49 @@ pub fn quantitycomparator_decoder() -> Decoder(Quantitycomparator) {
     ">=" -> decode.success(QuantitycomparatorGreaterthanequal)
     ">" -> decode.success(QuantitycomparatorGreaterthan)
     _ -> decode.failure(QuantitycomparatorLessthan, "Quantitycomparator")
+  }
+}
+
+pub type Reactioneventseverity {
+  ReactioneventseverityMild
+  ReactioneventseverityModerate
+  ReactioneventseveritySevere
+}
+
+pub fn reactioneventseverity_to_json(
+  reactioneventseverity: Reactioneventseverity,
+) -> Json {
+  json.string(reactioneventseverity_to_code(reactioneventseverity))
+}
+
+pub fn reactioneventseverity_to_code(
+  reactioneventseverity: Reactioneventseverity,
+) -> String {
+  case reactioneventseverity {
+    ReactioneventseverityMild -> "mild"
+    ReactioneventseverityModerate -> "moderate"
+    ReactioneventseveritySevere -> "severe"
+  }
+}
+
+pub fn reactioneventseverity_from_code(
+  code: String,
+) -> Result(Reactioneventseverity, Nil) {
+  case code {
+    "mild" -> Ok(ReactioneventseverityMild)
+    "moderate" -> Ok(ReactioneventseverityModerate)
+    "severe" -> Ok(ReactioneventseveritySevere)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn reactioneventseverity_decoder() -> Decoder(Reactioneventseverity) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "mild" -> decode.success(ReactioneventseverityMild)
+    "moderate" -> decode.success(ReactioneventseverityModerate)
+    "severe" -> decode.success(ReactioneventseveritySevere)
+    _ -> decode.failure(ReactioneventseverityMild, "Reactioneventseverity")
   }
 }
 

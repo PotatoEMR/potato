@@ -500,12 +500,18 @@ pub type GroupedResources {
   GroupedResources(
     bundle: List(resources.Bundle),
     operationoutcome: List(resources.Operationoutcome),
+    us_core_allergyintolerance: List(resources.UsCoreAllergyintolerance),
     us_core_patient: List(resources.UsCorePatient),
   )
 }
 
 pub fn groupedresources_new() -> GroupedResources {
-  GroupedResources(bundle: [], operationoutcome: [], us_core_patient: [])
+  GroupedResources(
+    bundle: [],
+    operationoutcome: [],
+    us_core_allergyintolerance: [],
+    us_core_patient: [],
+  )
 }
 
 pub fn bundle_to_groupedresources(
@@ -525,6 +531,11 @@ pub fn bundle_to_groupedresources(
               GroupedResources(..acc, operationoutcome: [
                 r,
                 ..acc.operationoutcome
+              ])
+            resources.ResourceUsCoreAllergyintolerance(r) ->
+              GroupedResources(..acc, us_core_allergyintolerance: [
+                r,
+                ..acc.us_core_allergyintolerance
               ])
             resources.ResourceUsCorePatient(r) ->
               GroupedResources(..acc, us_core_patient: [

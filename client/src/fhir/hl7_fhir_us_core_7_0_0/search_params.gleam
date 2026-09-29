@@ -32,6 +32,13 @@ pub type Operationoutcome {
   Operationoutcome
 }
 
+pub type UsCoreAllergyintolerance {
+  UsCoreAllergyintolerance(
+    clinical_status: Option(String),
+    patient: Option(String),
+  )
+}
+
 pub type UsCorePatient {
   UsCorePatient(
     id: Option(String),
@@ -51,6 +58,10 @@ pub fn bundle_new() {
 
 pub fn operationoutcome_new() {
   Operationoutcome
+}
+
+pub fn us_core_allergyintolerance_new() {
+  UsCoreAllergyintolerance(None, None)
 }
 
 pub fn us_core_patient_new() {
