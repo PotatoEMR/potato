@@ -27,12 +27,24 @@ pub fn main() {
 type Model(msg401) {
   Model(
     route: Route,
-    searched_patients: Result(List(resources.UsCorePatient), String),
+    search_patient: SearchPatient,
     client: client_rsvp.FhirClient(msg401),
   )
 }
 
+pub type SearchPatient {
+  SearchPatient(text: String, visible: Bool, results: SearchPatientResults)
+}
+
+pub type SearchPatientResults {
+  SearchPatientResultsPats(pats: List(resources.UsCorePatient))
+  SearchPatientResultsErrMsg(err_msg: String)
+  SearchPatientResultsLoadingMsg
+  SearchPatientResultsEmptyMsg
+}
+
 fn init(_) -> #(Model(Msg), Effect(Msg)) {
+  let search_patient = SearchPatient("", False, SearchPatientResultsEmptyMsg)
   let assert Ok(client) = client_rsvp.fhirclient_new("127.0.0.1:3000/api")
   let client =
     client_rsvp.FhirClient(
@@ -42,7 +54,7 @@ fn init(_) -> #(Model(Msg), Effect(Msg)) {
   // when user clicks a link in app, send msg to update fn
   let modem_effect =
     modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
-  let model = Model(route: RouteNoId(Index), searched_patients: Ok([]), client:)
+  let model = Model(route: RouteNoId(Index), search_patient:, client:)
   #(model, modem_effect)
 }
 
@@ -89,7 +101,11 @@ fn user_navigated_to(route, model) {
 
 type Msg {
   UserNavigatedTo(route: Route)
+  // any unauthorized response
   ServerReturned401(err: sansio.ErrResp)
+  // patient search
+  UserFocusedSearch
+  UserBlurredSearch
   UserTypedSearchPatient(String)
   ServerReturnedSearchPatients(
     Result(List(resources.UsCorePatient), client_rsvp.Err),
@@ -104,48 +120,112 @@ fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
       let send_to_login = modem.load(url)
       #(model, send_to_login)
     }
-    ServerReturnedSearchPatients(patient_result) ->
-      case patient_result {
-        Ok(patients) -> {
-          let model = Model(..model, searched_patients: Ok(patients))
-          #(model, effect.none())
-        }
-        Error(err) -> {
-          let model =
-            Model(
-              ..model,
-              searched_patients: Error(client_rsvp.err_to_string(err)),
+
+    UserTypedSearchPatient(search_text) -> {
+      case search_text {
+        "" ->
+          model
+          |> set_search_result(SearchPatientResultsEmptyMsg)
+          |> model_no_effect
+        _ -> {
+          let search: Effect(Msg) =
+            client_rsvp.us_core_patient_search(
+              search_params.UsCorePatient(
+                ..search_params.us_core_patient_new(),
+                name: Some(search_text),
+              ),
+              model.client,
+              ServerReturnedSearchPatients,
             )
-          #(model, effect.none())
+          let model =
+            model
+            |> set_search_result(SearchPatientResultsLoadingMsg)
+            |> set_search_visible(True)
+          #(model, search)
         }
       }
-    UserTypedSearchPatient(search_text) -> {
-      let search: Effect(Msg) =
-        client_rsvp.us_core_patient_search(
-          search_params.UsCorePatient(
-            ..search_params.us_core_patient_new(),
-            name: Some(search_text),
-          ),
-          model.client,
-          ServerReturnedSearchPatients,
-        )
-      #(model, search)
     }
+    ServerReturnedSearchPatients(patient_result) ->
+      model
+      |> set_search_result(case patient_result {
+        Ok(patients) -> SearchPatientResultsPats(patients)
+        Error(err) ->
+          SearchPatientResultsErrMsg(
+            "There was a problem getting patient search from FHIR server: "
+            <> client_rsvp.err_to_string(err),
+          )
+      })
+      |> model_no_effect
+    UserFocusedSearch -> model |> set_search_visible(True) |> model_no_effect
+    UserBlurredSearch -> model |> set_search_visible(False) |> model_no_effect
   }
+}
+
+fn set_search_result(model: Model(msg401), results: SearchPatientResults) {
+  Model(
+    ..model,
+    search_patient: SearchPatient(..model.search_patient, results:),
+  )
+}
+
+fn set_search_visible(model: Model(msg401), visible: Bool) {
+  Model(
+    ..model,
+    search_patient: SearchPatient(..model.search_patient, visible:),
+  )
+}
+
+fn model_no_effect(model: Model(msg401)) {
+  #(model, effect.none())
 }
 
 // VIEW ------------------------------------------------------------------------
 
 fn view(model: Model(Msg)) -> Element(Msg) {
-  let patient_results = case model.searched_patients {
-    Ok(patients) ->
-      list.map(patients, fn(patient) {
+  let patient_results = case model.search_patient.results {
+    SearchPatientResultsPats(pats:) ->
+      list.map(pats, fn(patient) {
         h.div([], [h.text(utils.humannames_to_single_name_string(patient.name))])
       })
-    Error(err) -> [h.div([], [h.text(err)])]
+    SearchPatientResultsErrMsg(err_msg:) -> [h.div([], [h.text(err_msg)])]
+    SearchPatientResultsLoadingMsg -> [h.div([], [h.text("loading...")])]
+    SearchPatientResultsEmptyMsg -> []
   }
-  h.main([], [
-    h.input([event.on_input(UserTypedSearchPatient)]),
-    ..patient_results
+  h.div([], [
+    h.nav(nav_style(), [
+      h.label(
+        [
+          a.for("search-patient"),
+          a.style("background-color", "red"),
+          a.style("padding", "5px"),
+        ],
+        [
+          h.input([
+            a.id("search-patient"),
+            event.on_input(UserTypedSearchPatient),
+          ]),
+        ],
+      ),
+      ..patient_results
+    ]),
+    h.nav(nav_style(), [
+      h.a([], [h.text("abcabcabc")]),
+      h.a([], [h.text("abcabcabc")]),
+      h.a([], [h.text("abcabcabc")]),
+      h.a([], [h.text("abcabcabc")]),
+      h.a([], [h.text("abcabcabc")]),
+      h.a([], [h.text("abcabcabc")]),
+    ]),
+    h.main([], [h.text("main")]),
   ])
+}
+
+fn nav_style() {
+  [
+    a.styles([
+      #("display", "flex"),
+      #("gap", "5px"),
+      #("border-bottom", "1px solid black"),
+    ]),
+  ]
 }

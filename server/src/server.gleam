@@ -302,12 +302,12 @@ fn serve_index(request) -> Response {
     Error(_) -> wisp.redirect(to: "/auth/login")
     Ok(username) -> {
       let html =
-        h.html([], [
+        h.html([a.styles(full)], [
           h.head([], [
             h.script([a.type_("module"), a.src("/static/potato.js")], ""),
             ..potatoemr()
           ]),
-          h.body([], [h.div([a.id("app")], [])]),
+          h.body([a.styles(full)], [h.div([a.id("app")], [])]),
         ])
 
       html
