@@ -2,6 +2,7 @@ import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
 import fhir/hl7_fhir_us_core_7_0_0/resources
 import fhir/hl7_fhir_us_core_7_0_0/sansio
 import fhir/hl7_fhir_us_core_7_0_0/search_params
+import gleam/dict
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/uri.{type Uri}
@@ -43,6 +44,38 @@ pub type SearchPatientResults {
   SearchPatientResultsEmptyMsg
 }
 
+// routes, uri_to_route type -> uri
+// must stay in sync with Route uri -> type
+// and in sync with labels in view
+
+pub type Route {
+  RoutePatient(id: String, patient: PatientLoad, page: RoutePatientPage)
+  RouteNoSpecificPatient(page: RouteNoSpecificPatient)
+}
+
+pub type PatientLoad {
+  PatientLoadStillLoading
+  PatientLoadFound(data: PatientData)
+  PatientLoadNotFound(String)
+}
+
+pub type PatientData {
+  PatientData(patient: resources.UsCorePatient)
+}
+
+pub type RoutePatientPage {
+  PatientOverview
+  PatientDemographics
+  PatientVitals
+  PatientGrowthchart
+}
+
+pub type RouteNoSpecificPatient {
+  Calendar
+  RegisterPatient
+  NotFound(notfound: String)
+}
+
 fn init(_) -> #(Model(Msg), Effect(Msg)) {
   let search_patient = SearchPatient("", False, SearchPatientResultsEmptyMsg)
   let assert Ok(client) = client_rsvp.fhirclient_new("127.0.0.1:3000/api")
@@ -54,20 +87,12 @@ fn init(_) -> #(Model(Msg), Effect(Msg)) {
   // when user clicks a link in app, send msg to update fn
   let modem_effect =
     modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
-  let model = Model(route: RouteNoId(Index), search_patient:, client:)
+  let model =
+    Model(route: RouteNoSpecificPatient(Calendar), search_patient:, client:)
   #(model, modem_effect)
 }
 
 // ROUTING ---------------------------------------------------------------------
-
-pub type Route {
-  RouteNoId(page: RouteNoId)
-}
-
-pub type RouteNoId {
-  Index
-  NotFound(notfound: String)
-}
 
 pub fn href(route: Route) -> Attribute(msg) {
   route |> route_to_urlstring |> a.href
@@ -75,25 +100,58 @@ pub fn href(route: Route) -> Attribute(msg) {
 
 pub fn route_to_urlstring(route: Route) -> String {
   case route {
-    RouteNoId(page:) ->
+    RouteNoSpecificPatient(page:) ->
       case page {
-        Index -> "/"
-        NotFound(_) -> "/"
+        Calendar -> "/"
+        RegisterPatient -> todo
+        NotFound(_) -> "/notfound"
       }
+    RoutePatient(id:, patient:, page:) -> {
+      let ending = case page {
+        PatientOverview -> todo
+        PatientDemographics -> todo
+        PatientVitals -> todo
+        PatientGrowthchart -> todo
+      }
+      "/patient/" <> id <> "/" <> ending
+    }
   }
 }
 
+pub const pages_no_specific_patient: List(#(String, RouteNoSpecificPatient)) = [
+  #("calendar", Calendar),
+  #("registerpatient", RegisterPatient),
+]
+
+pub const pages_patient: List(#(String, RoutePatientPage)) = [
+  #("overview", PatientOverview),
+  #("demographics", PatientDemographics),
+  #("vitals", PatientVitals),
+  #("growthchart", PatientGrowthchart),
+]
+
 pub fn uri_to_route(uri: Uri) -> Route {
   case uri.path_segments(uri.path) {
-    [] -> RouteNoId(Index)
-    [""] -> RouteNoId(Index)
-    _ -> uri |> uri.to_string |> NotFound |> RouteNoId
+    [] -> RouteNoSpecificPatient(Calendar)
+    [""] -> RouteNoSpecificPatient(Calendar)
+    [page] ->
+      case pages_no_specific_patient |> dict.from_list |> dict.get(page) {
+        Ok(page) -> RouteNoSpecificPatient(page:)
+        Error(_) -> uri |> uri.to_string |> NotFound |> RouteNoSpecificPatient
+      }
+    ["patient", id, page] ->
+      case pages_patient |> dict.from_list |> dict.get(page) {
+        Ok(page) -> RoutePatient(id:, patient: PatientLoadStillLoading, page:)
+        Error(_) -> uri |> uri.to_string |> NotFound |> RouteNoSpecificPatient
+      }
+    _ -> uri |> uri.to_string |> NotFound |> RouteNoSpecificPatient
   }
 }
 
 fn user_navigated_to(route, model) {
   case route {
-    RouteNoId(page:) -> #(Model(..model, route:), effect.none())
+    RouteNoSpecificPatient(page:) -> #(Model(..model, route:), effect.none())
+    RoutePatient(id:, patient:, page:) -> todo
   }
 }
 
