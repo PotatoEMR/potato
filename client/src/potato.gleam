@@ -338,6 +338,7 @@ fn view(model: Model(Msg)) -> Element(Msg) {
         ),
         ..patient_results
       ]),
+      h.a([], [h.text("register patient")]),
     ]),
     h.nav(nav_style(), [
       h.a([], [h.text("abcabcabc")]),

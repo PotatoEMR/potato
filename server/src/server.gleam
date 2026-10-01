@@ -210,6 +210,7 @@ fn potatoemr() {
       a.rel("icon"),
     ]),
     h.title([], "PotatoEMR"),
+    h.link([a.rel("stylesheet"), a.href("/static/reset.css")]),
   ]
 }
 
