@@ -20,7 +20,7 @@ import pages/patient/demographics
 import pages/patient/growthchart
 import pages/patient/overview
 import pages/patient/vitals
-import utils
+import utils.{ue}
 
 // MAIN ------------------------------------------------------------------------
 
@@ -300,16 +300,26 @@ fn set_search_result(model: Model(msg401), results: SearchPatientResults) {
 fn view(model: Model(Msg)) -> Element(Msg) {
   let patient_results = case model.search_patient.results {
     SearchPatientResultsPats(pats:) ->
-      list.map(pats, fn(patient) {
-        h.div([], [h.text(utils.humannames_to_single_name_string(patient.name))])
-      })
-    SearchPatientResultsErrMsg(err_msg:) -> [h.div([], [h.text(err_msg)])]
-    SearchPatientResultsLoadingMsg -> [h.div([], [h.text("loading...")])]
-    SearchPatientResultsEmptyMsg -> []
+      h.table([], [
+        table_head(["", "Name", "MRN", "Birth Date", "Zip", "SSN", "Phone"]),
+        ..list.map(pats, fn(patient) {
+          table_row([
+            "pic todo",
+            utils.humannames_to_single_name_string(patient.name),
+            patient |> utils.mrn |> ue,
+            patient |> utils.birth_date |> ue,
+            patient |> utils.first_zip |> ue,
+            patient |> utils.ssn |> ue,
+            patient |> utils.first_phone |> ue,
+          ])
+        })
+      ])
+    SearchPatientResultsErrMsg(err_msg:) -> h.div([], [h.text(err_msg)])
+    SearchPatientResultsLoadingMsg -> h.div([], [h.text("loading...")])
+    SearchPatientResultsEmptyMsg -> h.div([], [h.text("no results")])
   }
   h.div([], [
     h.nav(nav_style(), [
-      //<button command="show-modal" commandfor="my-dialog">Open dialog</button>
       h.button(
         [
           a.command("show-modal"),
@@ -326,17 +336,16 @@ fn view(model: Model(Msg)) -> Element(Msg) {
         h.label(
           [
             a.for("search-patient"),
-            a.style("background-color", "red"),
-            a.style("padding", "5px"),
           ],
           [
+            h.text("Name"),
             h.input([
               a.id("search-patient"),
               event.on_input(UserTypedSearchPatient),
             ]),
           ],
         ),
-        ..patient_results
+        patient_results,
       ]),
       h.a([], [h.text("register patient")]),
     ]),
@@ -350,6 +359,14 @@ fn view(model: Model(Msg)) -> Element(Msg) {
     ]),
     h.main([], [h.text("main")]),
   ])
+}
+
+fn table_head(headers: List(String)) -> Element(Msg) {
+  h.tr([], list.map(headers, fn(header) { h.th([], [h.text(header)]) }))
+}
+
+fn table_row(items: List(String)) -> Element(Msg) {
+  h.tr([], list.map(items, fn(item) { h.td([], [h.text(item)]) }))
 }
 
 fn nav_style() {
