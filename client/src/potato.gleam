@@ -13,6 +13,13 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event
 import modem
+import pages/no_specific_patient/calendar
+import pages/no_specific_patient/notfound
+import pages/no_specific_patient/registerpatient
+import pages/patient/demographics
+import pages/patient/growthchart
+import pages/patient/overview
+import pages/patient/vitals
 import utils
 
 // MAIN ------------------------------------------------------------------------
@@ -102,16 +109,16 @@ pub fn route_to_urlstring(route: Route) -> String {
   case route {
     RouteNoSpecificPatient(page:) ->
       case page {
-        Calendar -> "/"
-        RegisterPatient -> todo
+        Calendar -> ""
+        RegisterPatient -> "/registerpatient"
         NotFound(_) -> "/notfound"
       }
     RoutePatient(id:, patient:, page:) -> {
       let ending = case page {
-        PatientOverview -> todo
-        PatientDemographics -> todo
-        PatientVitals -> todo
-        PatientGrowthchart -> todo
+        PatientOverview -> "overview"
+        PatientDemographics -> "demographics"
+        PatientVitals -> "vitals"
+        PatientGrowthchart -> "growthchart"
       }
       "/patient/" <> id <> "/" <> ending
     }
@@ -151,7 +158,33 @@ pub fn uri_to_route(uri: Uri) -> Route {
 fn user_navigated_to(route, model) {
   case route {
     RouteNoSpecificPatient(page:) -> #(Model(..model, route:), effect.none())
-    RoutePatient(id:, patient:, page:) -> todo
+    RoutePatient(_patient, _page, id:) -> {
+      // before getting all patient data, keep current patient data
+      // so the sidebar and page will reload with new data if available
+      // but will not blow away sidebar on every navigation while loading
+      // instead keep patient from current route, and put in new route
+      // at least until new patient data loads
+      let existing_patient = case model.route {
+        RouteNoSpecificPatient(_) -> PatientLoadStillLoading
+        RoutePatient(existing_id, existing_patient, _existing_page) ->
+          case id == existing_id {
+            False -> PatientLoadStillLoading
+            True -> existing_patient
+          }
+      }
+      let route = RoutePatient(..route, patient: existing_patient)
+      let model = Model(..model, route:)
+      let pateverything =
+        client_rsvp.search_any(
+          "_id="
+            <> id
+            <> "&_revinclude=AllergyIntolerance:patient&_revinclude=DocumentReference:patient&_revinclude=Immunization:patient&_revinclude=MedicationRequest:patient&_revinclude=MedicationStatement:patient&_revinclude=Observation:patient&_revinclude=Condition:patient&_revinclude=Encounter:patient",
+          resources.RtPatient,
+          model.client,
+          ServerReturnedPatientEverything,
+        )
+      #(model, pateverything)
+    }
   }
 }
 
@@ -162,12 +195,11 @@ type Msg {
   // any unauthorized response
   ServerReturned401(err: sansio.ErrResp)
   // patient search
-  UserFocusedSearch
-  UserBlurredSearch
   UserTypedSearchPatient(String)
   ServerReturnedSearchPatients(
     Result(List(resources.UsCorePatient), client_rsvp.Err),
   )
+  ServerReturnedPatientEverything(Result(resources.Bundle, client_rsvp.Err))
 }
 
 fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
@@ -181,10 +213,12 @@ fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
 
     UserTypedSearchPatient(search_text) -> {
       case search_text {
-        "" ->
-          model
-          |> set_search_result(SearchPatientResultsEmptyMsg)
-          |> model_no_effect
+        "" -> {
+          let model =
+            model
+            |> set_search_result(SearchPatientResultsEmptyMsg)
+          #(model, effect.none())
+        }
         _ -> {
           let search: Effect(Msg) =
             client_rsvp.us_core_patient_search(
@@ -196,26 +230,61 @@ fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
               ServerReturnedSearchPatients,
             )
           let model =
-            model
-            |> set_search_result(SearchPatientResultsLoadingMsg)
-            |> set_search_visible(True)
+            Model(
+              ..model,
+              search_patient: SearchPatient(
+                ..model.search_patient,
+                visible: True,
+                results: SearchPatientResultsLoadingMsg,
+              ),
+            )
           #(model, search)
         }
       }
     }
-    ServerReturnedSearchPatients(patient_result) ->
-      model
-      |> set_search_result(case patient_result {
-        Ok(patients) -> SearchPatientResultsPats(patients)
-        Error(err) ->
-          SearchPatientResultsErrMsg(
-            "There was a problem getting patient search from FHIR server: "
-            <> client_rsvp.err_to_string(err),
-          )
-      })
-      |> model_no_effect
-    UserFocusedSearch -> model |> set_search_visible(True) |> model_no_effect
-    UserBlurredSearch -> model |> set_search_visible(False) |> model_no_effect
+    ServerReturnedSearchPatients(patient_result) -> {
+      let model =
+        model
+        |> set_search_result(case patient_result {
+          Ok(patients) -> SearchPatientResultsPats(patients)
+          Error(err) ->
+            SearchPatientResultsErrMsg(
+              "There was a problem getting patient search from FHIR server: "
+              <> client_rsvp.err_to_string(err),
+            )
+        })
+      #(model, effect.none())
+    }
+    ServerReturnedPatientEverything(patient_search_result) -> {
+      let patient_info = case patient_search_result {
+        Ok(pat_bundle) -> {
+          let resources = sansio.bundle_to_groupedresources(pat_bundle)
+          case resources.us_core_patient {
+            [] -> PatientLoadNotFound("no patient found")
+            [first, ..] ->
+              PatientLoadFound(PatientData(
+                patient: first,
+                // patient_allergies: resources.allergyintolerance,
+              // patient_documentreferences: resources.documentreference,
+              // patient_encounters: resources.encounter,
+              // patient_immunizations: resources.immunization,
+              // patient_medications: resources.medication,
+              // patient_medication_requests: resources.medicationrequest,
+              // patient_medication_statements: resources.medicationstatement,
+              // patient_observations: resources.observation,
+              ))
+          }
+        }
+        Error(err) -> PatientLoadNotFound(client_rsvp.err_to_string(err))
+      }
+      let model = case model.route {
+        RouteNoSpecificPatient(_) -> model
+        RoutePatient(_patient, id:, page:) -> {
+          Model(..model, route: RoutePatient(id:, page:, patient: patient_info))
+        }
+      }
+      #(model, effect.none())
+    }
   }
 }
 
@@ -224,17 +293,6 @@ fn set_search_result(model: Model(msg401), results: SearchPatientResults) {
     ..model,
     search_patient: SearchPatient(..model.search_patient, results:),
   )
-}
-
-fn set_search_visible(model: Model(msg401), visible: Bool) {
-  Model(
-    ..model,
-    search_patient: SearchPatient(..model.search_patient, visible:),
-  )
-}
-
-fn model_no_effect(model: Model(msg401)) {
-  #(model, effect.none())
 }
 
 // VIEW ------------------------------------------------------------------------
@@ -251,20 +309,35 @@ fn view(model: Model(Msg)) -> Element(Msg) {
   }
   h.div([], [
     h.nav(nav_style(), [
-      h.label(
+      //<button command="show-modal" commandfor="my-dialog">Open dialog</button>
+      h.button(
         [
-          a.for("search-patient"),
-          a.style("background-color", "red"),
-          a.style("padding", "5px"),
+          a.command("show-modal"),
+          a.commandfor("search-patient-dialog"),
         ],
-        [
-          h.input([
-            a.id("search-patient"),
-            event.on_input(UserTypedSearchPatient),
-          ]),
-        ],
+        [h.text("search patient")],
       ),
-      ..patient_results
+      h.dialog([a.closedby("any"), a.id("search-patient-dialog")], [
+        h.header([], [
+          h.button([a.commandfor("search-patient-dialog"), a.command("close")], [
+            h.text("close"),
+          ]),
+        ]),
+        h.label(
+          [
+            a.for("search-patient"),
+            a.style("background-color", "red"),
+            a.style("padding", "5px"),
+          ],
+          [
+            h.input([
+              a.id("search-patient"),
+              event.on_input(UserTypedSearchPatient),
+            ]),
+          ],
+        ),
+        ..patient_results
+      ]),
     ]),
     h.nav(nav_style(), [
       h.a([], [h.text("abcabcabc")]),
