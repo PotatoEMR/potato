@@ -13,6 +13,7 @@ import gleam/int
 import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/result
 
 ///[http://hl7.org/fhir/hl7_fhir_us_core_7_0_0/StructureDefinition/Bundle#resource](http://hl7.org/fhir/hl7_fhir_us_core_7_0_0/StructureDefinition/Bundle#resource)
 pub type Bundle {
@@ -177,50 +178,49 @@ pub fn bundle_entry_response_new(status status: String) -> BundleEntryResponse {
 pub fn bundle_entry_response_to_json(
   bundle_entry_response: BundleEntryResponse,
 ) -> Json {
-  let BundleEntryResponse(
-    outcome:,
-    last_modified:,
-    etag:,
-    location:,
-    status:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = bundle_entry_response
   let fields = [
-    #("status", json.string(status)),
+    #("status", json.string(bundle_entry_response.status)),
   ]
-  let fields = case outcome {
+  let fields = case bundle_entry_response.outcome {
     Some(v) -> [#("outcome", resource_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case last_modified {
+  let fields = case bundle_entry_response.last_modified {
     Some(v) -> [#("lastModified", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case etag {
+  let fields = case bundle_entry_response.etag {
     Some(v) -> [#("etag", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case location {
+  let fields = case bundle_entry_response.location {
     Some(v) -> [#("location", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case modifier_extension {
+  let fields = case bundle_entry_response.modifier_extension {
     [] -> fields
     _ -> [
       #(
         "modifierExtension",
-        json.array(modifier_extension, ct.extension_to_json),
+        json.array(
+          bundle_entry_response.modifier_extension,
+          ct.extension_to_json,
+        ),
       ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case bundle_entry_response.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, ct.extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(bundle_entry_response.extension, ct.extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case bundle_entry_response.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -276,52 +276,50 @@ pub fn bundle_entry_response_decoder() -> Decoder(BundleEntryResponse) {
 pub fn bundle_entry_request_to_json(
   bundle_entry_request: BundleEntryRequest,
 ) -> Json {
-  let BundleEntryRequest(
-    if_none_exist:,
-    if_match:,
-    if_modified_since:,
-    if_none_match:,
-    url:,
-    method:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = bundle_entry_request
   let fields = [
-    #("url", json.string(url)),
-    #("method", valuesets.httpverb_to_json(method)),
+    #("url", json.string(bundle_entry_request.url)),
+    #("method", valuesets.httpverb_to_json(bundle_entry_request.method)),
   ]
-  let fields = case if_none_exist {
+  let fields = case bundle_entry_request.if_none_exist {
     Some(v) -> [#("ifNoneExist", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case if_match {
+  let fields = case bundle_entry_request.if_match {
     Some(v) -> [#("ifMatch", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case if_modified_since {
+  let fields = case bundle_entry_request.if_modified_since {
     Some(v) -> [#("ifModifiedSince", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case if_none_match {
+  let fields = case bundle_entry_request.if_none_match {
     Some(v) -> [#("ifNoneMatch", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case modifier_extension {
+  let fields = case bundle_entry_request.modifier_extension {
     [] -> fields
     _ -> [
       #(
         "modifierExtension",
-        json.array(modifier_extension, ct.extension_to_json),
+        json.array(
+          bundle_entry_request.modifier_extension,
+          ct.extension_to_json,
+        ),
       ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case bundle_entry_request.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, ct.extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(bundle_entry_request.extension, ct.extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case bundle_entry_request.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -379,32 +377,36 @@ pub fn bundle_entry_request_decoder() -> Decoder(BundleEntryRequest) {
 pub fn bundle_entry_search_to_json(
   bundle_entry_search: BundleEntrySearch,
 ) -> Json {
-  let BundleEntrySearch(score:, mode:, modifier_extension:, extension:, id:) =
-    bundle_entry_search
   let fields = []
-  let fields = case score {
+  let fields = case bundle_entry_search.score {
     Some(v) -> [#("score", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case mode {
+  let fields = case bundle_entry_search.mode {
     Some(v) -> [#("mode", valuesets.searchentrymode_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case modifier_extension {
+  let fields = case bundle_entry_search.modifier_extension {
     [] -> fields
     _ -> [
       #(
         "modifierExtension",
-        json.array(modifier_extension, ct.extension_to_json),
+        json.array(bundle_entry_search.modifier_extension, ct.extension_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case bundle_entry_search.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, ct.extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(bundle_entry_search.extension, ct.extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case bundle_entry_search.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -444,57 +446,52 @@ pub fn bundle_entry_search_decoder() -> Decoder(BundleEntrySearch) {
 }
 
 pub fn bundle_entry_to_json(bundle_entry: BundleEntry) -> Json {
-  let BundleEntry(
-    response:,
-    request:,
-    search:,
-    resource:,
-    full_url:,
-    link:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = bundle_entry
   let fields = []
-  let fields = case response {
+  let fields = case bundle_entry.response {
     Some(v) -> [#("response", bundle_entry_response_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case request {
+  let fields = case bundle_entry.request {
     Some(v) -> [#("request", bundle_entry_request_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case search {
+  let fields = case bundle_entry.search {
     Some(v) -> [#("search", bundle_entry_search_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case resource {
+  let fields = case bundle_entry.resource {
     Some(v) -> [#("resource", resource_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case full_url {
+  let fields = case bundle_entry.full_url {
     Some(v) -> [#("fullUrl", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case link {
+  let fields = case bundle_entry.link {
     [] -> fields
-    _ -> [#("link", json.array(link, bundle_link_to_json)), ..fields]
+    _ -> [
+      #("link", json.array(bundle_entry.link, bundle_link_to_json)),
+      ..fields
+    ]
   }
-  let fields = case modifier_extension {
+  let fields = case bundle_entry.modifier_extension {
     [] -> fields
     _ -> [
       #(
         "modifierExtension",
-        json.array(modifier_extension, ct.extension_to_json),
+        json.array(bundle_entry.modifier_extension, ct.extension_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case bundle_entry.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, ct.extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(bundle_entry.extension, ct.extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case bundle_entry.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -633,27 +630,28 @@ pub fn bundle_entry_decoder_forgiving() -> Decoder(BundleEntryForgiving) {
 }
 
 pub fn bundle_link_to_json(bundle_link: BundleLink) -> Json {
-  let BundleLink(url:, relation:, modifier_extension:, extension:, id:) =
-    bundle_link
   let fields = [
-    #("url", json.string(url)),
-    #("relation", json.string(relation)),
+    #("url", json.string(bundle_link.url)),
+    #("relation", json.string(bundle_link.relation)),
   ]
-  let fields = case modifier_extension {
+  let fields = case bundle_link.modifier_extension {
     [] -> fields
     _ -> [
       #(
         "modifierExtension",
-        json.array(modifier_extension, ct.extension_to_json),
+        json.array(bundle_link.modifier_extension, ct.extension_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case bundle_link.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, ct.extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(bundle_link.extension, ct.extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case bundle_link.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -685,59 +683,46 @@ pub fn bundle_link_decoder() -> Decoder(BundleLink) {
 }
 
 pub fn bundle_to_json(bundle: Bundle) -> Json {
-  let Bundle(
-    signature:,
-    entry:,
-    link:,
-    total:,
-    timestamp:,
-    type_:,
-    identifier:,
-    language:,
-    implicit_rules:,
-    meta:,
-    id:,
-  ) = bundle
   let fields = [
-    #("type", valuesets.bundletype_to_json(type_)),
+    #("type", valuesets.bundletype_to_json(bundle.type_)),
   ]
-  let fields = case signature {
+  let fields = case bundle.signature {
     Some(v) -> [#("signature", ct.signature_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case entry {
+  let fields = case bundle.entry {
     [] -> fields
-    _ -> [#("entry", json.array(entry, bundle_entry_to_json)), ..fields]
+    _ -> [#("entry", json.array(bundle.entry, bundle_entry_to_json)), ..fields]
   }
-  let fields = case link {
+  let fields = case bundle.link {
     [] -> fields
-    _ -> [#("link", json.array(link, bundle_link_to_json)), ..fields]
+    _ -> [#("link", json.array(bundle.link, bundle_link_to_json)), ..fields]
   }
-  let fields = case total {
+  let fields = case bundle.total {
     Some(v) -> [#("total", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case timestamp {
+  let fields = case bundle.timestamp {
     Some(v) -> [#("timestamp", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier {
+  let fields = case bundle.identifier {
     Some(v) -> [#("identifier", ct.identifier_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case language {
+  let fields = case bundle.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case implicit_rules {
+  let fields = case bundle.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case meta {
+  let fields = case bundle.meta {
     Some(v) -> [#("meta", ct.meta_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case id {
+  let fields = case bundle.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -974,52 +959,62 @@ pub fn operationoutcome_issue_new(
 pub fn operationoutcome_issue_to_json(
   operationoutcome_issue: OperationoutcomeIssue,
 ) -> Json {
-  let OperationoutcomeIssue(
-    expression:,
-    location:,
-    diagnostics:,
-    details:,
-    code:,
-    severity:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = operationoutcome_issue
   let fields = [
-    #("code", valuesets.issuetype_to_json(code)),
-    #("severity", valuesets.issueseverity_to_json(severity)),
+    #("code", valuesets.issuetype_to_json(operationoutcome_issue.code)),
+    #(
+      "severity",
+      valuesets.issueseverity_to_json(operationoutcome_issue.severity),
+    ),
   ]
-  let fields = case expression {
-    [] -> fields
-    _ -> [#("expression", json.array(expression, json.string)), ..fields]
-  }
-  let fields = case location {
-    [] -> fields
-    _ -> [#("location", json.array(location, json.string)), ..fields]
-  }
-  let fields = case diagnostics {
-    Some(v) -> [#("diagnostics", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case details {
-    Some(v) -> [#("details", ct.codeableconcept_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case modifier_extension {
+  let fields = case operationoutcome_issue.expression {
     [] -> fields
     _ -> [
       #(
-        "modifierExtension",
-        json.array(modifier_extension, ct.extension_to_json),
+        "expression",
+        json.array(operationoutcome_issue.expression, json.string),
       ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case operationoutcome_issue.location {
     [] -> fields
-    _ -> [#("extension", json.array(extension, ct.extension_to_json)), ..fields]
+    _ -> [
+      #("location", json.array(operationoutcome_issue.location, json.string)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case operationoutcome_issue.diagnostics {
+    Some(v) -> [#("diagnostics", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case operationoutcome_issue.details {
+    Some(v) -> [#("details", ct.codeableconcept_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case operationoutcome_issue.modifier_extension {
+    [] -> fields
+    _ -> [
+      #(
+        "modifierExtension",
+        json.array(
+          operationoutcome_issue.modifier_extension,
+          ct.extension_to_json,
+        ),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case operationoutcome_issue.extension {
+    [] -> fields
+    _ -> [
+      #(
+        "extension",
+        json.array(operationoutcome_issue.extension, ct.extension_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case operationoutcome_issue.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1075,55 +1070,56 @@ pub fn operationoutcome_issue_decoder() -> Decoder(OperationoutcomeIssue) {
 }
 
 pub fn operationoutcome_to_json(operationoutcome: Operationoutcome) -> Json {
-  let Operationoutcome(
-    issue:,
-    modifier_extension:,
-    extension:,
-    contained:,
-    text:,
-    language:,
-    implicit_rules:,
-    meta:,
-    id:,
-  ) = operationoutcome
   let fields = [
-    #("issue", list1_to_json(issue, operationoutcome_issue_to_json)),
+    #(
+      "issue",
+      list1_to_json(operationoutcome.issue, operationoutcome_issue_to_json),
+    ),
   ]
-  let fields = case modifier_extension {
+  let fields = case operationoutcome.modifier_extension {
     [] -> fields
     _ -> [
       #(
         "modifierExtension",
-        json.array(modifier_extension, ct.extension_to_json),
+        json.array(operationoutcome.modifier_extension, ct.extension_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case operationoutcome.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, ct.extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(operationoutcome.extension, ct.extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case contained {
+  let fields = case operationoutcome.contained {
     [] -> fields
-    _ -> [#("contained", json.array(contained, resource_to_json)), ..fields]
+    _ -> [
+      #("contained", json.array(operationoutcome.contained, resource_to_json)),
+      ..fields
+    ]
   }
-  let fields = case text {
+  let fields = case operationoutcome.text {
     Some(v) -> [#("text", ct.narrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case language {
+  let fields = case operationoutcome.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case implicit_rules {
+  let fields = case operationoutcome.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case meta {
+  let fields = case operationoutcome.meta {
     Some(v) -> [#("meta", ct.meta_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case id {
+  let fields = case operationoutcome.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1490,27 +1486,24 @@ pub fn parameters_parameter_new(name name: String) -> ParametersParameter {
 pub fn parameters_parameter_to_json(
   parameters_parameter: ParametersParameter,
 ) -> Json {
-  let ParametersParameter(
-    part:,
-    resource:,
-    value:,
-    name:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = parameters_parameter
   let fields = [
-    #("name", json.string(name)),
+    #("name", json.string(parameters_parameter.name)),
   ]
-  let fields = case part {
+  let fields = case parameters_parameter.part {
     [] -> fields
-    _ -> [#("part", json.array(part, parameters_parameter_to_json)), ..fields]
+    _ -> [
+      #(
+        "part",
+        json.array(parameters_parameter.part, parameters_parameter_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case resource {
+  let fields = case parameters_parameter.resource {
     Some(v) -> [#("resource", resource_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case value {
+  let fields = case parameters_parameter.value {
     Some(v) -> [
       #(
         "value"
@@ -1573,21 +1566,30 @@ pub fn parameters_parameter_to_json(
     ]
     None -> fields
   }
-  let fields = case modifier_extension {
+  let fields = case parameters_parameter.modifier_extension {
     [] -> fields
     _ -> [
       #(
         "modifierExtension",
-        json.array(modifier_extension, ct.extension_to_json),
+        json.array(
+          parameters_parameter.modifier_extension,
+          ct.extension_to_json,
+        ),
       ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case parameters_parameter.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, ct.extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(parameters_parameter.extension, ct.extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case parameters_parameter.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1633,29 +1635,30 @@ pub fn parameters_parameter_decoder() -> Decoder(ParametersParameter) {
 }
 
 pub fn parameters_to_json(parameters: Parameters) -> Json {
-  let Parameters(parameter:, language:, implicit_rules:, meta:, id:) =
-    parameters
   let fields = []
-  let fields = case parameter {
+  let fields = case parameters.parameter {
     [] -> fields
     _ -> [
-      #("parameter", json.array(parameter, parameters_parameter_to_json)),
+      #(
+        "parameter",
+        json.array(parameters.parameter, parameters_parameter_to_json),
+      ),
       ..fields
     ]
   }
-  let fields = case language {
+  let fields = case parameters.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case implicit_rules {
+  let fields = case parameters.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case meta {
+  let fields = case parameters.meta {
     Some(v) -> [#("meta", ct.meta_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case id {
+  let fields = case parameters.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1734,20 +1737,12 @@ pub fn us_core_allergyintolerance_new(
 ) -> UsCoreAllergyintolerance {
   UsCoreAllergyintolerance(
     id: None,
-    meta: Some(
-      ct.Meta(
-        id: None,
-        extension: [],
-        version_id: None,
-        last_updated: None,
-        source: None,
-        profile: [
-          "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance",
-        ],
-        security: [],
-        tag: [],
-      ),
-    ),
+    meta: Some({
+      let meta = ct.meta_new()
+      ct.Meta(..meta, profile: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance",
+      ])
+    }),
     implicit_rules: None,
     language: None,
     text: None,
@@ -1816,37 +1811,11 @@ pub fn us_core_allergyintolerance_reaction_new(
 pub fn us_core_allergyintolerance_to_json(
   us_core_allergyintolerance: UsCoreAllergyintolerance,
 ) -> Json {
-  let UsCoreAllergyintolerance(
-    reaction:,
-    note:,
-    last_occurrence:,
-    asserter:,
-    recorder:,
-    recorded_date:,
-    onset:,
-    encounter:,
-    patient:,
-    code:,
-    criticality:,
-    category:,
-    type_:,
-    verification_status:,
-    clinical_status:,
-    identifier:,
-    modifier_extension:,
-    extension:,
-    contained:,
-    text:,
-    language:,
-    implicit_rules:,
-    meta:,
-    id:,
-  ) = us_core_allergyintolerance
   let fields = [
-    #("patient", ct.reference_to_json(patient)),
-    #("code", ct.codeableconcept_to_json(code)),
+    #("patient", ct.reference_to_json(us_core_allergyintolerance.patient)),
+    #("code", ct.codeableconcept_to_json(us_core_allergyintolerance.code)),
   ]
-  let fields = case reaction {
+  let fields = case us_core_allergyintolerance.reaction {
     [] -> fields
     values -> [
       #(
@@ -1856,27 +1825,27 @@ pub fn us_core_allergyintolerance_to_json(
       ..fields
     ]
   }
-  let fields = case note {
+  let fields = case us_core_allergyintolerance.note {
     [] -> fields
     values -> [#("note", json.array(values, ct.annotation_to_json)), ..fields]
   }
-  let fields = case last_occurrence {
+  let fields = case us_core_allergyintolerance.last_occurrence {
     Some(v) -> [#("lastOccurrence", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case asserter {
+  let fields = case us_core_allergyintolerance.asserter {
     Some(v) -> [#("asserter", ct.reference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case recorder {
+  let fields = case us_core_allergyintolerance.recorder {
     Some(v) -> [#("recorder", ct.reference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case recorded_date {
+  let fields = case us_core_allergyintolerance.recorded_date {
     Some(v) -> [#("recordedDate", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case onset {
+  let fields = case us_core_allergyintolerance.onset {
     Some(v) -> [
       #(
         "onset"
@@ -1893,18 +1862,18 @@ pub fn us_core_allergyintolerance_to_json(
     ]
     None -> fields
   }
-  let fields = case encounter {
+  let fields = case us_core_allergyintolerance.encounter {
     Some(v) -> [#("encounter", ct.reference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case criticality {
+  let fields = case us_core_allergyintolerance.criticality {
     Some(v) -> [
       #("criticality", valuesets.allergyintolerancecriticality_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case category {
+  let fields = case us_core_allergyintolerance.category {
     [] -> fields
     values -> [
       #(
@@ -1914,14 +1883,14 @@ pub fn us_core_allergyintolerance_to_json(
       ..fields
     ]
   }
-  let fields = case type_ {
+  let fields = case us_core_allergyintolerance.type_ {
     Some(v) -> [
       #("type", valuesets.allergyintolerancetype_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case verification_status {
+  let fields = case us_core_allergyintolerance.verification_status {
     Some(v) -> [
       #(
         "verificationStatus",
@@ -1935,7 +1904,7 @@ pub fn us_core_allergyintolerance_to_json(
     ]
     None -> fields
   }
-  let fields = case clinical_status {
+  let fields = case us_core_allergyintolerance.clinical_status {
     Some(v) -> [
       #(
         "clinicalStatus",
@@ -1949,48 +1918,48 @@ pub fn us_core_allergyintolerance_to_json(
     ]
     None -> fields
   }
-  let fields = case identifier {
+  let fields = case us_core_allergyintolerance.identifier {
     [] -> fields
     values -> [
       #("identifier", json.array(values, ct.identifier_to_json)),
       ..fields
     ]
   }
-  let fields = case modifier_extension {
+  let fields = case us_core_allergyintolerance.modifier_extension {
     [] -> fields
     values -> [
       #("modifierExtension", json.array(values, ct.extension_to_json)),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case us_core_allergyintolerance.extension {
     [] -> fields
     values -> [
       #("extension", json.array(values, ct.extension_to_json)),
       ..fields
     ]
   }
-  let fields = case contained {
+  let fields = case us_core_allergyintolerance.contained {
     [] -> fields
     values -> [#("contained", json.array(values, resource_to_json)), ..fields]
   }
-  let fields = case text {
+  let fields = case us_core_allergyintolerance.text {
     Some(v) -> [#("text", ct.narrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case language {
+  let fields = case us_core_allergyintolerance.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case implicit_rules {
+  let fields = case us_core_allergyintolerance.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case meta {
+  let fields = case us_core_allergyintolerance.meta {
     Some(v) -> [#("meta", ct.meta_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case id {
+  let fields = case us_core_allergyintolerance.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -2013,63 +1982,573 @@ pub fn us_core_allergyintolerance_onset_to_json(
 pub fn us_core_allergyintolerance_reaction_to_json(
   us_core_allergyintolerance_reaction: UsCoreAllergyintoleranceReaction,
 ) -> Json {
-  let UsCoreAllergyintoleranceReaction(
-    note:,
-    exposure_route:,
-    severity:,
-    onset:,
-    description:,
-    manifestation:,
-    substance:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = us_core_allergyintolerance_reaction
   let fields = [
-    #("manifestation", list1_to_json(manifestation, ct.codeableconcept_to_json)),
+    #(
+      "manifestation",
+      list1_to_json(
+        us_core_allergyintolerance_reaction.manifestation,
+        ct.codeableconcept_to_json,
+      ),
+    ),
   ]
-  let fields = case note {
+  let fields = case us_core_allergyintolerance_reaction.note {
     [] -> fields
     values -> [#("note", json.array(values, ct.annotation_to_json)), ..fields]
   }
-  let fields = case exposure_route {
+  let fields = case us_core_allergyintolerance_reaction.exposure_route {
     Some(v) -> [#("exposureRoute", ct.codeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case severity {
+  let fields = case us_core_allergyintolerance_reaction.severity {
     Some(v) -> [
       #("severity", valuesets.reactioneventseverity_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case onset {
+  let fields = case us_core_allergyintolerance_reaction.onset {
     Some(v) -> [#("onset", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case description {
+  let fields = case us_core_allergyintolerance_reaction.description {
     Some(v) -> [#("description", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case substance {
+  let fields = case us_core_allergyintolerance_reaction.substance {
     Some(v) -> [#("substance", ct.codeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case modifier_extension {
+  let fields = case us_core_allergyintolerance_reaction.modifier_extension {
     [] -> fields
     values -> [
       #("modifierExtension", json.array(values, ct.extension_to_json)),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case us_core_allergyintolerance_reaction.extension {
     [] -> fields
     values -> [
       #("extension", json.array(values, ct.extension_to_json)),
       ..fields
     ]
   }
-  let fields = case id {
+  let fields = case us_core_allergyintolerance_reaction.id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  json.object(fields)
+}
+
+pub type UsCorePatient {
+  UsCorePatient(
+    id: Option(String),
+    meta: Option(ct.Meta),
+    implicit_rules: Option(String),
+    language: Option(String),
+    text: Option(ct.Narrative),
+    contained: List(Resource),
+    extension: List(ct.Extension),
+    race: Option(ct.UsCoreRace),
+    ethnicity: Option(ct.UsCoreEthnicity),
+    tribal_affiliation: List(ct.UsCoreTribalAffiliation),
+    birthsex: Option(valuesets.Two16840111376214102124),
+    sex: Option(String),
+    gender_identity: List(ct.Codeableconcept),
+    modifier_extension: List(ct.Extension),
+    identifier: List1(ct.IdentifierRequiredSystemValue),
+    active: Option(Bool),
+    name: List1(ct.Humanname),
+    telecom: List(ct.ContactpointUsCorePatientTelecom),
+    gender: valuesets.Administrativegender,
+    birth_date: Option(Date),
+    deceased: Option(UsCorePatientDeceased),
+    address: List(ct.Address),
+    marital_status: Option(ct.Codeableconcept),
+    multiple_birth: Option(UsCorePatientMultiplebirth),
+    photo: List(ct.Attachment),
+    contact: List(UsCorePatientContact),
+    communication: List(UsCorePatientCommunication),
+    general_practitioner: List(ct.Reference),
+    managing_organization: Option(ct.Reference),
+    link: List(UsCorePatientLink),
+  )
+}
+
+pub fn us_core_patient_new(
+  identifier identifier: List1(ct.IdentifierRequiredSystemValue),
+  name name: List1(ct.Humanname),
+  gender gender: valuesets.Administrativegender,
+) -> UsCorePatient {
+  UsCorePatient(
+    id: None,
+    meta: Some({
+      let meta = ct.meta_new()
+      ct.Meta(..meta, profile: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient",
+      ])
+    }),
+    implicit_rules: None,
+    language: None,
+    text: None,
+    contained: [],
+    extension: [],
+    race: None,
+    ethnicity: None,
+    tribal_affiliation: [],
+    birthsex: None,
+    sex: None,
+    gender_identity: [],
+    modifier_extension: [],
+    identifier:,
+    active: None,
+    name:,
+    telecom: [],
+    gender:,
+    birth_date: None,
+    deceased: None,
+    address: [],
+    marital_status: None,
+    multiple_birth: None,
+    photo: [],
+    contact: [],
+    communication: [],
+    general_practitioner: [],
+    managing_organization: None,
+    link: [],
+  )
+}
+
+pub type UsCorePatientMultiplebirth {
+  UsCorePatientMultiplebirthBoolean(value: Bool)
+  UsCorePatientMultiplebirthInteger(value: Int)
+}
+
+pub type UsCorePatientDeceased {
+  UsCorePatientDeceasedBoolean(value: Bool)
+  UsCorePatientDeceasedDatetime(value: DateTime)
+}
+
+pub type UsCorePatientCommunication {
+  UsCorePatientCommunication(
+    id: Option(String),
+    extension: List(ct.Extension),
+    modifier_extension: List(ct.Extension),
+    language: ct.Codeableconcept,
+    preferred: Option(Bool),
+  )
+}
+
+pub fn us_core_patient_communication_new(
+  language language: ct.Codeableconcept,
+) -> UsCorePatientCommunication {
+  UsCorePatientCommunication(
+    id: None,
+    extension: [],
+    modifier_extension: [],
+    language:,
+    preferred: None,
+  )
+}
+
+pub type UsCorePatientContact {
+  UsCorePatientContact(
+    id: Option(String),
+    extension: List(ct.Extension),
+    modifier_extension: List(ct.Extension),
+    relationship: List(ct.Codeableconcept),
+    name: Option(ct.Humanname),
+    telecom: List(ct.Contactpoint),
+    address: Option(ct.Address),
+    gender: Option(valuesets.Administrativegender),
+    organization: Option(ct.Reference),
+    period: Option(ct.Period),
+  )
+}
+
+pub fn us_core_patient_contact_new() -> UsCorePatientContact {
+  UsCorePatientContact(
+    id: None,
+    extension: [],
+    modifier_extension: [],
+    relationship: [],
+    name: None,
+    telecom: [],
+    address: None,
+    gender: None,
+    organization: None,
+    period: None,
+  )
+}
+
+pub type UsCorePatientLink {
+  UsCorePatientLink(
+    id: Option(String),
+    extension: List(ct.Extension),
+    modifier_extension: List(ct.Extension),
+    other: ct.Reference,
+    type_: valuesets.Linktype,
+  )
+}
+
+pub fn us_core_patient_link_new(
+  other other: ct.Reference,
+  type_ type_: valuesets.Linktype,
+) -> UsCorePatientLink {
+  UsCorePatientLink(
+    id: None,
+    extension: [],
+    modifier_extension: [],
+    other:,
+    type_:,
+  )
+}
+
+pub fn us_core_patient_to_json(us_core_patient: UsCorePatient) -> Json {
+  let fields = [
+    #("gender", valuesets.administrativegender_to_json(us_core_patient.gender)),
+    #("name", list1_to_json(us_core_patient.name, ct.humanname_to_json)),
+    #(
+      "identifier",
+      list1_to_json(us_core_patient.identifier, fn(value) {
+        ct.identifier_required_system_value_to_json(value)
+      }),
+    ),
+  ]
+  let fields = case us_core_patient.link {
+    [] -> fields
+    values -> [
+      #("link", json.array(values, us_core_patient_link_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient.managing_organization {
+    Some(v) -> [#("managingOrganization", ct.reference_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient.general_practitioner {
+    [] -> fields
+    values -> [
+      #("generalPractitioner", json.array(values, ct.reference_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient.communication {
+    [] -> fields
+    values -> [
+      #(
+        "communication",
+        json.array(values, us_core_patient_communication_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient.contact {
+    [] -> fields
+    values -> [
+      #("contact", json.array(values, us_core_patient_contact_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient.photo {
+    [] -> fields
+    values -> [#("photo", json.array(values, ct.attachment_to_json)), ..fields]
+  }
+  let fields = case us_core_patient.multiple_birth {
+    Some(v) -> [
+      #(
+        "multipleBirth"
+          <> case v {
+          UsCorePatientMultiplebirthBoolean(_) -> "Boolean"
+          UsCorePatientMultiplebirthInteger(_) -> "Integer"
+        },
+        us_core_patient_multiplebirth_to_json(v),
+      ),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case us_core_patient.marital_status {
+    Some(v) -> [#("maritalStatus", ct.codeableconcept_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient.address {
+    [] -> fields
+    values -> [#("address", json.array(values, ct.address_to_json)), ..fields]
+  }
+  let fields = case us_core_patient.deceased {
+    Some(v) -> [
+      #(
+        "deceased"
+          <> case v {
+          UsCorePatientDeceasedBoolean(_) -> "Boolean"
+          UsCorePatientDeceasedDatetime(_) -> "DateTime"
+        },
+        us_core_patient_deceased_to_json(v),
+      ),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case us_core_patient.birth_date {
+    Some(v) -> [#("birthDate", pt.date_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient.telecom {
+    [] -> fields
+    values -> [
+      #(
+        "telecom",
+        json.array(values, ct.contactpoint_us_core_patient_telecom_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient.active {
+    Some(v) -> [#("active", json.bool(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient.modifier_extension {
+    [] -> fields
+    values -> [
+      #("modifierExtension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let slice_values =
+    list.flatten([
+      list.map(us_core_patient.gender_identity, fn(value) {
+        json.object([
+          #(
+            "url",
+            json.string(
+              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-genderIdentity",
+            ),
+          ),
+          #("valueCodeableConcept", ct.codeableconcept_to_json(value)),
+        ])
+      }),
+      case us_core_patient.sex {
+        Some(value) -> [
+          json.object([
+            #(
+              "url",
+              json.string(
+                "http://hl7.org/fhir/us/core/StructureDefinition/us-core-sex",
+              ),
+            ),
+            #("valueCode", json.string(value)),
+          ]),
+        ]
+        None -> []
+      },
+      case us_core_patient.birthsex {
+        Some(value) -> [
+          json.object([
+            #(
+              "url",
+              json.string(
+                "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+              ),
+            ),
+            #("valueCode", valuesets.two16840111376214102124_to_json(value)),
+          ]),
+        ]
+        None -> []
+      },
+      list.map(us_core_patient.tribal_affiliation, fn(value) {
+        ct.us_core_tribal_affiliation_to_json(
+          value,
+          "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation",
+        )
+      }),
+      case us_core_patient.ethnicity {
+        Some(value) -> [
+          ct.us_core_ethnicity_to_json(
+            value,
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity",
+          ),
+        ]
+        None -> []
+      },
+      case us_core_patient.race {
+        Some(value) -> [
+          ct.us_core_race_to_json(
+            value,
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race",
+          ),
+        ]
+        None -> []
+      },
+      list.map(us_core_patient.extension, fn(value) {
+        ct.extension_to_json(value)
+      }),
+    ])
+  let fields = case slice_values {
+    [] -> fields
+    values -> [#("extension", json.preprocessed_array(values)), ..fields]
+  }
+  let fields = case us_core_patient.contained {
+    [] -> fields
+    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+  }
+  let fields = case us_core_patient.text {
+    Some(v) -> [#("text", ct.narrative_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient.language {
+    Some(v) -> [#("language", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient.implicit_rules {
+    Some(v) -> [#("implicitRules", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient.meta {
+    Some(v) -> [#("meta", ct.meta_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient.id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = [#("resourceType", json.string("Patient")), ..fields]
+  json.object(fields)
+}
+
+pub fn us_core_patient_deceased_to_json(value: UsCorePatientDeceased) -> Json {
+  case value {
+    UsCorePatientDeceasedBoolean(value) -> json.bool(value)
+    UsCorePatientDeceasedDatetime(value) -> pt.datetime_to_json(value)
+  }
+}
+
+pub fn us_core_patient_multiplebirth_to_json(
+  value: UsCorePatientMultiplebirth,
+) -> Json {
+  case value {
+    UsCorePatientMultiplebirthBoolean(value) -> json.bool(value)
+    UsCorePatientMultiplebirthInteger(value) -> json.int(value)
+  }
+}
+
+pub fn us_core_patient_communication_to_json(
+  us_core_patient_communication: UsCorePatientCommunication,
+) -> Json {
+  let fields = [
+    #(
+      "language",
+      ct.codeableconcept_to_json(us_core_patient_communication.language),
+    ),
+  ]
+  let fields = case us_core_patient_communication.preferred {
+    Some(v) -> [#("preferred", json.bool(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient_communication.modifier_extension {
+    [] -> fields
+    values -> [
+      #("modifierExtension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient_communication.extension {
+    [] -> fields
+    values -> [
+      #("extension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient_communication.id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  json.object(fields)
+}
+
+pub fn us_core_patient_contact_to_json(
+  us_core_patient_contact: UsCorePatientContact,
+) -> Json {
+  let fields = []
+  let fields = case us_core_patient_contact.period {
+    Some(v) -> [#("period", ct.period_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient_contact.organization {
+    Some(v) -> [#("organization", ct.reference_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient_contact.gender {
+    Some(v) -> [
+      #("gender", valuesets.administrativegender_to_json(v)),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case us_core_patient_contact.address {
+    Some(v) -> [#("address", ct.address_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient_contact.telecom {
+    [] -> fields
+    values -> [
+      #("telecom", json.array(values, ct.contactpoint_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient_contact.name {
+    Some(v) -> [#("name", ct.humanname_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case us_core_patient_contact.relationship {
+    [] -> fields
+    values -> [
+      #("relationship", json.array(values, ct.codeableconcept_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient_contact.modifier_extension {
+    [] -> fields
+    values -> [
+      #("modifierExtension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient_contact.extension {
+    [] -> fields
+    values -> [
+      #("extension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient_contact.id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  json.object(fields)
+}
+
+pub fn us_core_patient_link_to_json(
+  us_core_patient_link: UsCorePatientLink,
+) -> Json {
+  let fields = [
+    #("type", valuesets.linktype_to_json(us_core_patient_link.type_)),
+    #("other", ct.reference_to_json(us_core_patient_link.other)),
+  ]
+  let fields = case us_core_patient_link.modifier_extension {
+    [] -> fields
+    values -> [
+      #("modifierExtension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient_link.extension {
+    [] -> fields
+    values -> [
+      #("extension", json.array(values, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case us_core_patient_link.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -2301,724 +2780,28 @@ pub fn us_core_allergyintolerance_decoder() -> Decoder(UsCoreAllergyintolerance)
       meta:,
       id:,
     )
-  use resource_type_value <- decode.field("resourceType", decode.string)
-  use <- bool.guard(
-    resource_type_value != "AllergyIntolerance",
-    decode.failure(placeholder, "resourceType"),
+  use _ <- decode.field(
+    "resourceType",
+    decode.then(decode.dynamic, fn(raw) {
+      case decode.run(raw, decode.string) {
+        Error(errors) ->
+          decode.failure(Nil, "AllergyIntolerance")
+          |> decode.map_errors(fn(_) { errors })
+        Ok(value) ->
+          case value == "AllergyIntolerance" {
+            True -> decode.success(Nil)
+            False ->
+              decode.failure(Nil, "AllergyIntolerance")
+              |> decode.map_errors(fn(errors) {
+                list.map(errors, fn(error) {
+                  decode.DecodeError(..error, found: value)
+                })
+              })
+          }
+      }
+    }),
   )
   decode.success(placeholder)
-}
-
-pub type UsCorePatient {
-  UsCorePatient(
-    id: Option(String),
-    meta: Option(ct.Meta),
-    implicit_rules: Option(String),
-    language: Option(String),
-    text: Option(ct.Narrative),
-    contained: List(Resource),
-    extension: List(ct.Extension),
-    race: Option(ct.UsCoreRace),
-    ethnicity: Option(ct.UsCoreEthnicity),
-    tribal_affiliation: List(ct.UsCoreTribalAffiliation),
-    birthsex: Option(valuesets.Two16840111376214102124),
-    sex: Option(String),
-    gender_identity: List(ct.Codeableconcept),
-    modifier_extension: List(ct.Extension),
-    identifier: List1(UsCorePatientIdentifier),
-    active: Option(Bool),
-    name: List1(ct.Humanname),
-    telecom: List(UsCorePatientTelecom),
-    gender: valuesets.Administrativegender,
-    birth_date: Option(Date),
-    deceased: Option(UsCorePatientDeceased),
-    address: List(ct.Address),
-    marital_status: Option(ct.Codeableconcept),
-    multiple_birth: Option(UsCorePatientMultiplebirth),
-    photo: List(ct.Attachment),
-    contact: List(UsCorePatientContact),
-    communication: List(UsCorePatientCommunication),
-    general_practitioner: List(ct.Reference),
-    managing_organization: Option(ct.Reference),
-    link: List(UsCorePatientLink),
-  )
-}
-
-pub fn us_core_patient_new(
-  identifier identifier: List1(UsCorePatientIdentifier),
-  name name: List1(ct.Humanname),
-  gender gender: valuesets.Administrativegender,
-) -> UsCorePatient {
-  UsCorePatient(
-    id: None,
-    meta: Some(
-      ct.Meta(
-        id: None,
-        extension: [],
-        version_id: None,
-        last_updated: None,
-        source: None,
-        profile: [
-          "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient",
-        ],
-        security: [],
-        tag: [],
-      ),
-    ),
-    implicit_rules: None,
-    language: None,
-    text: None,
-    contained: [],
-    extension: [],
-    race: None,
-    ethnicity: None,
-    tribal_affiliation: [],
-    birthsex: None,
-    sex: None,
-    gender_identity: [],
-    modifier_extension: [],
-    identifier:,
-    active: None,
-    name:,
-    telecom: [],
-    gender:,
-    birth_date: None,
-    deceased: None,
-    address: [],
-    marital_status: None,
-    multiple_birth: None,
-    photo: [],
-    contact: [],
-    communication: [],
-    general_practitioner: [],
-    managing_organization: None,
-    link: [],
-  )
-}
-
-pub type UsCorePatientMultiplebirth {
-  UsCorePatientMultiplebirthBoolean(value: Bool)
-  UsCorePatientMultiplebirthInteger(value: Int)
-}
-
-pub type UsCorePatientDeceased {
-  UsCorePatientDeceasedBoolean(value: Bool)
-  UsCorePatientDeceasedDatetime(value: DateTime)
-}
-
-pub type UsCorePatientCommunication {
-  UsCorePatientCommunication(
-    id: Option(String),
-    extension: List(ct.Extension),
-    modifier_extension: List(ct.Extension),
-    language: ct.Codeableconcept,
-    preferred: Option(Bool),
-  )
-}
-
-pub fn us_core_patient_communication_new(
-  language language: ct.Codeableconcept,
-) -> UsCorePatientCommunication {
-  UsCorePatientCommunication(
-    id: None,
-    extension: [],
-    modifier_extension: [],
-    language:,
-    preferred: None,
-  )
-}
-
-pub type UsCorePatientContact {
-  UsCorePatientContact(
-    id: Option(String),
-    extension: List(ct.Extension),
-    modifier_extension: List(ct.Extension),
-    relationship: List(ct.Codeableconcept),
-    name: Option(ct.Humanname),
-    telecom: List(ct.Contactpoint),
-    address: Option(ct.Address),
-    gender: Option(valuesets.Administrativegender),
-    organization: Option(ct.Reference),
-    period: Option(ct.Period),
-  )
-}
-
-pub fn us_core_patient_contact_new() -> UsCorePatientContact {
-  UsCorePatientContact(
-    id: None,
-    extension: [],
-    modifier_extension: [],
-    relationship: [],
-    name: None,
-    telecom: [],
-    address: None,
-    gender: None,
-    organization: None,
-    period: None,
-  )
-}
-
-pub type UsCorePatientIdentifier {
-  UsCorePatientIdentifier(
-    id: Option(String),
-    extension: List(ct.Extension),
-    use_: Option(valuesets.Identifieruse),
-    type_: Option(ct.Codeableconcept),
-    system: String,
-    value: String,
-    period: Option(ct.Period),
-    assigner: Option(ct.Reference),
-  )
-}
-
-pub fn us_core_patient_identifier_new(
-  system system: String,
-  value value: String,
-) -> UsCorePatientIdentifier {
-  UsCorePatientIdentifier(
-    id: None,
-    extension: [],
-    use_: None,
-    type_: None,
-    system:,
-    value:,
-    period: None,
-    assigner: None,
-  )
-}
-
-pub type UsCorePatientLink {
-  UsCorePatientLink(
-    id: Option(String),
-    extension: List(ct.Extension),
-    modifier_extension: List(ct.Extension),
-    other: ct.Reference,
-    type_: valuesets.Linktype,
-  )
-}
-
-pub fn us_core_patient_link_new(
-  other other: ct.Reference,
-  type_ type_: valuesets.Linktype,
-) -> UsCorePatientLink {
-  UsCorePatientLink(
-    id: None,
-    extension: [],
-    modifier_extension: [],
-    other:,
-    type_:,
-  )
-}
-
-pub type UsCorePatientTelecom {
-  UsCorePatientTelecom(
-    id: Option(String),
-    extension: List(ct.Extension),
-    system: valuesets.Contactpointsystem,
-    value: String,
-    use_: Option(valuesets.Contactpointuse),
-    rank: Option(Int),
-    period: Option(ct.Period),
-  )
-}
-
-pub fn us_core_patient_telecom_new(
-  system system: valuesets.Contactpointsystem,
-  value value: String,
-) -> UsCorePatientTelecom {
-  UsCorePatientTelecom(
-    id: None,
-    extension: [],
-    system:,
-    value:,
-    use_: None,
-    rank: None,
-    period: None,
-  )
-}
-
-pub fn us_core_patient_to_json(us_core_patient: UsCorePatient) -> Json {
-  let UsCorePatient(
-    link:,
-    managing_organization:,
-    general_practitioner:,
-    communication:,
-    contact:,
-    photo:,
-    multiple_birth:,
-    marital_status:,
-    address:,
-    deceased:,
-    birth_date:,
-    gender:,
-    telecom:,
-    name:,
-    active:,
-    identifier:,
-    modifier_extension:,
-    gender_identity:,
-    sex:,
-    birthsex:,
-    tribal_affiliation:,
-    ethnicity:,
-    race:,
-    extension:,
-    contained:,
-    text:,
-    language:,
-    implicit_rules:,
-    meta:,
-    id:,
-  ) = us_core_patient
-  let fields = [
-    #("gender", valuesets.administrativegender_to_json(gender)),
-    #("name", list1_to_json(name, ct.humanname_to_json)),
-    #(
-      "identifier",
-      list1_to_json(identifier, us_core_patient_identifier_to_json),
-    ),
-  ]
-  let fields = case link {
-    [] -> fields
-    values -> [
-      #("link", json.array(values, us_core_patient_link_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case managing_organization {
-    Some(v) -> [#("managingOrganization", ct.reference_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case general_practitioner {
-    [] -> fields
-    values -> [
-      #("generalPractitioner", json.array(values, ct.reference_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case communication {
-    [] -> fields
-    values -> [
-      #(
-        "communication",
-        json.array(values, us_core_patient_communication_to_json),
-      ),
-      ..fields
-    ]
-  }
-  let fields = case contact {
-    [] -> fields
-    values -> [
-      #("contact", json.array(values, us_core_patient_contact_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case photo {
-    [] -> fields
-    values -> [#("photo", json.array(values, ct.attachment_to_json)), ..fields]
-  }
-  let fields = case multiple_birth {
-    Some(v) -> [
-      #(
-        "multipleBirth"
-          <> case v {
-          UsCorePatientMultiplebirthBoolean(_) -> "Boolean"
-          UsCorePatientMultiplebirthInteger(_) -> "Integer"
-        },
-        us_core_patient_multiplebirth_to_json(v),
-      ),
-      ..fields
-    ]
-    None -> fields
-  }
-  let fields = case marital_status {
-    Some(v) -> [#("maritalStatus", ct.codeableconcept_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case address {
-    [] -> fields
-    values -> [#("address", json.array(values, ct.address_to_json)), ..fields]
-  }
-  let fields = case deceased {
-    Some(v) -> [
-      #(
-        "deceased"
-          <> case v {
-          UsCorePatientDeceasedBoolean(_) -> "Boolean"
-          UsCorePatientDeceasedDatetime(_) -> "DateTime"
-        },
-        us_core_patient_deceased_to_json(v),
-      ),
-      ..fields
-    ]
-    None -> fields
-  }
-  let fields = case birth_date {
-    Some(v) -> [#("birthDate", pt.date_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case telecom {
-    [] -> fields
-    values -> [
-      #("telecom", json.array(values, us_core_patient_telecom_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case active {
-    Some(v) -> [#("active", json.bool(v)), ..fields]
-    None -> fields
-  }
-  let fields = case modifier_extension {
-    [] -> fields
-    values -> [
-      #("modifierExtension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let slice_values =
-    list.flatten([
-      list.map(gender_identity, fn(value) {
-        json.object([
-          #(
-            "url",
-            json.string(
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-genderIdentity",
-            ),
-          ),
-          #("valueCodeableConcept", ct.codeableconcept_to_json(value)),
-        ])
-      }),
-      case sex {
-        Some(value) -> [
-          json.object([
-            #(
-              "url",
-              json.string(
-                "http://hl7.org/fhir/us/core/StructureDefinition/us-core-sex",
-              ),
-            ),
-            #("valueCode", json.string(value)),
-          ]),
-        ]
-        None -> []
-      },
-      case birthsex {
-        Some(value) -> [
-          json.object([
-            #(
-              "url",
-              json.string(
-                "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
-              ),
-            ),
-            #("valueCode", valuesets.two16840111376214102124_to_json(value)),
-          ]),
-        ]
-        None -> []
-      },
-      list.map(tribal_affiliation, fn(value) {
-        ct.us_core_tribal_affiliation_to_json(
-          value,
-          "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation",
-        )
-      }),
-      case ethnicity {
-        Some(value) -> [
-          ct.us_core_ethnicity_to_json(
-            value,
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity",
-          ),
-        ]
-        None -> []
-      },
-      case race {
-        Some(value) -> [
-          ct.us_core_race_to_json(
-            value,
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race",
-          ),
-        ]
-        None -> []
-      },
-      list.map(extension, fn(value) { ct.extension_to_json(value) }),
-    ])
-  let fields = case slice_values {
-    [] -> fields
-    values -> [#("extension", json.preprocessed_array(values)), ..fields]
-  }
-  let fields = case contained {
-    [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
-  }
-  let fields = case text {
-    Some(v) -> [#("text", ct.narrative_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case language {
-    Some(v) -> [#("language", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case implicit_rules {
-    Some(v) -> [#("implicitRules", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case meta {
-    Some(v) -> [#("meta", ct.meta_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case id {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = [#("resourceType", json.string("Patient")), ..fields]
-  json.object(fields)
-}
-
-pub fn us_core_patient_deceased_to_json(value: UsCorePatientDeceased) -> Json {
-  case value {
-    UsCorePatientDeceasedBoolean(value) -> json.bool(value)
-    UsCorePatientDeceasedDatetime(value) -> pt.datetime_to_json(value)
-  }
-}
-
-pub fn us_core_patient_multiplebirth_to_json(
-  value: UsCorePatientMultiplebirth,
-) -> Json {
-  case value {
-    UsCorePatientMultiplebirthBoolean(value) -> json.bool(value)
-    UsCorePatientMultiplebirthInteger(value) -> json.int(value)
-  }
-}
-
-pub fn us_core_patient_communication_to_json(
-  us_core_patient_communication: UsCorePatientCommunication,
-) -> Json {
-  let UsCorePatientCommunication(
-    preferred:,
-    language:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = us_core_patient_communication
-  let fields = [
-    #("language", ct.codeableconcept_to_json(language)),
-  ]
-  let fields = case preferred {
-    Some(v) -> [#("preferred", json.bool(v)), ..fields]
-    None -> fields
-  }
-  let fields = case modifier_extension {
-    [] -> fields
-    values -> [
-      #("modifierExtension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case extension {
-    [] -> fields
-    values -> [
-      #("extension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case id {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  json.object(fields)
-}
-
-pub fn us_core_patient_contact_to_json(
-  us_core_patient_contact: UsCorePatientContact,
-) -> Json {
-  let UsCorePatientContact(
-    period:,
-    organization:,
-    gender:,
-    address:,
-    telecom:,
-    name:,
-    relationship:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = us_core_patient_contact
-  let fields = []
-  let fields = case period {
-    Some(v) -> [#("period", ct.period_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case organization {
-    Some(v) -> [#("organization", ct.reference_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case gender {
-    Some(v) -> [
-      #("gender", valuesets.administrativegender_to_json(v)),
-      ..fields
-    ]
-    None -> fields
-  }
-  let fields = case address {
-    Some(v) -> [#("address", ct.address_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case telecom {
-    [] -> fields
-    values -> [
-      #("telecom", json.array(values, ct.contactpoint_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case name {
-    Some(v) -> [#("name", ct.humanname_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case relationship {
-    [] -> fields
-    values -> [
-      #("relationship", json.array(values, ct.codeableconcept_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case modifier_extension {
-    [] -> fields
-    values -> [
-      #("modifierExtension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case extension {
-    [] -> fields
-    values -> [
-      #("extension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case id {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  json.object(fields)
-}
-
-pub fn us_core_patient_identifier_to_json(
-  us_core_patient_identifier: UsCorePatientIdentifier,
-) -> Json {
-  let UsCorePatientIdentifier(
-    assigner:,
-    period:,
-    value:,
-    system:,
-    type_:,
-    use_:,
-    extension:,
-    id:,
-  ) = us_core_patient_identifier
-  let fields = [
-    #("value", json.string(value)),
-    #("system", json.string(system)),
-  ]
-  let fields = case assigner {
-    Some(v) -> [#("assigner", ct.reference_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case period {
-    Some(v) -> [#("period", ct.period_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case type_ {
-    Some(v) -> [#("type", ct.codeableconcept_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case use_ {
-    Some(v) -> [#("use", valuesets.identifieruse_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case extension {
-    [] -> fields
-    values -> [
-      #("extension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case id {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  json.object(fields)
-}
-
-pub fn us_core_patient_link_to_json(
-  us_core_patient_link: UsCorePatientLink,
-) -> Json {
-  let UsCorePatientLink(type_:, other:, modifier_extension:, extension:, id:) =
-    us_core_patient_link
-  let fields = [
-    #("type", valuesets.linktype_to_json(type_)),
-    #("other", ct.reference_to_json(other)),
-  ]
-  let fields = case modifier_extension {
-    [] -> fields
-    values -> [
-      #("modifierExtension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case extension {
-    [] -> fields
-    values -> [
-      #("extension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case id {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  json.object(fields)
-}
-
-pub fn us_core_patient_telecom_to_json(
-  us_core_patient_telecom: UsCorePatientTelecom,
-) -> Json {
-  let UsCorePatientTelecom(
-    period:,
-    rank:,
-    use_:,
-    value:,
-    system:,
-    extension:,
-    id:,
-  ) = us_core_patient_telecom
-  let fields = [
-    #("value", json.string(value)),
-    #("system", valuesets.contactpointsystem_to_json(system)),
-  ]
-  let fields = case period {
-    Some(v) -> [#("period", ct.period_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case rank {
-    Some(v) -> [#("rank", json.int(v)), ..fields]
-    None -> fields
-  }
-  let fields = case use_ {
-    Some(v) -> [#("use", valuesets.contactpointuse_to_json(v)), ..fields]
-    None -> fields
-  }
-  let fields = case extension {
-    [] -> fields
-    values -> [
-      #("extension", json.array(values, ct.extension_to_json)),
-      ..fields
-    ]
-  }
-  let fields = case id {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  json.object(fields)
 }
 
 type UsCoreEthnicityExtensionAccumulator {
@@ -3030,99 +2813,140 @@ type UsCoreEthnicityExtensionAccumulator {
   )
 }
 
-fn parse_us_core_ethnicity(
-  extension: ct.Extension,
-) -> Result(ct.UsCoreEthnicity, String) {
-  case extension.ext {
-    ct.ExtComplex(children) -> {
-      let accumulator: Result(UsCoreEthnicityExtensionAccumulator, String) =
-        list.fold(
-          children,
-          Ok(UsCoreEthnicityExtensionAccumulator(None, [], None, [])),
-          fn(accumulator_result, child) {
-            case accumulator_result {
-              Error(reason) -> Error(reason)
-              Ok(accumulator) ->
-                case child.url {
-                  "text" ->
-                    case child.ext {
-                      ct.ExtSimple(ct.ExtensionValueString(value)) ->
-                        Ok(
-                          UsCoreEthnicityExtensionAccumulator(
-                            ..accumulator,
-                            text: Some(value),
-                          ),
-                        )
-                      _ -> Error("extension text has invalid value")
-                    }
-                  "detailed" ->
-                    case child.ext {
-                      ct.ExtSimple(ct.ExtensionValueCoding(value)) ->
-                        case
-                          ct.bound_coding_from_coding(
-                            value,
-                            valuesets.detailedethnicity_from_code_and_system,
-                          )
-                        {
-                          Ok(value) ->
-                            Ok(
-                              UsCoreEthnicityExtensionAccumulator(
-                                ..accumulator,
-                                detailed: [value, ..accumulator.detailed],
-                              ),
-                            )
-                          Error(_) -> Error("invalid extension value")
-                        }
-                      _ -> Error("extension detailed has invalid value")
-                    }
-                  "ombCategory" ->
-                    case child.ext {
-                      ct.ExtSimple(ct.ExtensionValueCoding(value)) ->
-                        case
-                          ct.bound_coding_from_coding(
-                            value,
-                            valuesets.ombethnicitycategory_from_code_and_system,
-                          )
-                        {
-                          Ok(value) ->
-                            Ok(
-                              UsCoreEthnicityExtensionAccumulator(
-                                ..accumulator,
-                                omb_category: Some(value),
-                              ),
-                            )
-                          Error(_) -> Error("invalid extension value")
-                        }
-                      _ -> Error("extension ombCategory has invalid value")
-                    }
-                  _ ->
-                    Ok(
-                      UsCoreEthnicityExtensionAccumulator(..accumulator, open: [
-                        child,
-                        ..accumulator.open
-                      ]),
-                    )
-                }
-            }
-          },
+type UsCoreEthnicityParsedExtensionSlice {
+  UsCoreEthnicityParsedExtensionSliceText(Option(String), String)
+  UsCoreEthnicityParsedExtensionSliceDetailed(
+    Option(String),
+    ct.BoundCoding(valuesets.Detailedethnicity),
+  )
+  UsCoreEthnicityParsedExtensionSliceOmbcategory(
+    Option(String),
+    ct.BoundCoding(valuesets.Ombethnicitycategory),
+  )
+  UsCoreEthnicityParsedExtensionSliceOpen(ct.Extension)
+}
+
+fn parse_us_core_ethnicity_child() -> Decoder(
+  Result(UsCoreEthnicityParsedExtensionSlice, String),
+) {
+  use url <- decode.field("url", decode.string)
+  use id <- decode.optional_field("id", None, decode.optional(decode.string))
+  decode.then(
+    case url {
+      "text" ->
+        decode.field("valueString", decode.string, decode.success)
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCoreEthnicityParsedExtensionSliceText(id, value)
+          })
+        })
+      "detailed" ->
+        decode.field(
+          "valueCoding",
+          ct.bound_coding_decoder(
+            valuesets.detailedethnicity_from_code_and_system,
+            valuesets.Detailedethnicity10009,
+          ),
+          decode.success,
         )
-      case accumulator {
-        Error(reason) -> Error(reason)
-        Ok(accumulator) ->
-          case accumulator.text {
-            None -> Error("required extension text")
-            Some(text) ->
-              Ok(ct.UsCoreEthnicity(
-                extension: list.reverse(accumulator.open),
-                text:,
-                detailed: list.reverse(accumulator.detailed),
-                omb_category: accumulator.omb_category,
-              ))
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCoreEthnicityParsedExtensionSliceDetailed(id, value)
+          })
+        })
+      "ombCategory" ->
+        decode.field(
+          "valueCoding",
+          ct.bound_coding_decoder(
+            valuesets.ombethnicitycategory_from_code_and_system,
+            valuesets.Ombethnicitycategory21352,
+          ),
+          decode.success,
+        )
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCoreEthnicityParsedExtensionSliceOmbcategory(id, value)
+          })
+        })
+      _ ->
+        ct.extension_decoder()
+        |> decode.map(fn(value) {
+          Ok(UsCoreEthnicityParsedExtensionSliceOpen(value))
+        })
+    },
+    decode.success,
+  )
+}
+
+fn parse_us_core_ethnicity() -> Decoder(Result(ct.UsCoreEthnicity, String)) {
+  use children <- decode.field(
+    "extension",
+    decode.list(parse_us_core_ethnicity_child()),
+  )
+  decode.success({
+    let accumulator: Result(UsCoreEthnicityExtensionAccumulator, String) =
+      list.fold(
+        children,
+        Ok(UsCoreEthnicityExtensionAccumulator(None, [], None, [])),
+        fn(accumulator_result, child) {
+          case accumulator_result {
+            Error(reason) -> Error(reason)
+            Ok(accumulator) ->
+              case child {
+                Error(reason) -> Error(reason)
+                Ok(slice) ->
+                  case slice {
+                    UsCoreEthnicityParsedExtensionSliceText(_id, value) ->
+                      Ok(
+                        UsCoreEthnicityExtensionAccumulator(
+                          ..accumulator,
+                          text: Some(value),
+                        ),
+                      )
+                    UsCoreEthnicityParsedExtensionSliceDetailed(_id, value) ->
+                      Ok(
+                        UsCoreEthnicityExtensionAccumulator(
+                          ..accumulator,
+                          detailed: [value, ..accumulator.detailed],
+                        ),
+                      )
+                    UsCoreEthnicityParsedExtensionSliceOmbcategory(_id, value) ->
+                      Ok(
+                        UsCoreEthnicityExtensionAccumulator(
+                          ..accumulator,
+                          omb_category: Some(value),
+                        ),
+                      )
+                    UsCoreEthnicityParsedExtensionSliceOpen(child) ->
+                      Ok(
+                        UsCoreEthnicityExtensionAccumulator(
+                          ..accumulator,
+                          open: [child, ..accumulator.open],
+                        ),
+                      )
+                  }
+              }
           }
-      }
+        },
+      )
+    case accumulator {
+      Error(reason) -> Error(reason)
+      Ok(accumulator) ->
+        case accumulator.text {
+          None -> Error("required extension text")
+          Some(text) ->
+            Ok(ct.UsCoreEthnicity(
+              extension: list.reverse(accumulator.open),
+              text:,
+              detailed: list.reverse(accumulator.detailed),
+              omb_category: accumulator.omb_category,
+            ))
+        }
     }
-    _ -> Error("extension should contain child extensions")
-  }
+  })
 }
 
 type UsCoreRaceExtensionAccumulator {
@@ -3134,102 +2958,140 @@ type UsCoreRaceExtensionAccumulator {
   )
 }
 
-fn parse_us_core_race(
-  extension: ct.Extension,
-) -> Result(ct.UsCoreRace, String) {
-  case extension.ext {
-    ct.ExtComplex(children) -> {
-      let accumulator: Result(UsCoreRaceExtensionAccumulator, String) =
-        list.fold(
-          children,
-          Ok(UsCoreRaceExtensionAccumulator(None, [], [], [])),
-          fn(accumulator_result, child) {
-            case accumulator_result {
-              Error(reason) -> Error(reason)
-              Ok(accumulator) ->
-                case child.url {
-                  "text" ->
-                    case child.ext {
-                      ct.ExtSimple(ct.ExtensionValueString(value)) ->
-                        Ok(
-                          UsCoreRaceExtensionAccumulator(
-                            ..accumulator,
-                            text: Some(value),
-                          ),
-                        )
-                      _ -> Error("extension text has invalid value")
-                    }
-                  "detailed" ->
-                    case child.ext {
-                      ct.ExtSimple(ct.ExtensionValueCoding(value)) ->
-                        case
-                          ct.bound_coding_from_coding(
-                            value,
-                            valuesets.detailedrace_from_code_and_system,
-                          )
-                        {
-                          Ok(value) ->
-                            Ok(
-                              UsCoreRaceExtensionAccumulator(
-                                ..accumulator,
-                                detailed: [value, ..accumulator.detailed],
-                              ),
-                            )
-                          Error(_) -> Error("invalid extension value")
-                        }
-                      _ -> Error("extension detailed has invalid value")
-                    }
-                  "ombCategory" ->
-                    case child.ext {
-                      ct.ExtSimple(ct.ExtensionValueCoding(value)) ->
-                        case
-                          ct.bound_coding_from_coding(
-                            value,
-                            valuesets.ombracecategory_from_code_and_system,
-                          )
-                        {
-                          Ok(value) ->
-                            Ok(
-                              UsCoreRaceExtensionAccumulator(
-                                ..accumulator,
-                                omb_category: [
-                                  value,
-                                  ..accumulator.omb_category
-                                ],
-                              ),
-                            )
-                          Error(_) -> Error("invalid extension value")
-                        }
-                      _ -> Error("extension ombCategory has invalid value")
-                    }
-                  _ ->
-                    Ok(
-                      UsCoreRaceExtensionAccumulator(..accumulator, open: [
-                        child,
-                        ..accumulator.open
-                      ]),
-                    )
-                }
-            }
-          },
+type UsCoreRaceParsedExtensionSlice {
+  UsCoreRaceParsedExtensionSliceText(Option(String), String)
+  UsCoreRaceParsedExtensionSliceDetailed(
+    Option(String),
+    ct.BoundCoding(valuesets.Detailedrace),
+  )
+  UsCoreRaceParsedExtensionSliceOmbcategory(
+    Option(String),
+    ct.BoundCoding(valuesets.Ombracecategory),
+  )
+  UsCoreRaceParsedExtensionSliceOpen(ct.Extension)
+}
+
+fn parse_us_core_race_child() -> Decoder(
+  Result(UsCoreRaceParsedExtensionSlice, String),
+) {
+  use url <- decode.field("url", decode.string)
+  use id <- decode.optional_field("id", None, decode.optional(decode.string))
+  decode.then(
+    case url {
+      "text" ->
+        decode.field("valueString", decode.string, decode.success)
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCoreRaceParsedExtensionSliceText(id, value)
+          })
+        })
+      "detailed" ->
+        decode.field(
+          "valueCoding",
+          ct.bound_coding_decoder(
+            valuesets.detailedrace_from_code_and_system,
+            valuesets.Detailedrace10009,
+          ),
+          decode.success,
         )
-      case accumulator {
-        Error(reason) -> Error(reason)
-        Ok(accumulator) ->
-          case accumulator.text {
-            None -> Error("required extension text")
-            Some(text) ->
-              Ok(ct.UsCoreRace(
-                extension: list.reverse(accumulator.open),
-                text:,
-                detailed: list.reverse(accumulator.detailed),
-                omb_category: list.reverse(accumulator.omb_category),
-              ))
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCoreRaceParsedExtensionSliceDetailed(id, value)
+          })
+        })
+      "ombCategory" ->
+        decode.field(
+          "valueCoding",
+          ct.bound_coding_decoder(
+            valuesets.ombracecategory_from_code_and_system,
+            valuesets.Ombracecategory10025,
+          ),
+          decode.success,
+        )
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCoreRaceParsedExtensionSliceOmbcategory(id, value)
+          })
+        })
+      _ ->
+        ct.extension_decoder()
+        |> decode.map(fn(value) {
+          Ok(UsCoreRaceParsedExtensionSliceOpen(value))
+        })
+    },
+    decode.success,
+  )
+}
+
+fn parse_us_core_race() -> Decoder(Result(ct.UsCoreRace, String)) {
+  use children <- decode.field(
+    "extension",
+    decode.list(parse_us_core_race_child()),
+  )
+  decode.success({
+    let accumulator: Result(UsCoreRaceExtensionAccumulator, String) =
+      list.fold(
+        children,
+        Ok(UsCoreRaceExtensionAccumulator(None, [], [], [])),
+        fn(accumulator_result, child) {
+          case accumulator_result {
+            Error(reason) -> Error(reason)
+            Ok(accumulator) ->
+              case child {
+                Error(reason) -> Error(reason)
+                Ok(slice) ->
+                  case slice {
+                    UsCoreRaceParsedExtensionSliceText(_id, value) ->
+                      Ok(
+                        UsCoreRaceExtensionAccumulator(
+                          ..accumulator,
+                          text: Some(value),
+                        ),
+                      )
+                    UsCoreRaceParsedExtensionSliceDetailed(_id, value) ->
+                      Ok(
+                        UsCoreRaceExtensionAccumulator(..accumulator, detailed: [
+                          value,
+                          ..accumulator.detailed
+                        ]),
+                      )
+                    UsCoreRaceParsedExtensionSliceOmbcategory(_id, value) ->
+                      Ok(
+                        UsCoreRaceExtensionAccumulator(
+                          ..accumulator,
+                          omb_category: [value, ..accumulator.omb_category],
+                        ),
+                      )
+                    UsCoreRaceParsedExtensionSliceOpen(child) ->
+                      Ok(
+                        UsCoreRaceExtensionAccumulator(..accumulator, open: [
+                          child,
+                          ..accumulator.open
+                        ]),
+                      )
+                  }
+              }
           }
-      }
+        },
+      )
+    case accumulator {
+      Error(reason) -> Error(reason)
+      Ok(accumulator) ->
+        case accumulator.text {
+          None -> Error("required extension text")
+          Some(text) ->
+            Ok(ct.UsCoreRace(
+              extension: list.reverse(accumulator.open),
+              text:,
+              detailed: list.reverse(accumulator.detailed),
+              omb_category: list.reverse(accumulator.omb_category),
+            ))
+        }
     }
-    _ -> Error("extension should contain child extensions")
-  }
+  })
 }
 
 type UsCoreTribalAffiliationExtensionAccumulator {
@@ -3240,73 +3102,121 @@ type UsCoreTribalAffiliationExtensionAccumulator {
   )
 }
 
-fn parse_us_core_tribal_affiliation(
-  extension: ct.Extension,
-) -> Result(ct.UsCoreTribalAffiliation, String) {
-  case extension.ext {
-    ct.ExtComplex(children) -> {
-      let accumulator: Result(
-        UsCoreTribalAffiliationExtensionAccumulator,
-        String,
-      ) =
-        list.fold(
-          children,
-          Ok(UsCoreTribalAffiliationExtensionAccumulator(None, None, [])),
-          fn(accumulator_result, child) {
-            case accumulator_result {
-              Error(reason) -> Error(reason)
-              Ok(accumulator) ->
-                case child.url {
-                  "isEnrolled" ->
-                    case child.ext {
-                      ct.ExtSimple(ct.ExtensionValueBoolean(value)) ->
-                        Ok(
-                          UsCoreTribalAffiliationExtensionAccumulator(
-                            ..accumulator,
-                            is_enrolled: Some(value),
-                          ),
-                        )
-                      _ -> Error("extension isEnrolled has invalid value")
-                    }
-                  "tribalAffiliation" ->
-                    case child.ext {
-                      ct.ExtSimple(ct.ExtensionValueCodeableconcept(value)) ->
-                        Ok(
-                          UsCoreTribalAffiliationExtensionAccumulator(
-                            ..accumulator,
-                            tribal_affiliation: Some(value),
-                          ),
-                        )
-                      _ ->
-                        Error("extension tribalAffiliation has invalid value")
-                    }
-                  _ ->
-                    Ok(
-                      UsCoreTribalAffiliationExtensionAccumulator(
-                        ..accumulator,
-                        open: [child, ..accumulator.open],
-                      ),
-                    )
-                }
-            }
-          },
+type UsCoreTribalAffiliationParsedExtensionSlice {
+  UsCoreTribalAffiliationParsedExtensionSliceIsenrolled(Option(String), Bool)
+  UsCoreTribalAffiliationParsedExtensionSliceTribalaffiliation(
+    Option(String),
+    ct.Codeableconcept,
+  )
+  UsCoreTribalAffiliationParsedExtensionSliceOpen(ct.Extension)
+}
+
+fn parse_us_core_tribal_affiliation_child() -> Decoder(
+  Result(UsCoreTribalAffiliationParsedExtensionSlice, String),
+) {
+  use url <- decode.field("url", decode.string)
+  use id <- decode.optional_field("id", None, decode.optional(decode.string))
+  decode.then(
+    case url {
+      "isEnrolled" ->
+        decode.field("valueBoolean", decode.bool, decode.success)
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCoreTribalAffiliationParsedExtensionSliceIsenrolled(id, value)
+          })
+        })
+      "tribalAffiliation" ->
+        decode.field(
+          "valueCodeableConcept",
+          ct.codeableconcept_decoder(),
+          decode.success,
         )
-      case accumulator {
-        Error(reason) -> Error(reason)
-        Ok(accumulator) ->
-          case accumulator.tribal_affiliation {
-            None -> Error("required extension tribal_affiliation")
-            Some(tribal_affiliation) ->
-              Ok(ct.UsCoreTribalAffiliation(
-                extension: list.reverse(accumulator.open),
-                is_enrolled: accumulator.is_enrolled,
-                tribal_affiliation:,
-              ))
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCoreTribalAffiliationParsedExtensionSliceTribalaffiliation(
+              id,
+              value,
+            )
+          })
+        })
+      _ ->
+        ct.extension_decoder()
+        |> decode.map(fn(value) {
+          Ok(UsCoreTribalAffiliationParsedExtensionSliceOpen(value))
+        })
+    },
+    decode.success,
+  )
+}
+
+fn parse_us_core_tribal_affiliation() -> Decoder(
+  Result(ct.UsCoreTribalAffiliation, String),
+) {
+  use children <- decode.field(
+    "extension",
+    decode.list(parse_us_core_tribal_affiliation_child()),
+  )
+  decode.success({
+    let accumulator: Result(UsCoreTribalAffiliationExtensionAccumulator, String) =
+      list.fold(
+        children,
+        Ok(UsCoreTribalAffiliationExtensionAccumulator(None, None, [])),
+        fn(accumulator_result, child) {
+          case accumulator_result {
+            Error(reason) -> Error(reason)
+            Ok(accumulator) ->
+              case child {
+                Error(reason) -> Error(reason)
+                Ok(slice) ->
+                  case slice {
+                    UsCoreTribalAffiliationParsedExtensionSliceIsenrolled(
+                      _id,
+                      value,
+                    ) ->
+                      Ok(
+                        UsCoreTribalAffiliationExtensionAccumulator(
+                          ..accumulator,
+                          is_enrolled: Some(value),
+                        ),
+                      )
+                    UsCoreTribalAffiliationParsedExtensionSliceTribalaffiliation(
+                      _id,
+                      value,
+                    ) ->
+                      Ok(
+                        UsCoreTribalAffiliationExtensionAccumulator(
+                          ..accumulator,
+                          tribal_affiliation: Some(value),
+                        ),
+                      )
+                    UsCoreTribalAffiliationParsedExtensionSliceOpen(child) ->
+                      Ok(
+                        UsCoreTribalAffiliationExtensionAccumulator(
+                          ..accumulator,
+                          open: [child, ..accumulator.open],
+                        ),
+                      )
+                  }
+              }
           }
-      }
+        },
+      )
+    case accumulator {
+      Error(reason) -> Error(reason)
+      Ok(accumulator) ->
+        case accumulator.tribal_affiliation {
+          None -> Error("required extension tribal_affiliation")
+          Some(tribal_affiliation) ->
+            Ok(ct.UsCoreTribalAffiliation(
+              extension: list.reverse(accumulator.open),
+              is_enrolled: accumulator.is_enrolled,
+              tribal_affiliation:,
+            ))
+        }
     }
-    _ -> Error("extension should contain child extensions")
-  }
+  })
 }
 
 type UsCorePatientExtensionSliceAccumulator {
@@ -3321,6 +3231,16 @@ type UsCorePatientExtensionSliceAccumulator {
   )
 }
 
+pub type UsCorePatientParsedExtensionSlice {
+  UsCorePatientParsedExtensionSliceGenderidentity(ct.Codeableconcept)
+  UsCorePatientParsedExtensionSliceSex(String)
+  UsCorePatientParsedExtensionSliceBirthsex(valuesets.Two16840111376214102124)
+  UsCorePatientParsedExtensionSliceTribalaffiliation(ct.UsCoreTribalAffiliation)
+  UsCorePatientParsedExtensionSliceEthnicity(ct.UsCoreEthnicity)
+  UsCorePatientParsedExtensionSliceRace(ct.UsCoreRace)
+  UsCorePatientParsedExtensionSliceOpen(ct.Extension)
+}
+
 type UsCorePatientExtensionSlices {
   UsCorePatientExtensionSlices(
     gender_identity: List(ct.Codeableconcept),
@@ -3331,40 +3251,6 @@ type UsCorePatientExtensionSlices {
     race: Option(ct.UsCoreRace),
     open: List(ct.Extension),
   )
-}
-
-pub fn us_core_patient_telecom_decoder() -> Decoder(UsCorePatientTelecom) {
-  use <- decode.recursive
-  use period <- decode.optional_field(
-    "period",
-    None,
-    decode.optional(ct.period_decoder()),
-  )
-  use rank <- decode.optional_field("rank", None, decode.optional(decode.int))
-  use use_ <- decode.optional_field(
-    "use",
-    None,
-    decode.optional(valuesets.contactpointuse_decoder()),
-  )
-  use value <- decode.field("value", decode.string)
-  use system <- decode.field("system", valuesets.contactpointsystem_decoder())
-  use extension <- decode.optional_field(
-    "extension",
-    [],
-    decode.list(ct.extension_decoder()),
-  )
-  use id <- decode.optional_field("id", None, decode.optional(decode.string))
-  let placeholder =
-    UsCorePatientTelecom(
-      period:,
-      rank:,
-      use_:,
-      value:,
-      system:,
-      extension:,
-      id:,
-    )
-  decode.success(placeholder)
 }
 
 pub fn us_core_patient_link_decoder() -> Decoder(UsCorePatientLink) {
@@ -3384,50 +3270,6 @@ pub fn us_core_patient_link_decoder() -> Decoder(UsCorePatientLink) {
   use id <- decode.optional_field("id", None, decode.optional(decode.string))
   let placeholder =
     UsCorePatientLink(type_:, other:, modifier_extension:, extension:, id:)
-  decode.success(placeholder)
-}
-
-pub fn us_core_patient_identifier_decoder() -> Decoder(UsCorePatientIdentifier) {
-  use <- decode.recursive
-  use assigner <- decode.optional_field(
-    "assigner",
-    None,
-    decode.optional(ct.reference_decoder()),
-  )
-  use period <- decode.optional_field(
-    "period",
-    None,
-    decode.optional(ct.period_decoder()),
-  )
-  use value <- decode.field("value", decode.string)
-  use system <- decode.field("system", decode.string)
-  use type_ <- decode.optional_field(
-    "type",
-    None,
-    decode.optional(ct.codeableconcept_decoder()),
-  )
-  use use_ <- decode.optional_field(
-    "use",
-    None,
-    decode.optional(valuesets.identifieruse_decoder()),
-  )
-  use extension <- decode.optional_field(
-    "extension",
-    [],
-    decode.list(ct.extension_decoder()),
-  )
-  use id <- decode.optional_field("id", None, decode.optional(decode.string))
-  let placeholder =
-    UsCorePatientIdentifier(
-      assigner:,
-      period:,
-      value:,
-      system:,
-      type_:,
-      use_:,
-      extension:,
-      id:,
-    )
   decode.success(placeholder)
 }
 
@@ -3551,6 +3393,76 @@ pub fn us_core_patient_deceased_decoder() -> Decoder(UsCorePatientDeceased) {
   )
 }
 
+pub fn us_core_patient_extension_slice_decoder() -> Decoder(
+  Result(UsCorePatientParsedExtensionSlice, String),
+) {
+  use url <- decode.field("url", decode.string)
+  use _id <- decode.optional_field("id", None, decode.optional(decode.string))
+  decode.then(
+    case url {
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-genderIdentity" ->
+        decode.field(
+          "valueCodeableConcept",
+          ct.codeableconcept_decoder(),
+          decode.success,
+        )
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCorePatientParsedExtensionSliceGenderidentity(value)
+          })
+        })
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-sex" ->
+        decode.field("valueCode", decode.string, decode.success)
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCorePatientParsedExtensionSliceSex(value)
+          })
+        })
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex" ->
+        decode.field(
+          "valueCode",
+          valuesets.two16840111376214102124_decoder(),
+          decode.success,
+        )
+        |> decode.map(Ok)
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCorePatientParsedExtensionSliceBirthsex(value)
+          })
+        })
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation" ->
+        parse_us_core_tribal_affiliation()
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCorePatientParsedExtensionSliceTribalaffiliation(value)
+          })
+        })
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity" ->
+        parse_us_core_ethnicity()
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCorePatientParsedExtensionSliceEthnicity(value)
+          })
+        })
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race" ->
+        parse_us_core_race()
+        |> decode.map(fn(parsed) {
+          result.map(parsed, fn(value) {
+            UsCorePatientParsedExtensionSliceRace(value)
+          })
+        })
+      _ ->
+        ct.extension_decoder()
+        |> decode.map(fn(value) {
+          Ok(UsCorePatientParsedExtensionSliceOpen(value))
+        })
+    },
+    decode.success,
+  )
+}
+
 pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
   use <- decode.recursive
   use link <- decode.optional_field(
@@ -3608,7 +3520,7 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
   use telecom <- decode.optional_field(
     "telecom",
     [],
-    decode.list(us_core_patient_telecom_decoder()),
+    decode.list(ct.contactpoint_us_core_patient_telecom_decoder()),
   )
   use name <- list1_decoder("name", ct.humanname_decoder())
   use active <- decode.optional_field(
@@ -3618,7 +3530,39 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
   )
   use identifier <- list1_decoder(
     "identifier",
-    us_core_patient_identifier_decoder(),
+    decode.then(decode.dynamic, fn(raw) {
+      case
+        decode.run(raw, {
+          use _ <- decode.then({
+            use fields <- decode.then(decode.dict(decode.string, decode.dynamic))
+            let _ = fields
+            decode.success(Nil)
+          })
+          use _ <- decode.field("system", decode.string)
+          use _ <- decode.field("value", decode.string)
+          decode.success(Nil)
+        })
+      {
+        Ok(_) ->
+          ct.identifier_decoder()
+          |> decode.then(fn(value) {
+            case ct.identifier_required_system_value_from_identifier(value) {
+              Ok(value) -> decode.success(value)
+              Error(_) ->
+                decode.failure(
+                  ct.identifier_required_system_value_new(system: "", value: ""),
+                  "ct.IdentifierRequiredSystemValue",
+                )
+            }
+          })
+        Error(errors) ->
+          decode.failure(
+            ct.identifier_required_system_value_new(system: "", value: ""),
+            "ct.IdentifierRequiredSystemValue",
+          )
+          |> decode.map_errors(fn(_) { errors })
+      }
+    }),
   )
   use modifier_extension <- decode.optional_field(
     "modifierExtension",
@@ -3628,7 +3572,7 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
   use extension_base_values <- decode.optional_field(
     "extension",
     [],
-    decode.list(ct.extension_decoder()),
+    decode.list(us_core_patient_extension_slice_decoder()),
   )
   let extension_accumulator =
     list.index_fold(
@@ -3644,79 +3588,43 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
           [],
         ),
       ),
-      fn(accumulator_result, extension, index) {
+      fn(accumulator_result, parsed, index) {
         case accumulator_result {
           Error(errors) -> Error(errors)
           Ok(accumulator) ->
-            case extension.url {
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-genderIdentity" ->
-                case extension.ext {
-                  ct.ExtSimple(ct.ExtensionValueCodeableconcept(value)) ->
+            case parsed {
+              Error(reason) ->
+                Error([
+                  decode.DecodeError(
+                    expected: "profile extension",
+                    found: reason,
+                    path: ["extension", int.to_string(index)],
+                  ),
+                ])
+              Ok(slice) ->
+                case slice {
+                  UsCorePatientParsedExtensionSliceGenderidentity(value) ->
                     Ok(
                       UsCorePatientExtensionSliceAccumulator(
                         ..accumulator,
                         gender_identity: [value, ..accumulator.gender_identity],
                       ),
                     )
-                  _ ->
-                    Error([
-                      decode.DecodeError(
-                        expected: "ct.Codeableconcept",
-                        found: "invalid extension value",
-                        path: ["extension", int.to_string(index)],
-                      ),
-                    ])
-                }
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-sex" ->
-                case extension.ext {
-                  ct.ExtSimple(ct.ExtensionValueCode(value)) ->
+                  UsCorePatientParsedExtensionSliceSex(value) ->
                     Ok(
                       UsCorePatientExtensionSliceAccumulator(
                         ..accumulator,
                         sex: Some(value),
                       ),
                     )
-                  _ ->
-                    Error([
-                      decode.DecodeError(
-                        expected: "String",
-                        found: "invalid extension value",
-                        path: ["extension", int.to_string(index)],
+                  UsCorePatientParsedExtensionSliceBirthsex(value) ->
+                    Ok(
+                      UsCorePatientExtensionSliceAccumulator(
+                        ..accumulator,
+                        birthsex: Some(value),
                       ),
-                    ])
-                }
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex" ->
-                case extension.ext {
-                  ct.ExtSimple(ct.ExtensionValueCode(value)) ->
-                    case valuesets.two16840111376214102124_from_code(value) {
-                      Ok(value) ->
-                        Ok(
-                          UsCorePatientExtensionSliceAccumulator(
-                            ..accumulator,
-                            birthsex: Some(value),
-                          ),
-                        )
-                      Error(_) ->
-                        Error([
-                          decode.DecodeError(
-                            expected: "valuesets.Two16840111376214102124",
-                            found: "invalid extension value",
-                            path: ["extension", int.to_string(index)],
-                          ),
-                        ])
-                    }
-                  _ ->
-                    Error([
-                      decode.DecodeError(
-                        expected: "valuesets.Two16840111376214102124",
-                        found: "invalid extension value",
-                        path: ["extension", int.to_string(index)],
-                      ),
-                    ])
-                }
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation" ->
-                case parse_us_core_tribal_affiliation(extension) {
-                  Ok(value) ->
+                    )
+                  UsCorePatientParsedExtensionSliceTribalaffiliation(value) ->
                     Ok(
                       UsCorePatientExtensionSliceAccumulator(
                         ..accumulator,
@@ -3726,58 +3634,28 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
                         ],
                       ),
                     )
-                  Error(reason) ->
-                    Error([
-                      decode.DecodeError(
-                        expected: "ct.UsCoreTribalAffiliation",
-                        found: reason,
-                        path: ["extension", int.to_string(index)],
-                      ),
-                    ])
-                }
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity" ->
-                case parse_us_core_ethnicity(extension) {
-                  Ok(value) ->
+                  UsCorePatientParsedExtensionSliceEthnicity(value) ->
                     Ok(
                       UsCorePatientExtensionSliceAccumulator(
                         ..accumulator,
                         ethnicity: Some(value),
                       ),
                     )
-                  Error(reason) ->
-                    Error([
-                      decode.DecodeError(
-                        expected: "ct.UsCoreEthnicity",
-                        found: reason,
-                        path: ["extension", int.to_string(index)],
-                      ),
-                    ])
-                }
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race" ->
-                case parse_us_core_race(extension) {
-                  Ok(value) ->
+                  UsCorePatientParsedExtensionSliceRace(value) ->
                     Ok(
                       UsCorePatientExtensionSliceAccumulator(
                         ..accumulator,
                         race: Some(value),
                       ),
                     )
-                  Error(reason) ->
-                    Error([
-                      decode.DecodeError(
-                        expected: "ct.UsCoreRace",
-                        found: reason,
-                        path: ["extension", int.to_string(index)],
+                  UsCorePatientParsedExtensionSliceOpen(value) ->
+                    Ok(
+                      UsCorePatientExtensionSliceAccumulator(
+                        ..accumulator,
+                        open: [value, ..accumulator.open],
                       ),
-                    ])
+                    )
                 }
-              _ ->
-                Ok(
-                  UsCorePatientExtensionSliceAccumulator(..accumulator, open: [
-                    extension,
-                    ..accumulator.open
-                  ]),
-                )
             }
         }
       },
@@ -3794,15 +3672,6 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
         open: list.reverse(accumulator.open),
       ))
     Error(errors) -> Error(errors)
-  }
-  let extension_slices_decoder = case extension_slices {
-    Ok(extension_slices) -> decode.success(extension_slices)
-    Error(errors) ->
-      decode.failure(
-        UsCorePatientExtensionSlices([], None, None, [], None, None, []),
-        "UsCorePatient slices",
-      )
-      |> decode.map_errors(fn(_) { errors })
   }
   use contained <- decode.optional_field(
     "contained",
@@ -3830,25 +3699,36 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
     decode.optional(ct.meta_decoder()),
   )
   use id <- decode.optional_field("id", None, decode.optional(decode.string))
+  let extension_slices_decoder = case extension_slices {
+    Ok(value) -> decode.success(value)
+    Error(errors) ->
+      decode.failure(
+        UsCorePatientExtensionSlices([], None, None, [], None, None, []),
+        "UsCorePatient slices",
+      )
+      |> decode.map_errors(fn(_) { errors })
+  }
   use _ <- decode.field(
     "resourceType",
-    decode.then(decode.string, fn(resource_type) {
-      case resource_type {
-        "Patient" -> decode.success(resource_type)
-        _ -> decode.failure(resource_type, "Patient")
+    decode.then(decode.dynamic, fn(raw) {
+      case decode.run(raw, decode.string) {
+        Error(errors) ->
+          decode.failure(Nil, "Patient") |> decode.map_errors(fn(_) { errors })
+        Ok(value) ->
+          case value == "Patient" {
+            True -> decode.success(Nil)
+            False ->
+              decode.failure(Nil, "Patient")
+              |> decode.map_errors(fn(errors) {
+                list.map(errors, fn(error) {
+                  decode.DecodeError(..error, found: value)
+                })
+              })
+          }
       }
     }),
   )
   use extension_slices <- decode.then(extension_slices_decoder)
-  let UsCorePatientExtensionSlices(
-    gender_identity:,
-    sex:,
-    birthsex:,
-    tribal_affiliation:,
-    ethnicity:,
-    race:,
-    open: extension,
-  ) = extension_slices
   decode.success(UsCorePatient(
     link:,
     managing_organization:,
@@ -3867,13 +3747,13 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
     active:,
     identifier:,
     modifier_extension:,
-    gender_identity:,
-    sex:,
-    birthsex:,
-    tribal_affiliation:,
-    ethnicity:,
-    race:,
-    extension:,
+    gender_identity: extension_slices.gender_identity,
+    sex: extension_slices.sex,
+    birthsex: extension_slices.birthsex,
+    tribal_affiliation: extension_slices.tribal_affiliation,
+    ethnicity: extension_slices.ethnicity,
+    race: extension_slices.race,
+    extension: extension_slices.open,
     contained:,
     text:,
     language:,

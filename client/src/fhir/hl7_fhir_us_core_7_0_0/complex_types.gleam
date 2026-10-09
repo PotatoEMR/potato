@@ -9,6 +9,7 @@ import gleam/int
 import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/result
 
 /// 1..*
 pub type List1(a) {
@@ -44,27 +45,18 @@ pub fn bound_coding_from_coding(
   binding_from_code_and_system: fn(String, String) ->
     Result(required_binding, Nil),
 ) -> Result(BoundCoding(required_binding), Nil) {
-  let Coding(
-    id:,
-    extension:,
-    system:,
-    version:,
-    code:,
-    display:,
-    user_selected:,
-  ) = coding
-  case code, system {
+  case coding.code, coding.system {
     Some(code), Some(system) ->
       case binding_from_code_and_system(code, system) {
         Error(Nil) -> Error(Nil)
         Ok(code) ->
           Ok(BoundCoding(
-            id:,
-            extension:,
+            id: coding.id,
+            extension: coding.extension,
             code:,
-            version:,
-            display:,
-            user_selected:,
+            version: coding.version,
+            display: coding.display,
+            user_selected: coding.user_selected,
           ))
       }
     _, _ -> Error(Nil)
@@ -76,35 +68,30 @@ pub fn bound_coding_to_json(
   get_code: fn(required_binding) -> String,
   get_system: fn(required_binding) -> String,
 ) -> Json {
-  let BoundCoding(
-    user_selected:,
-    display:,
-    code: bound_code,
-    version:,
-    extension:,
-    id:,
-  ) = coding
   let fields = [
-    #("code", json.string(get_code(bound_code))),
-    #("system", json.string(get_system(bound_code))),
+    #("code", json.string(get_code(coding.code))),
+    #("system", json.string(get_system(coding.code))),
   ]
-  let fields = case user_selected {
+  let fields = case coding.user_selected {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
-  let fields = case display {
+  let fields = case coding.display {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case version {
+  let fields = case coding.version {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case coding.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(coding.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case coding.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -185,11 +172,16 @@ pub fn bound_codeableconcept_from_codeableconcept(
   binding_from_code_and_system: fn(String, String) ->
     Result(required_binding, Nil),
 ) -> Result(BoundCodeableconcept(required_binding), Nil) {
-  let Codeableconcept(id:, extension:, coding:, text:) = concept
-  case find_valueset_coding(coding, binding_from_code_and_system) {
+  case find_valueset_coding(concept.coding, binding_from_code_and_system) {
     Error(Nil) -> Error(Nil)
     Ok(#(required, more)) ->
-      Ok(BoundCodeableconcept(id:, extension:, required:, more:, text:))
+      Ok(BoundCodeableconcept(
+        id: concept.id,
+        extension: concept.extension,
+        required:,
+        more:,
+        text: concept.text,
+      ))
   }
 }
 
@@ -198,21 +190,23 @@ pub fn bound_codeableconcept_to_json(
   get_code: fn(required_binding) -> String,
   get_system: fn(required_binding) -> String,
 ) -> Json {
-  let BoundCodeableconcept(text:, required:, more:, extension:, id:) =
-    codeableconcept
-  let required_coding = bound_coding_to_json(required, get_code, get_system)
-  let other_codings = list.map(more, coding_to_json)
+  let required_coding =
+    bound_coding_to_json(codeableconcept.required, get_code, get_system)
+  let other_codings = list.map(codeableconcept.more, coding_to_json)
   let all_codings = json.preprocessed_array([required_coding, ..other_codings])
   let fields = [#("coding", all_codings)]
-  let fields = case text {
+  let fields = case codeableconcept.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case codeableconcept.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(codeableconcept.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case codeableconcept.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -335,20 +329,25 @@ pub fn bound_quantity_from_quantity(
   binding_from_code_and_system: fn(String, String) ->
     Result(required_binding, Nil),
 ) -> Result(BoundQuantity(required_binding), Nil) {
-  let Quantity(id:, extension:, value:, comparator:, unit:, system:, code:) =
-    quantity
-  case code, system {
+  case quantity.code, quantity.system {
     None, None ->
-      Ok(BoundQuantity(id:, extension:, value:, comparator:, unit:, code: None))
+      Ok(BoundQuantity(
+        id: quantity.id,
+        extension: quantity.extension,
+        value: quantity.value,
+        comparator: quantity.comparator,
+        unit: quantity.unit,
+        code: None,
+      ))
     Some(code), Some(system) ->
       case binding_from_code_and_system(code, system) {
         Ok(code) ->
           Ok(BoundQuantity(
-            id:,
-            extension:,
-            value:,
-            comparator:,
-            unit:,
+            id: quantity.id,
+            extension: quantity.extension,
+            value: quantity.value,
+            comparator: quantity.comparator,
+            unit: quantity.unit,
             code: Some(code),
           ))
         Error(_) -> Error(Nil)
@@ -362,35 +361,36 @@ pub fn bound_quantity_to_json(
   get_code: fn(required_binding) -> String,
   get_system: fn(required_binding) -> String,
 ) -> Json {
-  let BoundQuantity(code:, unit:, comparator:, value:, extension:, id:) =
-    quantity
-  let fields = case code {
+  let fields = case quantity.code {
     Some(bound_code) -> [
       #("code", json.string(get_code(bound_code))),
       #("system", json.string(get_system(bound_code))),
     ]
     None -> []
   }
-  let fields = case unit {
+  let fields = case quantity.unit {
     Some(v) -> [#("unit", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case comparator {
+  let fields = case quantity.comparator {
     Some(v) -> [
       #("comparator", valuesets.quantitycomparator_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case value {
+  let fields = case quantity.value {
     Some(v) -> [#("value", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case quantity.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(quantity.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case quantity.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -501,66 +501,55 @@ pub fn address_new() -> Address {
 }
 
 pub fn address_to_json(address: Address) -> Json {
-  let Address(
-    period:,
-    country:,
-    postal_code:,
-    state:,
-    district:,
-    city:,
-    line:,
-    text:,
-    type_:,
-    use_:,
-    extension:,
-    id:,
-  ) = address
   let fields = []
-  let fields = case period {
+  let fields = case address.period {
     Some(v) -> [#("period", period_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case country {
+  let fields = case address.country {
     Some(v) -> [#("country", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case postal_code {
+  let fields = case address.postal_code {
     Some(v) -> [#("postalCode", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case state {
+  let fields = case address.state {
     Some(v) -> [#("state", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case district {
+  let fields = case address.district {
     Some(v) -> [#("district", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case city {
+  let fields = case address.city {
     Some(v) -> [#("city", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case line {
+  let fields = case address.line {
     [] -> fields
-    _ -> [#("line", json.array(line, json.string)), ..fields]
+    _ -> [#("line", json.array(address.line, json.string)), ..fields]
   }
-  let fields = case text {
+  let fields = case address.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case type_ {
+  let fields = case address.type_ {
     Some(v) -> [#("type", valuesets.addresstype_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case use_ {
+  let fields = case address.use_ {
     Some(v) -> [#("use", valuesets.addressuse_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case address.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(address.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case address.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -663,36 +652,38 @@ pub fn age_new() -> Age {
 }
 
 pub fn age_to_json(age: Age) -> Json {
-  let Age(code:, system:, unit:, comparator:, value:, extension:, id:) = age
   let fields = []
-  let fields = case code {
+  let fields = case age.code {
     Some(v) -> [#("code", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case system {
+  let fields = case age.system {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case unit {
+  let fields = case age.unit {
     Some(v) -> [#("unit", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case comparator {
+  let fields = case age.comparator {
     Some(v) -> [
       #("comparator", valuesets.quantitycomparator_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case value {
+  let fields = case age.value {
     Some(v) -> [#("value", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case age.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(age.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case age.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -783,15 +774,14 @@ pub fn annotation_new(text text: String) -> Annotation {
 }
 
 pub fn annotation_to_json(annotation: Annotation) -> Json {
-  let Annotation(text:, time:, author:, extension:, id:) = annotation
   let fields = [
-    #("text", json.string(text)),
+    #("text", json.string(annotation.text)),
   ]
-  let fields = case time {
+  let fields = case annotation.time {
     Some(v) -> [#("time", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case author {
+  let fields = case annotation.author {
     Some(v) -> [
       #(
         "author"
@@ -805,11 +795,14 @@ pub fn annotation_to_json(annotation: Annotation) -> Json {
     ]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case annotation.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(annotation.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case annotation.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -866,56 +859,47 @@ pub fn attachment_new() -> Attachment {
 }
 
 pub fn attachment_to_json(attachment: Attachment) -> Json {
-  let Attachment(
-    creation:,
-    title:,
-    hash:,
-    size:,
-    url:,
-    data:,
-    language:,
-    content_type:,
-    extension:,
-    id:,
-  ) = attachment
   let fields = []
-  let fields = case creation {
+  let fields = case attachment.creation {
     Some(v) -> [#("creation", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case title {
+  let fields = case attachment.title {
     Some(v) -> [#("title", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case hash {
+  let fields = case attachment.hash {
     Some(v) -> [#("hash", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case size {
+  let fields = case attachment.size {
     Some(v) -> [#("size", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case url {
+  let fields = case attachment.url {
     Some(v) -> [#("url", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case data {
+  let fields = case attachment.data {
     Some(v) -> [#("data", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case language {
+  let fields = case attachment.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case content_type {
+  let fields = case attachment.content_type {
     Some(v) -> [#("contentType", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case attachment.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(attachment.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case attachment.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -991,21 +975,26 @@ pub fn codeableconcept_new() -> Codeableconcept {
 }
 
 pub fn codeableconcept_to_json(codeableconcept: Codeableconcept) -> Json {
-  let Codeableconcept(text:, coding:, extension:, id:) = codeableconcept
   let fields = []
-  let fields = case text {
+  let fields = case codeableconcept.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case coding {
+  let fields = case codeableconcept.coding {
     [] -> fields
-    _ -> [#("coding", json.array(coding, coding_to_json)), ..fields]
+    _ -> [
+      #("coding", json.array(codeableconcept.coding, coding_to_json)),
+      ..fields
+    ]
   }
-  let fields = case extension {
+  let fields = case codeableconcept.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(codeableconcept.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case codeableconcept.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1059,41 +1048,35 @@ pub fn coding_new() -> Coding {
 }
 
 pub fn coding_to_json(coding: Coding) -> Json {
-  let Coding(
-    user_selected:,
-    display:,
-    code:,
-    version:,
-    system:,
-    extension:,
-    id:,
-  ) = coding
   let fields = []
-  let fields = case user_selected {
+  let fields = case coding.user_selected {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
-  let fields = case display {
+  let fields = case coding.display {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case code {
+  let fields = case coding.code {
     Some(v) -> [#("code", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case version {
+  let fields = case coding.version {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case system {
+  let fields = case coding.system {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case coding.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(coding.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case coding.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1159,21 +1142,26 @@ pub fn contactdetail_new() -> Contactdetail {
 }
 
 pub fn contactdetail_to_json(contactdetail: Contactdetail) -> Json {
-  let Contactdetail(telecom:, name:, extension:, id:) = contactdetail
   let fields = []
-  let fields = case telecom {
+  let fields = case contactdetail.telecom {
     [] -> fields
-    _ -> [#("telecom", json.array(telecom, contactpoint_to_json)), ..fields]
+    _ -> [
+      #("telecom", json.array(contactdetail.telecom, contactpoint_to_json)),
+      ..fields
+    ]
   }
-  let fields = case name {
+  let fields = case contactdetail.name {
     Some(v) -> [#("name", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case contactdetail.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(contactdetail.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case contactdetail.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1227,34 +1215,35 @@ pub fn contactpoint_new() -> Contactpoint {
 }
 
 pub fn contactpoint_to_json(contactpoint: Contactpoint) -> Json {
-  let Contactpoint(period:, rank:, use_:, value:, system:, extension:, id:) =
-    contactpoint
   let fields = []
-  let fields = case period {
+  let fields = case contactpoint.period {
     Some(v) -> [#("period", period_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case rank {
+  let fields = case contactpoint.rank {
     Some(v) -> [#("rank", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case use_ {
+  let fields = case contactpoint.use_ {
     Some(v) -> [#("use", valuesets.contactpointuse_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case value {
+  let fields = case contactpoint.value {
     Some(v) -> [#("value", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case system {
+  let fields = case contactpoint.system {
     Some(v) -> [#("system", valuesets.contactpointsystem_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case contactpoint.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(contactpoint.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case contactpoint.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1320,20 +1309,25 @@ pub fn contributor_new(
 }
 
 pub fn contributor_to_json(contributor: Contributor) -> Json {
-  let Contributor(contact:, name:, type_:, extension:, id:) = contributor
   let fields = [
-    #("name", json.string(name)),
-    #("type", valuesets.contributortype_to_json(type_)),
+    #("name", json.string(contributor.name)),
+    #("type", valuesets.contributortype_to_json(contributor.type_)),
   ]
-  let fields = case contact {
+  let fields = case contributor.contact {
     [] -> fields
-    _ -> [#("contact", json.array(contact, contactdetail_to_json)), ..fields]
+    _ -> [
+      #("contact", json.array(contributor.contact, contactdetail_to_json)),
+      ..fields
+    ]
   }
-  let fields = case extension {
+  let fields = case contributor.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(contributor.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case contributor.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1384,36 +1378,38 @@ pub fn count_new() -> Count {
 }
 
 pub fn count_to_json(count: Count) -> Json {
-  let Count(code:, system:, unit:, comparator:, value:, extension:, id:) = count
   let fields = []
-  let fields = case code {
+  let fields = case count.code {
     Some(v) -> [#("code", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case system {
+  let fields = case count.system {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case unit {
+  let fields = case count.unit {
     Some(v) -> [#("unit", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case comparator {
+  let fields = case count.comparator {
     Some(v) -> [
       #("comparator", valuesets.quantitycomparator_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case value {
+  let fields = case count.value {
     Some(v) -> [#("value", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case count.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(count.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case count.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1619,17 +1615,24 @@ pub fn datarequirement_sort_new(
 pub fn datarequirement_sort_to_json(
   datarequirement_sort: DatarequirementSort,
 ) -> Json {
-  let DatarequirementSort(direction:, path:, extension:, id:) =
-    datarequirement_sort
   let fields = [
-    #("direction", valuesets.sortdirection_to_json(direction)),
-    #("path", json.string(path)),
+    #(
+      "direction",
+      valuesets.sortdirection_to_json(datarequirement_sort.direction),
+    ),
+    #("path", json.string(datarequirement_sort.path)),
   ]
-  let fields = case extension {
+  let fields = case datarequirement_sort.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(datarequirement_sort.extension, extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case datarequirement_sort.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1652,10 +1655,8 @@ pub fn datarequirement_sort_decoder() -> Decoder(DatarequirementSort) {
 pub fn datarequirement_datefilter_to_json(
   datarequirement_datefilter: DatarequirementDatefilter,
 ) -> Json {
-  let DatarequirementDatefilter(value:, search_param:, path:, extension:, id:) =
-    datarequirement_datefilter
   let fields = []
-  let fields = case value {
+  let fields = case datarequirement_datefilter.value {
     Some(v) -> [
       #(
         "value"
@@ -1670,19 +1671,25 @@ pub fn datarequirement_datefilter_to_json(
     ]
     None -> fields
   }
-  let fields = case search_param {
+  let fields = case datarequirement_datefilter.search_param {
     Some(v) -> [#("searchParam", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case path {
+  let fields = case datarequirement_datefilter.path {
     Some(v) -> [#("path", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case datarequirement_datefilter.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(datarequirement_datefilter.extension, extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case datarequirement_datefilter.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1724,36 +1731,37 @@ pub fn datarequirement_datefilter_decoder() -> Decoder(
 pub fn datarequirement_codefilter_to_json(
   datarequirement_codefilter: DatarequirementCodefilter,
 ) -> Json {
-  let DatarequirementCodefilter(
-    code:,
-    value_set:,
-    search_param:,
-    path:,
-    extension:,
-    id:,
-  ) = datarequirement_codefilter
   let fields = []
-  let fields = case code {
+  let fields = case datarequirement_codefilter.code {
     [] -> fields
-    _ -> [#("code", json.array(code, coding_to_json)), ..fields]
+    _ -> [
+      #("code", json.array(datarequirement_codefilter.code, coding_to_json)),
+      ..fields
+    ]
   }
-  let fields = case value_set {
+  let fields = case datarequirement_codefilter.value_set {
     Some(v) -> [#("valueSet", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case search_param {
+  let fields = case datarequirement_codefilter.search_param {
     Some(v) -> [#("searchParam", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case path {
+  let fields = case datarequirement_codefilter.path {
     Some(v) -> [#("path", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case datarequirement_codefilter.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(datarequirement_codefilter.extension, extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case datarequirement_codefilter.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1797,54 +1805,54 @@ pub fn datarequirement_codefilter_decoder() -> Decoder(
 }
 
 pub fn datarequirement_to_json(datarequirement: Datarequirement) -> Json {
-  let Datarequirement(
-    sort:,
-    limit:,
-    date_filter:,
-    code_filter:,
-    must_support:,
-    subject:,
-    profile:,
-    type_:,
-    extension:,
-    id:,
-  ) = datarequirement
   let fields = [
-    #("type", valuesets.alltypes_to_json(type_)),
+    #("type", valuesets.alltypes_to_json(datarequirement.type_)),
   ]
-  let fields = case sort {
+  let fields = case datarequirement.sort {
     [] -> fields
-    _ -> [#("sort", json.array(sort, datarequirement_sort_to_json)), ..fields]
+    _ -> [
+      #("sort", json.array(datarequirement.sort, datarequirement_sort_to_json)),
+      ..fields
+    ]
   }
-  let fields = case limit {
+  let fields = case datarequirement.limit {
     Some(v) -> [#("limit", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case date_filter {
+  let fields = case datarequirement.date_filter {
     [] -> fields
     _ -> [
       #(
         "dateFilter",
-        json.array(date_filter, datarequirement_datefilter_to_json),
+        json.array(
+          datarequirement.date_filter,
+          datarequirement_datefilter_to_json,
+        ),
       ),
       ..fields
     ]
   }
-  let fields = case code_filter {
+  let fields = case datarequirement.code_filter {
     [] -> fields
     _ -> [
       #(
         "codeFilter",
-        json.array(code_filter, datarequirement_codefilter_to_json),
+        json.array(
+          datarequirement.code_filter,
+          datarequirement_codefilter_to_json,
+        ),
       ),
       ..fields
     ]
   }
-  let fields = case must_support {
+  let fields = case datarequirement.must_support {
     [] -> fields
-    _ -> [#("mustSupport", json.array(must_support, json.string)), ..fields]
+    _ -> [
+      #("mustSupport", json.array(datarequirement.must_support, json.string)),
+      ..fields
+    ]
   }
-  let fields = case subject {
+  let fields = case datarequirement.subject {
     Some(v) -> [
       #(
         "subject"
@@ -1858,15 +1866,21 @@ pub fn datarequirement_to_json(datarequirement: Datarequirement) -> Json {
     ]
     None -> fields
   }
-  let fields = case profile {
+  let fields = case datarequirement.profile {
     [] -> fields
-    _ -> [#("profile", json.array(profile, json.string)), ..fields]
+    _ -> [
+      #("profile", json.array(datarequirement.profile, json.string)),
+      ..fields
+    ]
   }
-  let fields = case extension {
+  let fields = case datarequirement.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(datarequirement.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case datarequirement.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -1949,37 +1963,38 @@ pub fn distance_new() -> Distance {
 }
 
 pub fn distance_to_json(distance: Distance) -> Json {
-  let Distance(code:, system:, unit:, comparator:, value:, extension:, id:) =
-    distance
   let fields = []
-  let fields = case code {
+  let fields = case distance.code {
     Some(v) -> [#("code", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case system {
+  let fields = case distance.system {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case unit {
+  let fields = case distance.unit {
     Some(v) -> [#("unit", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case comparator {
+  let fields = case distance.comparator {
     Some(v) -> [
       #("comparator", valuesets.quantitycomparator_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case value {
+  let fields = case distance.value {
     Some(v) -> [#("value", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case distance.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(distance.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case distance.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -2177,10 +2192,8 @@ pub fn dosage_doseandrate_new() -> DosageDoseandrate {
 pub fn dosage_doseandrate_to_json(
   dosage_doseandrate: DosageDoseandrate,
 ) -> Json {
-  let DosageDoseandrate(rate:, dose:, type_:, extension:, id:) =
-    dosage_doseandrate
   let fields = []
-  let fields = case rate {
+  let fields = case dosage_doseandrate.rate {
     Some(v) -> [
       #(
         "rate"
@@ -2195,7 +2208,7 @@ pub fn dosage_doseandrate_to_json(
     ]
     None -> fields
   }
-  let fields = case dose {
+  let fields = case dosage_doseandrate.dose {
     Some(v) -> [
       #(
         "dose"
@@ -2209,15 +2222,21 @@ pub fn dosage_doseandrate_to_json(
     ]
     None -> fields
   }
-  let fields = case type_ {
+  let fields = case dosage_doseandrate.type_ {
     Some(v) -> [#("type", codeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case dosage_doseandrate.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(dosage_doseandrate.extension, extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case dosage_doseandrate.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -2243,57 +2262,42 @@ pub fn dosage_doseandrate_decoder() -> Decoder(DosageDoseandrate) {
 }
 
 pub fn dosage_to_json(dosage: Dosage) -> Json {
-  let Dosage(
-    max_dose_per_lifetime:,
-    max_dose_per_administration:,
-    max_dose_per_period:,
-    dose_and_rate:,
-    method:,
-    route:,
-    site:,
-    as_needed:,
-    timing:,
-    patient_instruction:,
-    additional_instruction:,
-    text:,
-    sequence:,
-    modifier_extension:,
-    extension:,
-    id:,
-  ) = dosage
   let fields = []
-  let fields = case max_dose_per_lifetime {
+  let fields = case dosage.max_dose_per_lifetime {
     Some(v) -> [#("maxDosePerLifetime", quantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case max_dose_per_administration {
+  let fields = case dosage.max_dose_per_administration {
     Some(v) -> [#("maxDosePerAdministration", quantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case max_dose_per_period {
+  let fields = case dosage.max_dose_per_period {
     Some(v) -> [#("maxDosePerPeriod", ratio_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case dose_and_rate {
+  let fields = case dosage.dose_and_rate {
     [] -> fields
     _ -> [
-      #("doseAndRate", json.array(dose_and_rate, dosage_doseandrate_to_json)),
+      #(
+        "doseAndRate",
+        json.array(dosage.dose_and_rate, dosage_doseandrate_to_json),
+      ),
       ..fields
     ]
   }
-  let fields = case method {
+  let fields = case dosage.method {
     Some(v) -> [#("method", codeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case route {
+  let fields = case dosage.route {
     Some(v) -> [#("route", codeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case site {
+  let fields = case dosage.site {
     Some(v) -> [#("site", codeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case as_needed {
+  let fields = case dosage.as_needed {
     Some(v) -> [
       #(
         "asNeeded"
@@ -2307,44 +2311,50 @@ pub fn dosage_to_json(dosage: Dosage) -> Json {
     ]
     None -> fields
   }
-  let fields = case timing {
+  let fields = case dosage.timing {
     Some(v) -> [#("timing", timing_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case patient_instruction {
+  let fields = case dosage.patient_instruction {
     Some(v) -> [#("patientInstruction", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case additional_instruction {
+  let fields = case dosage.additional_instruction {
     [] -> fields
     _ -> [
       #(
         "additionalInstruction",
-        json.array(additional_instruction, codeableconcept_to_json),
+        json.array(dosage.additional_instruction, codeableconcept_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case text {
+  let fields = case dosage.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case sequence {
+  let fields = case dosage.sequence {
     Some(v) -> [#("sequence", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case modifier_extension {
+  let fields = case dosage.modifier_extension {
     [] -> fields
     _ -> [
-      #("modifierExtension", json.array(modifier_extension, extension_to_json)),
+      #(
+        "modifierExtension",
+        json.array(dosage.modifier_extension, extension_to_json),
+      ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case dosage.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(dosage.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case dosage.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -2471,37 +2481,38 @@ pub fn duration_new() -> Duration {
 }
 
 pub fn duration_to_json(duration: Duration) -> Json {
-  let Duration(code:, system:, unit:, comparator:, value:, extension:, id:) =
-    duration
   let fields = []
-  let fields = case code {
+  let fields = case duration.code {
     Some(v) -> [#("code", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case system {
+  let fields = case duration.system {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case unit {
+  let fields = case duration.unit {
     Some(v) -> [#("unit", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case comparator {
+  let fields = case duration.comparator {
     Some(v) -> [
       #("comparator", valuesets.quantitycomparator_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case value {
+  let fields = case duration.value {
     Some(v) -> [#("value", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case duration.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(duration.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case duration.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -2578,39 +2589,33 @@ pub fn expression_new(language language: String) -> Expression {
 }
 
 pub fn expression_to_json(expression: Expression) -> Json {
-  let Expression(
-    reference:,
-    expression:,
-    language:,
-    name:,
-    description:,
-    extension:,
-    id:,
-  ) = expression
   let fields = [
-    #("language", json.string(language)),
+    #("language", json.string(expression.language)),
   ]
-  let fields = case reference {
+  let fields = case expression.reference {
     Some(v) -> [#("reference", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case expression {
+  let fields = case expression.expression {
     Some(v) -> [#("expression", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case name {
+  let fields = case expression.name {
     Some(v) -> [#("name", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case description {
+  let fields = case expression.description {
     Some(v) -> [#("description", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case expression.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(expression.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case expression.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -2723,13 +2728,12 @@ pub type ExtensionValue {
 }
 
 pub fn extension_to_json(extension: Extension) -> Json {
-  let Extension(id:, url:, ext:) = extension
-  let fields = [#("url", json.string(url))]
-  let fields = case id {
+  let fields = [#("url", json.string(extension.url))]
+  let fields = case extension.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = [ext_simple_or_complex_to_json(ext), ..fields]
+  let fields = [ext_simple_or_complex_to_json(extension.ext), ..fields]
   json.object(fields)
 }
 
@@ -3077,51 +3081,43 @@ pub fn humanname_new() -> Humanname {
 }
 
 pub fn humanname_to_json(humanname: Humanname) -> Json {
-  let Humanname(
-    period:,
-    suffix:,
-    prefix:,
-    given:,
-    family:,
-    text:,
-    use_:,
-    extension:,
-    id:,
-  ) = humanname
   let fields = []
-  let fields = case period {
+  let fields = case humanname.period {
     Some(v) -> [#("period", period_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case suffix {
+  let fields = case humanname.suffix {
     [] -> fields
-    _ -> [#("suffix", json.array(suffix, json.string)), ..fields]
+    _ -> [#("suffix", json.array(humanname.suffix, json.string)), ..fields]
   }
-  let fields = case prefix {
+  let fields = case humanname.prefix {
     [] -> fields
-    _ -> [#("prefix", json.array(prefix, json.string)), ..fields]
+    _ -> [#("prefix", json.array(humanname.prefix, json.string)), ..fields]
   }
-  let fields = case given {
+  let fields = case humanname.given {
     [] -> fields
-    _ -> [#("given", json.array(given, json.string)), ..fields]
+    _ -> [#("given", json.array(humanname.given, json.string)), ..fields]
   }
-  let fields = case family {
+  let fields = case humanname.family {
     Some(v) -> [#("family", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case text {
+  let fields = case humanname.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case use_ {
+  let fields = case humanname.use_ {
     Some(v) -> [#("use", valuesets.nameuse_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case humanname.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(humanname.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case humanname.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3200,46 +3196,39 @@ pub fn identifier_new() -> Identifier {
 }
 
 pub fn identifier_to_json(identifier: Identifier) -> Json {
-  let Identifier(
-    assigner:,
-    period:,
-    value:,
-    system:,
-    type_:,
-    use_:,
-    extension:,
-    id:,
-  ) = identifier
   let fields = []
-  let fields = case assigner {
+  let fields = case identifier.assigner {
     Some(v) -> [#("assigner", reference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case period {
+  let fields = case identifier.period {
     Some(v) -> [#("period", period_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case value {
+  let fields = case identifier.value {
     Some(v) -> [#("value", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case system {
+  let fields = case identifier.system {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case type_ {
+  let fields = case identifier.type_ {
     Some(v) -> [#("type", codeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case use_ {
+  let fields = case identifier.use_ {
     Some(v) -> [#("use", valuesets.identifieruse_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case identifier.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(identifier.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case identifier.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3324,46 +3313,39 @@ pub fn meta_new() -> Meta {
 }
 
 pub fn meta_to_json(meta: Meta) -> Json {
-  let Meta(
-    tag:,
-    security:,
-    profile:,
-    source:,
-    last_updated:,
-    version_id:,
-    extension:,
-    id:,
-  ) = meta
   let fields = []
-  let fields = case tag {
+  let fields = case meta.tag {
     [] -> fields
-    _ -> [#("tag", json.array(tag, coding_to_json)), ..fields]
+    _ -> [#("tag", json.array(meta.tag, coding_to_json)), ..fields]
   }
-  let fields = case security {
+  let fields = case meta.security {
     [] -> fields
-    _ -> [#("security", json.array(security, coding_to_json)), ..fields]
+    _ -> [#("security", json.array(meta.security, coding_to_json)), ..fields]
   }
-  let fields = case profile {
+  let fields = case meta.profile {
     [] -> fields
-    _ -> [#("profile", json.array(profile, json.string)), ..fields]
+    _ -> [#("profile", json.array(meta.profile, json.string)), ..fields]
   }
-  let fields = case source {
+  let fields = case meta.source {
     Some(v) -> [#("source", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case last_updated {
+  let fields = case meta.last_updated {
     Some(v) -> [#("lastUpdated", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case version_id {
+  let fields = case meta.version_id {
     Some(v) -> [#("versionId", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case meta.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(meta.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case meta.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3431,21 +3413,23 @@ pub fn money_new() -> Money {
 }
 
 pub fn money_to_json(money: Money) -> Json {
-  let Money(currency:, value:, extension:, id:) = money
   let fields = []
-  let fields = case currency {
+  let fields = case money.currency {
     Some(v) -> [#("currency", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case value {
+  let fields = case money.value {
     Some(v) -> [#("value", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case money.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(money.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case money.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3491,16 +3475,18 @@ pub fn narrative_new(
 }
 
 pub fn narrative_to_json(narrative: Narrative) -> Json {
-  let Narrative(div:, status:, extension:, id:) = narrative
   let fields = [
-    #("div", json.string(div)),
-    #("status", valuesets.narrativestatus_to_json(status)),
+    #("div", json.string(narrative.div)),
+    #("status", valuesets.narrativestatus_to_json(narrative.status)),
   ]
-  let fields = case extension {
+  let fields = case narrative.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(narrative.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case narrative.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3555,46 +3541,41 @@ pub fn parameterdefinition_new(
 pub fn parameterdefinition_to_json(
   parameterdefinition: Parameterdefinition,
 ) -> Json {
-  let Parameterdefinition(
-    profile:,
-    type_:,
-    documentation:,
-    max:,
-    min:,
-    use_:,
-    name:,
-    extension:,
-    id:,
-  ) = parameterdefinition
   let fields = [
-    #("type", valuesets.alltypes_to_json(type_)),
-    #("use", valuesets.operationparameteruse_to_json(use_)),
+    #("type", valuesets.alltypes_to_json(parameterdefinition.type_)),
+    #("use", valuesets.operationparameteruse_to_json(parameterdefinition.use_)),
   ]
-  let fields = case profile {
+  let fields = case parameterdefinition.profile {
     Some(v) -> [#("profile", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case documentation {
+  let fields = case parameterdefinition.documentation {
     Some(v) -> [#("documentation", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case max {
+  let fields = case parameterdefinition.max {
     Some(v) -> [#("max", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case min {
+  let fields = case parameterdefinition.min {
     Some(v) -> [#("min", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case name {
+  let fields = case parameterdefinition.name {
     Some(v) -> [#("name", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case parameterdefinition.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #(
+        "extension",
+        json.array(parameterdefinition.extension, extension_to_json),
+      ),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case parameterdefinition.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3656,21 +3637,23 @@ pub fn period_new() -> Period {
 }
 
 pub fn period_to_json(period: Period) -> Json {
-  let Period(end:, start:, extension:, id:) = period
   let fields = []
-  let fields = case end {
+  let fields = case period.end {
     Some(v) -> [#("end", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case start {
+  let fields = case period.start {
     Some(v) -> [#("start", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case period.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(period.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case period.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3724,37 +3707,38 @@ pub fn quantity_new() -> Quantity {
 }
 
 pub fn quantity_to_json(quantity: Quantity) -> Json {
-  let Quantity(code:, system:, unit:, comparator:, value:, extension:, id:) =
-    quantity
   let fields = []
-  let fields = case code {
+  let fields = case quantity.code {
     Some(v) -> [#("code", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case system {
+  let fields = case quantity.system {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case unit {
+  let fields = case quantity.unit {
     Some(v) -> [#("unit", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case comparator {
+  let fields = case quantity.comparator {
     Some(v) -> [
       #("comparator", valuesets.quantitycomparator_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case value {
+  let fields = case quantity.value {
     Some(v) -> [#("value", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case quantity.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(quantity.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case quantity.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3820,21 +3804,23 @@ pub fn range_new() -> Range {
 }
 
 pub fn range_to_json(range: Range) -> Json {
-  let Range(high:, low:, extension:, id:) = range
   let fields = []
-  let fields = case high {
+  let fields = case range.high {
     Some(v) -> [#("high", quantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case low {
+  let fields = case range.low {
     Some(v) -> [#("low", quantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case range.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(range.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case range.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3877,21 +3863,23 @@ pub fn ratio_new() -> Ratio {
 }
 
 pub fn ratio_to_json(ratio: Ratio) -> Json {
-  let Ratio(denominator:, numerator:, extension:, id:) = ratio
   let fields = []
-  let fields = case denominator {
+  let fields = case ratio.denominator {
     Some(v) -> [#("denominator", quantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case numerator {
+  let fields = case ratio.numerator {
     Some(v) -> [#("numerator", quantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case ratio.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(ratio.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case ratio.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -3943,30 +3931,31 @@ pub fn reference_new() -> Reference {
 }
 
 pub fn reference_to_json(reference: Reference) -> Json {
-  let Reference(display:, identifier:, type_:, reference:, extension:, id:) =
-    reference
   let fields = []
-  let fields = case display {
+  let fields = case reference.display {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier {
+  let fields = case reference.identifier {
     Some(v) -> [#("identifier", identifier_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case type_ {
+  let fields = case reference.type_ {
     Some(v) -> [#("type", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case reference {
+  let fields = case reference.reference {
     Some(v) -> [#("reference", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case reference.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(reference.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case reference.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4043,49 +4032,41 @@ pub fn relatedartifact_new(
 }
 
 pub fn relatedartifact_to_json(relatedartifact: Relatedartifact) -> Json {
-  let Relatedartifact(
-    resource:,
-    document:,
-    url:,
-    citation:,
-    display:,
-    label:,
-    type_:,
-    extension:,
-    id:,
-  ) = relatedartifact
   let fields = [
-    #("type", valuesets.relatedartifacttype_to_json(type_)),
+    #("type", valuesets.relatedartifacttype_to_json(relatedartifact.type_)),
   ]
-  let fields = case resource {
+  let fields = case relatedartifact.resource {
     Some(v) -> [#("resource", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case document {
+  let fields = case relatedartifact.document {
     Some(v) -> [#("document", attachment_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case url {
+  let fields = case relatedartifact.url {
     Some(v) -> [#("url", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case citation {
+  let fields = case relatedartifact.citation {
     Some(v) -> [#("citation", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case display {
+  let fields = case relatedartifact.display {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case label {
+  let fields = case relatedartifact.label {
     Some(v) -> [#("label", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case relatedartifact.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(relatedartifact.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case relatedartifact.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4174,43 +4155,35 @@ pub fn sampleddata_new(
 }
 
 pub fn sampleddata_to_json(sampleddata: Sampleddata) -> Json {
-  let Sampleddata(
-    data:,
-    dimensions:,
-    upper_limit:,
-    lower_limit:,
-    factor:,
-    period:,
-    origin:,
-    extension:,
-    id:,
-  ) = sampleddata
   let fields = [
-    #("dimensions", json.int(dimensions)),
-    #("period", json.float(period)),
-    #("origin", quantity_to_json(origin)),
+    #("dimensions", json.int(sampleddata.dimensions)),
+    #("period", json.float(sampleddata.period)),
+    #("origin", quantity_to_json(sampleddata.origin)),
   ]
-  let fields = case data {
+  let fields = case sampleddata.data {
     Some(v) -> [#("data", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case upper_limit {
+  let fields = case sampleddata.upper_limit {
     Some(v) -> [#("upperLimit", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case lower_limit {
+  let fields = case sampleddata.lower_limit {
     Some(v) -> [#("lowerLimit", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case factor {
+  let fields = case sampleddata.factor {
     Some(v) -> [#("factor", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case sampleddata.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(sampleddata.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case sampleddata.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4295,43 +4268,35 @@ pub fn signature_new(
 }
 
 pub fn signature_to_json(signature: Signature) -> Json {
-  let Signature(
-    data:,
-    sig_format:,
-    target_format:,
-    on_behalf_of:,
-    who:,
-    when:,
-    type_:,
-    extension:,
-    id:,
-  ) = signature
   let fields = [
-    #("who", reference_to_json(who)),
-    #("when", pt.instant_to_json(when)),
-    #("type", list1_to_json(type_, coding_to_json)),
+    #("who", reference_to_json(signature.who)),
+    #("when", pt.instant_to_json(signature.when)),
+    #("type", list1_to_json(signature.type_, coding_to_json)),
   ]
-  let fields = case data {
+  let fields = case signature.data {
     Some(v) -> [#("data", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case sig_format {
+  let fields = case signature.sig_format {
     Some(v) -> [#("sigFormat", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case target_format {
+  let fields = case signature.target_format {
     Some(v) -> [#("targetFormat", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case on_behalf_of {
+  let fields = case signature.on_behalf_of {
     Some(v) -> [#("onBehalfOf", reference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case signature.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(signature.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case signature.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4479,86 +4444,76 @@ pub fn timing_repeat_new() -> TimingRepeat {
 }
 
 pub fn timing_repeat_to_json(timing_repeat: TimingRepeat) -> Json {
-  let TimingRepeat(
-    offset:,
-    when:,
-    time_of_day:,
-    day_of_week:,
-    period_unit:,
-    period_max:,
-    period:,
-    frequency_max:,
-    frequency:,
-    duration_unit:,
-    duration_max:,
-    duration:,
-    count_max:,
-    count:,
-    bounds:,
-    extension:,
-    id:,
-  ) = timing_repeat
   let fields = []
-  let fields = case offset {
+  let fields = case timing_repeat.offset {
     Some(v) -> [#("offset", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case when {
-    [] -> fields
-    _ -> [#("when", json.array(when, valuesets.eventtiming_to_json)), ..fields]
-  }
-  let fields = case time_of_day {
-    [] -> fields
-    _ -> [#("timeOfDay", json.array(time_of_day, pt.time_to_json)), ..fields]
-  }
-  let fields = case day_of_week {
+  let fields = case timing_repeat.when {
     [] -> fields
     _ -> [
-      #("dayOfWeek", json.array(day_of_week, valuesets.daysofweek_to_json)),
+      #("when", json.array(timing_repeat.when, valuesets.eventtiming_to_json)),
       ..fields
     ]
   }
-  let fields = case period_unit {
+  let fields = case timing_repeat.time_of_day {
+    [] -> fields
+    _ -> [
+      #("timeOfDay", json.array(timing_repeat.time_of_day, pt.time_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case timing_repeat.day_of_week {
+    [] -> fields
+    _ -> [
+      #(
+        "dayOfWeek",
+        json.array(timing_repeat.day_of_week, valuesets.daysofweek_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case timing_repeat.period_unit {
     Some(v) -> [#("periodUnit", valuesets.unitsoftime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case period_max {
+  let fields = case timing_repeat.period_max {
     Some(v) -> [#("periodMax", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case period {
+  let fields = case timing_repeat.period {
     Some(v) -> [#("period", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case frequency_max {
+  let fields = case timing_repeat.frequency_max {
     Some(v) -> [#("frequencyMax", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case frequency {
+  let fields = case timing_repeat.frequency {
     Some(v) -> [#("frequency", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case duration_unit {
+  let fields = case timing_repeat.duration_unit {
     Some(v) -> [#("durationUnit", valuesets.unitsoftime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case duration_max {
+  let fields = case timing_repeat.duration_max {
     Some(v) -> [#("durationMax", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case duration {
+  let fields = case timing_repeat.duration {
     Some(v) -> [#("duration", json.float(v)), ..fields]
     None -> fields
   }
-  let fields = case count_max {
+  let fields = case timing_repeat.count_max {
     Some(v) -> [#("countMax", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case count {
+  let fields = case timing_repeat.count {
     Some(v) -> [#("count", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case bounds {
+  let fields = case timing_repeat.bounds {
     Some(v) -> [
       #(
         "bounds"
@@ -4573,11 +4528,14 @@ pub fn timing_repeat_to_json(timing_repeat: TimingRepeat) -> Json {
     ]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case timing_repeat.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(timing_repeat.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case timing_repeat.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4681,33 +4639,37 @@ pub fn timing_repeat_decoder() -> Decoder(TimingRepeat) {
 }
 
 pub fn timing_to_json(timing: Timing) -> Json {
-  let Timing(code:, repeat:, event:, modifier_extension:, extension:, id:) =
-    timing
   let fields = []
-  let fields = case code {
+  let fields = case timing.code {
     Some(v) -> [#("code", codeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case repeat {
+  let fields = case timing.repeat {
     Some(v) -> [#("repeat", timing_repeat_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case event {
+  let fields = case timing.event {
     [] -> fields
-    _ -> [#("event", json.array(event, pt.datetime_to_json)), ..fields]
+    _ -> [#("event", json.array(timing.event, pt.datetime_to_json)), ..fields]
   }
-  let fields = case modifier_extension {
+  let fields = case timing.modifier_extension {
     [] -> fields
     _ -> [
-      #("modifierExtension", json.array(modifier_extension, extension_to_json)),
+      #(
+        "modifierExtension",
+        json.array(timing.modifier_extension, extension_to_json),
+      ),
       ..fields
     ]
   }
-  let fields = case extension {
+  let fields = case timing.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(timing.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case timing.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4812,27 +4774,21 @@ pub fn triggerdefinition_new(
 }
 
 pub fn triggerdefinition_to_json(triggerdefinition: Triggerdefinition) -> Json {
-  let Triggerdefinition(
-    condition:,
-    data:,
-    timing:,
-    name:,
-    type_:,
-    extension:,
-    id:,
-  ) = triggerdefinition
   let fields = [
-    #("type", valuesets.triggertype_to_json(type_)),
+    #("type", valuesets.triggertype_to_json(triggerdefinition.type_)),
   ]
-  let fields = case condition {
+  let fields = case triggerdefinition.condition {
     Some(v) -> [#("condition", expression_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case data {
+  let fields = case triggerdefinition.data {
     [] -> fields
-    _ -> [#("data", json.array(data, datarequirement_to_json)), ..fields]
+    _ -> [
+      #("data", json.array(triggerdefinition.data, datarequirement_to_json)),
+      ..fields
+    ]
   }
-  let fields = case timing {
+  let fields = case triggerdefinition.timing {
     Some(v) -> [
       #(
         "timing"
@@ -4848,15 +4804,18 @@ pub fn triggerdefinition_to_json(triggerdefinition: Triggerdefinition) -> Json {
     ]
     None -> fields
   }
-  let fields = case name {
+  let fields = case triggerdefinition.name {
     Some(v) -> [#("name", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case extension {
+  let fields = case triggerdefinition.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(triggerdefinition.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case triggerdefinition.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4953,25 +4912,27 @@ pub fn usagecontext_new(
 }
 
 pub fn usagecontext_to_json(usagecontext: Usagecontext) -> Json {
-  let Usagecontext(value:, code:, extension:, id:) = usagecontext
   let fields = [
     #(
       "value"
-        <> case value {
+        <> case usagecontext.value {
         UsagecontextValueCodeableconcept(_) -> "CodeableConcept"
         UsagecontextValueQuantity(_) -> "Quantity"
         UsagecontextValueRange(_) -> "Range"
         UsagecontextValueReference(_) -> "Reference"
       },
-      usagecontext_value_to_json(value),
+      usagecontext_value_to_json(usagecontext.value),
     ),
-    #("code", coding_to_json(code)),
+    #("code", coding_to_json(usagecontext.code)),
   ]
-  let fields = case extension {
+  let fields = case usagecontext.extension {
     [] -> fields
-    _ -> [#("extension", json.array(extension, extension_to_json)), ..fields]
+    _ -> [
+      #("extension", json.array(usagecontext.extension, extension_to_json)),
+      ..fields
+    ]
   }
-  let fields = case id {
+  let fields = case usagecontext.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4991,6 +4952,89 @@ pub fn usagecontext_decoder() -> Decoder(Usagecontext) {
   decode.success(Usagecontext(value:, code:, extension:, id:))
 }
 
+pub type DiscriminatorMatch {
+  DiscriminatorMatches
+  DiscriminatorDifferent
+}
+
+pub type IdentifierRequiredSystemValue {
+  IdentifierRequiredSystemValue(
+    assigner: Option(Reference),
+    extension: List(Extension),
+    id: Option(String),
+    period: Option(Period),
+    system: String,
+    type_: Option(Codeableconcept),
+    use_: Option(valuesets.Identifieruse),
+    value: String,
+  )
+}
+
+pub fn identifier_required_system_value_new(
+  system system: String,
+  value value: String,
+) -> IdentifierRequiredSystemValue {
+  IdentifierRequiredSystemValue(
+    assigner: None,
+    extension: [],
+    id: None,
+    period: None,
+    system:,
+    type_: None,
+    use_: None,
+    value:,
+  )
+}
+
+pub fn identifier_required_system_value_from_identifier(
+  source: Identifier,
+) -> Result(IdentifierRequiredSystemValue, Nil) {
+  case True {
+    False -> Error(Nil)
+    True -> {
+      use system <- result.try(case source.system {
+        Some(value) -> Ok(value)
+        None -> Error(Nil)
+      })
+      use value <- result.try(case source.value {
+        Some(value) -> Ok(value)
+        None -> Error(Nil)
+      })
+      Ok(IdentifierRequiredSystemValue(
+        assigner: source.assigner,
+        extension: source.extension,
+        id: source.id,
+        period: source.period,
+        system: system,
+        type_: source.type_,
+        use_: source.use_,
+        value: value,
+      ))
+    }
+  }
+}
+
+fn identifier_required_system_value_to_identifier(
+  source: IdentifierRequiredSystemValue,
+) -> Identifier {
+  Identifier(
+    assigner: source.assigner,
+    extension: source.extension,
+    id: source.id,
+    period: source.period,
+    system: Some(source.system),
+    type_: source.type_,
+    use_: source.use_,
+    value: Some(source.value),
+  )
+}
+
+pub fn identifier_required_system_value_to_json(
+  source: IdentifierRequiredSystemValue,
+) -> Json {
+  identifier_to_json(identifier_required_system_value_to_identifier(source))
+}
+
 pub type UsCoreEthnicity {
   UsCoreEthnicity(
     extension: List(Extension),
@@ -5005,18 +5049,17 @@ pub fn us_core_ethnicity_new(text text: String) -> UsCoreEthnicity {
 }
 
 pub fn us_core_ethnicity_to_json(value: UsCoreEthnicity, url: String) -> Json {
-  let UsCoreEthnicity(extension:, text:, detailed:, omb_category:) = value
-  let children = list.map(extension, extension_to_json)
+  let children = list.map(value.extension, extension_to_json)
   let children = [
     json.object([
       #("url", json.string("text")),
-      #("valueString", json.string(text)),
+      #("valueString", json.string(value.text)),
     ]),
     ..children
   ]
   let children =
     list.append(
-      list.map(detailed, fn(value) {
+      list.map(value.detailed, fn(value) {
         json.object([
           #("url", json.string("detailed")),
           #(
@@ -5033,7 +5076,7 @@ pub fn us_core_ethnicity_to_json(value: UsCoreEthnicity, url: String) -> Json {
       }),
       children,
     )
-  let children = case omb_category {
+  let children = case value.omb_category {
     Some(value) -> [
       json.object([
         #("url", json.string("ombCategory")),
@@ -5063,6 +5106,7 @@ pub type UsCoreRace {
     extension: List(Extension),
     text: String,
     detailed: List(BoundCoding(valuesets.Detailedrace)),
+    // TODO enforce max somehow
     omb_category: List(BoundCoding(valuesets.Ombracecategory)),
   )
 }
@@ -5072,18 +5116,17 @@ pub fn us_core_race_new(text text: String) -> UsCoreRace {
 }
 
 pub fn us_core_race_to_json(value: UsCoreRace, url: String) -> Json {
-  let UsCoreRace(extension:, text:, detailed:, omb_category:) = value
-  let children = list.map(extension, extension_to_json)
+  let children = list.map(value.extension, extension_to_json)
   let children = [
     json.object([
       #("url", json.string("text")),
-      #("valueString", json.string(text)),
+      #("valueString", json.string(value.text)),
     ]),
     ..children
   ]
   let children =
     list.append(
-      list.map(detailed, fn(value) {
+      list.map(value.detailed, fn(value) {
         json.object([
           #("url", json.string("detailed")),
           #(
@@ -5102,7 +5145,7 @@ pub fn us_core_race_to_json(value: UsCoreRace, url: String) -> Json {
     )
   let children =
     list.append(
-      list.map(omb_category, fn(value) {
+      list.map(value.omb_category, fn(value) {
         json.object([
           #("url", json.string("ombCategory")),
           #(
@@ -5143,10 +5186,8 @@ pub fn us_core_tribal_affiliation_to_json(
   value: UsCoreTribalAffiliation,
   url: String,
 ) -> Json {
-  let UsCoreTribalAffiliation(extension:, is_enrolled:, tribal_affiliation:) =
-    value
-  let children = list.map(extension, extension_to_json)
-  let children = case is_enrolled {
+  let children = list.map(value.extension, extension_to_json)
+  let children = case value.is_enrolled {
     Some(value) -> [
       json.object([
         #("url", json.string("isEnrolled")),
@@ -5159,7 +5200,10 @@ pub fn us_core_tribal_affiliation_to_json(
   let children = [
     json.object([
       #("url", json.string("tribalAffiliation")),
-      #("valueCodeableConcept", codeableconcept_to_json(tribal_affiliation)),
+      #(
+        "valueCodeableConcept",
+        codeableconcept_to_json(value.tribal_affiliation),
+      ),
     ]),
     ..children
   ]
@@ -5169,9 +5213,106 @@ pub fn us_core_tribal_affiliation_to_json(
   ])
 }
 
+pub type ContactpointUsCorePatientTelecom {
+  ContactpointUsCorePatientTelecom(
+    id: Option(String),
+    system: valuesets.Contactpointsystem,
+    use_: Option(valuesets.Contactpointuse),
+    value: String,
+    period: Option(Period),
+    extension: List(Extension),
+    rank: Option(Int),
+  )
+}
+
+pub fn contactpoint_us_core_patient_telecom_new(
+  system system: valuesets.Contactpointsystem,
+  value value: String,
+) -> ContactpointUsCorePatientTelecom {
+  ContactpointUsCorePatientTelecom(
+    id: None,
+    system:,
+    use_: None,
+    value:,
+    period: None,
+    extension: [],
+    rank: None,
+  )
+}
+
+pub fn contactpoint_us_core_patient_telecom_to_json(
+  contactpoint_us_core_patient_telecom: ContactpointUsCorePatientTelecom,
+) -> Json {
+  let fields = [
+    #("value", json.string(contactpoint_us_core_patient_telecom.value)),
+    #(
+      "system",
+      valuesets.contactpointsystem_to_json(
+        contactpoint_us_core_patient_telecom.system,
+      ),
+    ),
+  ]
+  let fields = case contactpoint_us_core_patient_telecom.rank {
+    Some(v) -> [#("rank", json.int(v)), ..fields]
+    None -> fields
+  }
+  let fields = case contactpoint_us_core_patient_telecom.extension {
+    [] -> fields
+    values -> [#("extension", json.array(values, extension_to_json)), ..fields]
+  }
+  let fields = case contactpoint_us_core_patient_telecom.period {
+    Some(v) -> [#("period", period_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case contactpoint_us_core_patient_telecom.use_ {
+    Some(v) -> [#("use", valuesets.contactpointuse_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case contactpoint_us_core_patient_telecom.id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  json.object(fields)
+}
+
+pub fn contactpoint_us_core_patient_telecom_decoder() -> Decoder(
+  ContactpointUsCorePatientTelecom,
+) {
+  use <- decode.recursive
+  use rank <- decode.optional_field("rank", None, decode.optional(decode.int))
+  use extension <- decode.optional_field(
+    "extension",
+    [],
+    decode.list(extension_decoder()),
+  )
+  use period <- decode.optional_field(
+    "period",
+    None,
+    decode.optional(period_decoder()),
+  )
+  use value <- decode.field("value", decode.string)
+  use use_ <- decode.optional_field(
+    "use",
+    None,
+    decode.optional(valuesets.contactpointuse_decoder()),
+  )
+  use system <- decode.field("system", valuesets.contactpointsystem_decoder())
+  use id <- decode.optional_field("id", None, decode.optional(decode.string))
+  let placeholder =
+    ContactpointUsCorePatientTelecom(
+      rank:,
+      extension:,
+      period:,
+      value:,
+      use_:,
+      system:,
+      id:,
+    )
+  decode.success(placeholder)
+}
+
 pub fn list1_to_json(l: List1(a), tj: fn(a) -> Json) {
-  let List1(first:, rest:) = l
-  json.array([first, ..rest], tj)
+  json.array([l.first, ..l.rest], tj)
 }
 
 pub fn list1_decoder(
@@ -5199,72 +5340,29 @@ pub fn decode_number() {
   decode.one_of(decode.float, [decode.map(decode.int, int.to_float)])
 }
 
-pub type Primitive(a) {
-  Primitive(id: Option(String), ext: List(Extension), value: Option(a))
+// Primitive and PrimitiveExtPart are used for decoding JSON
+// but generic primitive extensions are NOT supported;
+// the only supported primitive extensions are when profiles define them
+// in which case they are generated as actual types
+// for example 
+// pub type UsCoreQuestionnaireresponseQuestionnaire {
+//   UsCoreQuestionnaireresponseQuestionnaire(
+//     id: Option(String),
+//     extension: List(ct.Extension),
+//     questionnaire_display: Option(String),
+//     url: Option(String),
+//     value: Option(String),
+//   )
+// }
+// so a user should never do anything with the Primitive type
+@internal
+pub type Primitive(a, b) {
+  Primitive(id: Option(String), ext: List(b), value: Option(a))
 }
 
-pub type PrimitiveExtPart {
-  PrimitiveExtPart(id: Option(String), ext: List(Extension))
-}
-
-pub fn primitive_ext_part_to_json(p: Primitive(_)) {
-  let Primitive(id, ext, _) = p
-  let fields = []
-  let fields = case id {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case ext {
-    [] -> fields
-    _ -> [#("extension", json.array(ext, extension_to_json)), ..fields]
-  }
-  json.object(fields)
-}
-
-pub fn primitive_to_json(
-  old_fields: List(#(String, Json)),
-  primitive: Primitive(a),
-  field_to_json: fn(a) -> Json,
-  name: String,
-) {
-  let old_fields = case primitive.id, primitive.ext {
-    None, [] -> old_fields
-    _, _ -> [
-      #("_" <> name, primitive_ext_part_to_json(primitive)),
-      ..old_fields
-    ]
-  }
-  case primitive.value {
-    None -> old_fields
-    Some(v) -> [#(name, field_to_json(v)), ..old_fields]
-  }
-}
-
-pub fn primitives_to_json(
-  old_fields: List(#(String, Json)),
-  field: List(Primitive(a)),
-  field_to_json: fn(a) -> Json,
-  name: String,
-) {
-  let vals =
-    list.map(field, fn(primitive) {
-      json.nullable(primitive.value, field_to_json)
-    })
-  let exts =
-    list.map(field, fn(primitive) {
-      case primitive.id, primitive.ext {
-        None, [] -> json.null()
-        _, _ -> primitive_ext_part_to_json(primitive)
-      }
-    })
-  let old_fields = case list.any(vals, fn(j) { j != json.null() }) {
-    False -> old_fields
-    True -> [#(name, json.preprocessed_array(vals)), ..old_fields]
-  }
-  case list.any(exts, fn(j) { j != json.null() }) {
-    False -> old_fields
-    True -> [#("_" <> name, json.preprocessed_array(exts)), ..old_fields]
-  }
+@internal
+pub type PrimitiveExtPart(b) {
+  PrimitiveExtPart(id: Option(String), ext: List(b))
 }
 
 pub fn primitive_slice_to_json(
@@ -5309,11 +5407,11 @@ pub fn primitive_slice_list_to_json(
   }
 }
 
-pub fn primitive_ext_part_decoder() {
+pub fn primitive_ext_part_decoder(extension_decoder: Decoder(a)) {
   use ext <- decode.optional_field(
     "extension",
     [],
-    decode.list(extension_decoder()),
+    decode.list(extension_decoder),
   )
   use id <- decode.optional_field("id", None, decode.optional(decode.string))
   decode.success(PrimitiveExtPart(ext:, id:))
@@ -5322,13 +5420,14 @@ pub fn primitive_ext_part_decoder() {
 pub fn primitive_decoder(
   name: String,
   thing_decoder: Decoder(a),
-  next: fn(Primitive(a)) -> Decoder(b),
-) -> Decoder(b) {
+  extension_decoder: Decoder(b),
+  next: fn(Primitive(a, b)) -> Decoder(c),
+) -> Decoder(c) {
   use value <- decode.optional_field(name, None, decode.optional(thing_decoder))
   use pwe <- decode.optional_field(
     "_" <> name,
     None,
-    decode.optional(primitive_ext_part_decoder()),
+    decode.optional(primitive_ext_part_decoder(extension_decoder)),
   )
   let #(id, ext) = case pwe {
     None -> #(None, [])
@@ -5341,8 +5440,9 @@ pub fn primitive_decoder(
 pub fn primitives_decoder(
   name: String,
   thing_decoder: Decoder(a),
-  next: fn(List(Primitive(a))) -> Decoder(b),
-) -> Decoder(b) {
+  extension_decoder: Decoder(b),
+  next: fn(List(Primitive(a, b))) -> Decoder(c),
+) -> Decoder(c) {
   use values <- decode.optional_field(
     name,
     [],
@@ -5351,7 +5451,7 @@ pub fn primitives_decoder(
   use pwes <- decode.optional_field(
     "_" <> name,
     [],
-    decode.list(decode.optional(primitive_ext_part_decoder())),
+    decode.list(decode.optional(primitive_ext_part_decoder(extension_decoder))),
   )
   let together =
     map2_fillnone(pwes, values, fn(pwe, value) {
@@ -5367,35 +5467,50 @@ pub fn primitives_decoder(
 pub fn primitive_slice_decoder(
   name: String,
   thing_decoder: Decoder(a),
-  convert: fn(Primitive(a)) -> Decoder(b),
-  next: fn(b) -> Decoder(c),
-) -> Decoder(c) {
-  use primitive <- primitive_decoder(name, thing_decoder)
-  use value <- decode.then(convert(primitive))
+  extension_decoder: Decoder(b),
+  convert: fn(Primitive(a, b)) -> Decoder(c),
+  next: fn(c) -> Decoder(d),
+) -> Decoder(d) {
+  use primitive <- primitive_decoder(name, thing_decoder, extension_decoder)
+  use value <- decode.then(case primitive.value, primitive.id, primitive.ext {
+    None, None, [] ->
+      decode.field(name, thing_decoder, fn(_) { convert(primitive) })
+    _, _, _ -> convert(primitive)
+  })
   next(value)
 }
 
 pub fn primitive_choice_slice_decoder(
   name: String,
   thing_decoder: Decoder(a),
-  convert: fn(Primitive(a)) -> Decoder(b),
-  next: fn(b) -> Decoder(c),
-) -> Decoder(c) {
-  use value_present <- decode.optional_field(
-    name,
-    False,
-    decode.dynamic |> decode.map(fn(_) { True }),
-  )
+  extension_decoder: Decoder(b),
+  convert: fn(Primitive(a, b)) -> Decoder(c),
+  next: fn(c) -> Decoder(d),
+) -> Decoder(d) {
+  use value_present <- decode.optional_field(name, False, decode.success(True))
   use extension_present <- decode.optional_field(
     "_" <> name,
     False,
-    decode.dynamic |> decode.map(fn(_) { True }),
+    decode.success(True),
   )
   case value_present || extension_present {
-    True -> primitive_slice_decoder(name, thing_decoder, convert, next)
+    True ->
+      primitive_slice_decoder(
+        name,
+        thing_decoder,
+        extension_decoder,
+        convert,
+        next,
+      )
     False -> {
       use _ <- decode.field(name, thing_decoder)
-      primitive_slice_decoder(name, thing_decoder, convert, next)
+      primitive_slice_decoder(
+        name,
+        thing_decoder,
+        extension_decoder,
+        convert,
+        next,
+      )
     }
   }
 }
@@ -5403,23 +5518,46 @@ pub fn primitive_choice_slice_decoder(
 pub fn primitive_slice_list_decoder(
   name: String,
   thing_decoder: Decoder(a),
-  convert: fn(Primitive(a)) -> Decoder(b),
-  next: fn(List(b)) -> Decoder(c),
-) -> Decoder(c) {
-  use primitives <- primitives_decoder(name, thing_decoder)
-  primitive_slice_list_from_primitives(primitives, convert, next)
+  extension_decoder: Decoder(b),
+  convert: fn(Primitive(a, b)) -> Decoder(c),
+  next: fn(List(c)) -> Decoder(d),
+) -> Decoder(d) {
+  use primitives <- primitives_decoder(name, thing_decoder, extension_decoder)
+  primitive_slice_list_from_primitives(primitives, convert, name, 0, next)
 }
 
 fn primitive_slice_list_from_primitives(
-  primitives: List(Primitive(a)),
-  convert: fn(Primitive(a)) -> Decoder(b),
-  next: fn(List(b)) -> Decoder(c),
-) -> Decoder(c) {
+  primitives: List(Primitive(a, b)),
+  convert: fn(Primitive(a, b)) -> Decoder(c),
+  name: String,
+  index: Int,
+  next: fn(List(c)) -> Decoder(d),
+) -> Decoder(d) {
   case primitives {
     [] -> next([])
     [first, ..rest] -> {
-      use first <- decode.then(convert(first))
-      use rest <- primitive_slice_list_from_primitives(rest, convert)
+      use first <- decode.then(
+        convert(first)
+        |> decode.map_errors(fn(errors) {
+          list.map(errors, fn(error) {
+            case error.path {
+              [field, ..path] if field == name ->
+                decode.DecodeError(..error, path: [
+                  field,
+                  int.to_string(index),
+                  ..path
+                ])
+              _ -> error
+            }
+          })
+        }),
+      )
+      use rest <- primitive_slice_list_from_primitives(
+        rest,
+        convert,
+        name,
+        index + 1,
+      )
       next([first, ..rest])
     }
   }

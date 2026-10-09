@@ -265,13 +265,13 @@ fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
               PatientLoadFound(PatientData(
                 patient: first,
                 // patient_allergies: resources.allergyintolerance,
-              // patient_documentreferences: resources.documentreference,
-              // patient_encounters: resources.encounter,
-              // patient_immunizations: resources.immunization,
-              // patient_medications: resources.medication,
-              // patient_medication_requests: resources.medicationrequest,
-              // patient_medication_statements: resources.medicationstatement,
-              // patient_observations: resources.observation,
+                // patient_documentreferences: resources.documentreference,
+                // patient_encounters: resources.encounter,
+                // patient_immunizations: resources.immunization,
+                // patient_medications: resources.medication,
+                // patient_medication_requests: resources.medicationrequest,
+                // patient_medication_statements: resources.medicationstatement,
+                // patient_observations: resources.observation,
               ))
           }
         }

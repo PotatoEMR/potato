@@ -2,12 +2,20 @@
 
 import gleam/dynamic/decode.{type Decoder}
 import gleam/json.{type Json}
+import gleam/list
+import gleam/string
 
 pub type Addresstype {
   AddresstypePostal
   AddresstypePhysical
   AddresstypeBoth
 }
+
+pub const addresstype: List(Addresstype) = [
+  AddresstypePostal,
+  AddresstypePhysical,
+  AddresstypeBoth,
+]
 
 pub fn addresstype_to_json(addresstype: Addresstype) -> Json {
   json.string(addresstype_to_code(addresstype))
@@ -36,7 +44,20 @@ pub fn addresstype_decoder() -> Decoder(Addresstype) {
     "postal" -> decode.success(AddresstypePostal)
     "physical" -> decode.success(AddresstypePhysical)
     "both" -> decode.success(AddresstypeBoth)
-    _ -> decode.failure(AddresstypePostal, "Addresstype")
+    _ ->
+      decode.failure(
+        AddresstypePostal,
+        "code from valueset Addresstype ["
+          <> {
+          addresstype |> list.map(addresstype_to_code) |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -47,6 +68,14 @@ pub type Addressuse {
   AddressuseOld
   AddressuseBilling
 }
+
+pub const addressuse: List(Addressuse) = [
+  AddressuseHome,
+  AddressuseWork,
+  AddressuseTemp,
+  AddressuseOld,
+  AddressuseBilling,
+]
 
 pub fn addressuse_to_json(addressuse: Addressuse) -> Json {
   json.string(addressuse_to_code(addressuse))
@@ -81,7 +110,18 @@ pub fn addressuse_decoder() -> Decoder(Addressuse) {
     "temp" -> decode.success(AddressuseTemp)
     "old" -> decode.success(AddressuseOld)
     "billing" -> decode.success(AddressuseBilling)
-    _ -> decode.failure(AddressuseHome, "Addressuse")
+    _ ->
+      decode.failure(
+        AddressuseHome,
+        "code from valueset Addressuse ["
+          <> { addressuse |> list.map(addressuse_to_code) |> string.join(", ") }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -91,6 +131,13 @@ pub type Administrativegender {
   AdministrativegenderOther
   AdministrativegenderUnknown
 }
+
+pub const administrativegender: List(Administrativegender) = [
+  AdministrativegenderMale,
+  AdministrativegenderFemale,
+  AdministrativegenderOther,
+  AdministrativegenderUnknown,
+]
 
 pub fn administrativegender_to_json(
   administrativegender: Administrativegender,
@@ -128,7 +175,22 @@ pub fn administrativegender_decoder() -> Decoder(Administrativegender) {
     "female" -> decode.success(AdministrativegenderFemale)
     "other" -> decode.success(AdministrativegenderOther)
     "unknown" -> decode.success(AdministrativegenderUnknown)
-    _ -> decode.failure(AdministrativegenderMale, "Administrativegender")
+    _ ->
+      decode.failure(
+        AdministrativegenderMale,
+        "code from valueset Administrativegender ["
+          <> {
+          administrativegender
+          |> list.map(administrativegender_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -138,6 +200,13 @@ pub type Allergyintolerancecategory {
   AllergyintolerancecategoryEnvironment
   AllergyintolerancecategoryBiologic
 }
+
+pub const allergyintolerancecategory: List(Allergyintolerancecategory) = [
+  AllergyintolerancecategoryFood,
+  AllergyintolerancecategoryMedication,
+  AllergyintolerancecategoryEnvironment,
+  AllergyintolerancecategoryBiologic,
+]
 
 pub fn allergyintolerancecategory_to_json(
   allergyintolerancecategory: Allergyintolerancecategory,
@@ -180,8 +249,19 @@ pub fn allergyintolerancecategory_decoder() -> Decoder(
     _ ->
       decode.failure(
         AllergyintolerancecategoryFood,
-        "Allergyintolerancecategory",
+        "code from valueset Allergyintolerancecategory ["
+          <> {
+          allergyintolerancecategory
+          |> list.map(allergyintolerancecategory_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
       )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -190,6 +270,12 @@ pub type Allergyintoleranceclinical {
   AllergyintoleranceclinicalInactive
   AllergyintoleranceclinicalResolved
 }
+
+pub const allergyintoleranceclinical: List(Allergyintoleranceclinical) = [
+  AllergyintoleranceclinicalActive,
+  AllergyintoleranceclinicalInactive,
+  AllergyintoleranceclinicalResolved,
+]
 
 pub fn allergyintoleranceclinical_to_json(
   allergyintoleranceclinical: Allergyintoleranceclinical,
@@ -236,8 +322,19 @@ pub fn allergyintoleranceclinical_decoder() -> Decoder(
     _ ->
       decode.failure(
         AllergyintoleranceclinicalActive,
-        "Allergyintoleranceclinical",
+        "code from valueset Allergyintoleranceclinical ["
+          <> {
+          allergyintoleranceclinical
+          |> list.map(allergyintoleranceclinical_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
       )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -252,6 +349,12 @@ pub type Allergyintolerancecriticality {
   AllergyintolerancecriticalityHigh
   AllergyintolerancecriticalityUnabletoassess
 }
+
+pub const allergyintolerancecriticality: List(Allergyintolerancecriticality) = [
+  AllergyintolerancecriticalityLow,
+  AllergyintolerancecriticalityHigh,
+  AllergyintolerancecriticalityUnabletoassess,
+]
 
 pub fn allergyintolerancecriticality_to_json(
   allergyintolerancecriticality: Allergyintolerancecriticality,
@@ -294,8 +397,19 @@ pub fn allergyintolerancecriticality_decoder() -> Decoder(
     _ ->
       decode.failure(
         AllergyintolerancecriticalityLow,
-        "Allergyintolerancecriticality",
+        "code from valueset Allergyintolerancecriticality ["
+          <> {
+          allergyintolerancecriticality
+          |> list.map(allergyintolerancecriticality_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
       )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -303,6 +417,11 @@ pub type Allergyintolerancetype {
   AllergyintolerancetypeAllergy
   AllergyintolerancetypeIntolerance
 }
+
+pub const allergyintolerancetype: List(Allergyintolerancetype) = [
+  AllergyintolerancetypeAllergy,
+  AllergyintolerancetypeIntolerance,
+]
 
 pub fn allergyintolerancetype_to_json(
   allergyintolerancetype: Allergyintolerancetype,
@@ -334,17 +453,38 @@ pub fn allergyintolerancetype_decoder() -> Decoder(Allergyintolerancetype) {
   case variant {
     "allergy" -> decode.success(AllergyintolerancetypeAllergy)
     "intolerance" -> decode.success(AllergyintolerancetypeIntolerance)
-    _ -> decode.failure(AllergyintolerancetypeAllergy, "Allergyintolerancetype")
+    _ ->
+      decode.failure(
+        AllergyintolerancetypeAllergy,
+        "code from valueset Allergyintolerancetype ["
+          <> {
+          allergyintolerancetype
+          |> list.map(allergyintolerancetype_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
 pub type Allergyintoleranceverification {
   AllergyintoleranceverificationUnconfirmed
-  AllergyintoleranceverificationPresumed
   AllergyintoleranceverificationConfirmed
   AllergyintoleranceverificationRefuted
   AllergyintoleranceverificationEnteredinerror
 }
+
+pub const allergyintoleranceverification: List(Allergyintoleranceverification) = [
+  AllergyintoleranceverificationUnconfirmed,
+  AllergyintoleranceverificationConfirmed,
+  AllergyintoleranceverificationRefuted,
+  AllergyintoleranceverificationEnteredinerror,
+]
 
 pub fn allergyintoleranceverification_to_json(
   allergyintoleranceverification: Allergyintoleranceverification,
@@ -359,7 +499,6 @@ pub fn allergyintoleranceverification_to_code(
 ) -> String {
   case allergyintoleranceverification {
     AllergyintoleranceverificationUnconfirmed -> "unconfirmed"
-    AllergyintoleranceverificationPresumed -> "presumed"
     AllergyintoleranceverificationConfirmed -> "confirmed"
     AllergyintoleranceverificationRefuted -> "refuted"
     AllergyintoleranceverificationEnteredinerror -> "entered-in-error"
@@ -374,9 +513,6 @@ pub fn allergyintoleranceverification_from_code_and_system(
     "unconfirmed",
       "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
     -> Ok(AllergyintoleranceverificationUnconfirmed)
-    "presumed",
-      "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
-    -> Ok(AllergyintoleranceverificationPresumed)
     "confirmed",
       "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
     -> Ok(AllergyintoleranceverificationConfirmed)
@@ -396,7 +532,6 @@ pub fn allergyintoleranceverification_decoder() -> Decoder(
   use variant <- decode.then(decode.string)
   case variant {
     "unconfirmed" -> decode.success(AllergyintoleranceverificationUnconfirmed)
-    "presumed" -> decode.success(AllergyintoleranceverificationPresumed)
     "confirmed" -> decode.success(AllergyintoleranceverificationConfirmed)
     "refuted" -> decode.success(AllergyintoleranceverificationRefuted)
     "entered-in-error" ->
@@ -404,8 +539,19 @@ pub fn allergyintoleranceverification_decoder() -> Decoder(
     _ ->
       decode.failure(
         AllergyintoleranceverificationUnconfirmed,
-        "Allergyintoleranceverification",
+        "code from valueset Allergyintoleranceverification ["
+          <> {
+          allergyintoleranceverification
+          |> list.map(allergyintoleranceverification_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
       )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -630,6 +776,222 @@ pub type Alltypes {
   AlltypesType
   AlltypesAny
 }
+
+pub const alltypes: List(Alltypes) = [
+  AlltypesAddress,
+  AlltypesAge,
+  AlltypesAnnotation,
+  AlltypesAttachment,
+  AlltypesBackboneelement,
+  AlltypesCodeableconcept,
+  AlltypesCoding,
+  AlltypesContactdetail,
+  AlltypesContactpoint,
+  AlltypesContributor,
+  AlltypesCount,
+  AlltypesDatarequirement,
+  AlltypesDistance,
+  AlltypesDosage,
+  AlltypesDuration,
+  AlltypesElement,
+  AlltypesElementdefinition,
+  AlltypesExpression,
+  AlltypesExtension,
+  AlltypesHumanname,
+  AlltypesIdentifier,
+  AlltypesMarketingstatus,
+  AlltypesMeta,
+  AlltypesMoney,
+  AlltypesMoneyquantity,
+  AlltypesNarrative,
+  AlltypesParameterdefinition,
+  AlltypesPeriod,
+  AlltypesPopulation,
+  AlltypesProdcharacteristic,
+  AlltypesProductshelflife,
+  AlltypesQuantity,
+  AlltypesRange,
+  AlltypesRatio,
+  AlltypesReference,
+  AlltypesRelatedartifact,
+  AlltypesSampleddata,
+  AlltypesSignature,
+  AlltypesSimplequantity,
+  AlltypesSubstanceamount,
+  AlltypesTiming,
+  AlltypesTriggerdefinition,
+  AlltypesUsagecontext,
+  AlltypesBase64binary,
+  AlltypesBoolean,
+  AlltypesCanonical,
+  AlltypesCode,
+  AlltypesDate,
+  AlltypesDatetime,
+  AlltypesDecimal,
+  AlltypesId,
+  AlltypesInstant,
+  AlltypesInteger,
+  AlltypesMarkdown,
+  AlltypesOid,
+  AlltypesPositiveint,
+  AlltypesString,
+  AlltypesTime,
+  AlltypesUnsignedint,
+  AlltypesUri,
+  AlltypesUrl,
+  AlltypesUuid,
+  AlltypesXhtml,
+  AlltypesAccount,
+  AlltypesActivitydefinition,
+  AlltypesAdverseevent,
+  AlltypesAllergyintolerance,
+  AlltypesAppointment,
+  AlltypesAppointmentresponse,
+  AlltypesAuditevent,
+  AlltypesBasic,
+  AlltypesBinary,
+  AlltypesBiologicallyderivedproduct,
+  AlltypesBodystructure,
+  AlltypesBundle,
+  AlltypesCapabilitystatement,
+  AlltypesCareplan,
+  AlltypesCareteam,
+  AlltypesCatalogentry,
+  AlltypesChargeitem,
+  AlltypesChargeitemdefinition,
+  AlltypesClaim,
+  AlltypesClaimresponse,
+  AlltypesClinicalimpression,
+  AlltypesCodesystem,
+  AlltypesCommunication,
+  AlltypesCommunicationrequest,
+  AlltypesCompartmentdefinition,
+  AlltypesComposition,
+  AlltypesConceptmap,
+  AlltypesCondition,
+  AlltypesConsent,
+  AlltypesContract,
+  AlltypesCoverage,
+  AlltypesCoverageeligibilityrequest,
+  AlltypesCoverageeligibilityresponse,
+  AlltypesDetectedissue,
+  AlltypesDevice,
+  AlltypesDevicedefinition,
+  AlltypesDevicemetric,
+  AlltypesDevicerequest,
+  AlltypesDeviceusestatement,
+  AlltypesDiagnosticreport,
+  AlltypesDocumentmanifest,
+  AlltypesDocumentreference,
+  AlltypesDomainresource,
+  AlltypesEffectevidencesynthesis,
+  AlltypesEncounter,
+  AlltypesEndpoint,
+  AlltypesEnrollmentrequest,
+  AlltypesEnrollmentresponse,
+  AlltypesEpisodeofcare,
+  AlltypesEventdefinition,
+  AlltypesEvidence,
+  AlltypesEvidencevariable,
+  AlltypesExamplescenario,
+  AlltypesExplanationofbenefit,
+  AlltypesFamilymemberhistory,
+  AlltypesFlag,
+  AlltypesGoal,
+  AlltypesGraphdefinition,
+  AlltypesGroup,
+  AlltypesGuidanceresponse,
+  AlltypesHealthcareservice,
+  AlltypesImagingstudy,
+  AlltypesImmunization,
+  AlltypesImmunizationevaluation,
+  AlltypesImmunizationrecommendation,
+  AlltypesImplementationguide,
+  AlltypesInsuranceplan,
+  AlltypesInvoice,
+  AlltypesLibrary,
+  AlltypesLinkage,
+  AlltypesList,
+  AlltypesLocation,
+  AlltypesMeasure,
+  AlltypesMeasurereport,
+  AlltypesMedia,
+  AlltypesMedication,
+  AlltypesMedicationadministration,
+  AlltypesMedicationdispense,
+  AlltypesMedicationknowledge,
+  AlltypesMedicationrequest,
+  AlltypesMedicationstatement,
+  AlltypesMedicinalproduct,
+  AlltypesMedicinalproductauthorization,
+  AlltypesMedicinalproductcontraindication,
+  AlltypesMedicinalproductindication,
+  AlltypesMedicinalproductingredient,
+  AlltypesMedicinalproductinteraction,
+  AlltypesMedicinalproductmanufactured,
+  AlltypesMedicinalproductpackaged,
+  AlltypesMedicinalproductpharmaceutical,
+  AlltypesMedicinalproductundesirableeffect,
+  AlltypesMessagedefinition,
+  AlltypesMessageheader,
+  AlltypesMolecularsequence,
+  AlltypesNamingsystem,
+  AlltypesNutritionorder,
+  AlltypesObservation,
+  AlltypesObservationdefinition,
+  AlltypesOperationdefinition,
+  AlltypesOperationoutcome,
+  AlltypesOrganization,
+  AlltypesOrganizationaffiliation,
+  AlltypesParameters,
+  AlltypesPatient,
+  AlltypesPaymentnotice,
+  AlltypesPaymentreconciliation,
+  AlltypesPerson,
+  AlltypesPlandefinition,
+  AlltypesPractitioner,
+  AlltypesPractitionerrole,
+  AlltypesProcedure,
+  AlltypesProvenance,
+  AlltypesQuestionnaire,
+  AlltypesQuestionnaireresponse,
+  AlltypesRelatedperson,
+  AlltypesRequestgroup,
+  AlltypesResearchdefinition,
+  AlltypesResearchelementdefinition,
+  AlltypesResearchstudy,
+  AlltypesResearchsubject,
+  AlltypesResource,
+  AlltypesRiskassessment,
+  AlltypesRiskevidencesynthesis,
+  AlltypesSchedule,
+  AlltypesSearchparameter,
+  AlltypesServicerequest,
+  AlltypesSlot,
+  AlltypesSpecimen,
+  AlltypesSpecimendefinition,
+  AlltypesStructuredefinition,
+  AlltypesStructuremap,
+  AlltypesSubscription,
+  AlltypesSubstance,
+  AlltypesSubstancenucleicacid,
+  AlltypesSubstancepolymer,
+  AlltypesSubstanceprotein,
+  AlltypesSubstancereferenceinformation,
+  AlltypesSubstancesourcematerial,
+  AlltypesSubstancespecification,
+  AlltypesSupplydelivery,
+  AlltypesSupplyrequest,
+  AlltypesTask,
+  AlltypesTerminologycapabilities,
+  AlltypesTestreport,
+  AlltypesTestscript,
+  AlltypesValueset,
+  AlltypesVerificationresult,
+  AlltypesVisionprescription,
+  AlltypesType,
+  AlltypesAny,
+]
 
 pub fn alltypes_to_json(alltypes: Alltypes) -> Json {
   json.string(alltypes_to_code(alltypes))
@@ -1309,7 +1671,18 @@ pub fn alltypes_decoder() -> Decoder(Alltypes) {
     "VisionPrescription" -> decode.success(AlltypesVisionprescription)
     "Type" -> decode.success(AlltypesType)
     "Any" -> decode.success(AlltypesAny)
-    _ -> decode.failure(AlltypesAddress, "Alltypes")
+    _ ->
+      decode.failure(
+        AlltypesAddress,
+        "code from valueset Alltypes ["
+          <> { alltypes |> list.map(alltypes_to_code) |> string.join(", ") }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -1324,6 +1697,18 @@ pub type Bundletype {
   BundletypeSearchset
   BundletypeCollection
 }
+
+pub const bundletype: List(Bundletype) = [
+  BundletypeDocument,
+  BundletypeMessage,
+  BundletypeTransaction,
+  BundletypeTransactionresponse,
+  BundletypeBatch,
+  BundletypeBatchresponse,
+  BundletypeHistory,
+  BundletypeSearchset,
+  BundletypeCollection,
+]
 
 pub fn bundletype_to_json(bundletype: Bundletype) -> Json {
   json.string(bundletype_to_code(bundletype))
@@ -1370,7 +1755,18 @@ pub fn bundletype_decoder() -> Decoder(Bundletype) {
     "history" -> decode.success(BundletypeHistory)
     "searchset" -> decode.success(BundletypeSearchset)
     "collection" -> decode.success(BundletypeCollection)
-    _ -> decode.failure(BundletypeDocument, "Bundletype")
+    _ ->
+      decode.failure(
+        BundletypeDocument,
+        "code from valueset Bundletype ["
+          <> { bundletype |> list.map(bundletype_to_code) |> string.join(", ") }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -1383,6 +1779,16 @@ pub type Contactpointsystem {
   ContactpointsystemSms
   ContactpointsystemOther
 }
+
+pub const contactpointsystem: List(Contactpointsystem) = [
+  ContactpointsystemPhone,
+  ContactpointsystemFax,
+  ContactpointsystemEmail,
+  ContactpointsystemPager,
+  ContactpointsystemUrl,
+  ContactpointsystemSms,
+  ContactpointsystemOther,
+]
 
 pub fn contactpointsystem_to_json(
   contactpointsystem: Contactpointsystem,
@@ -1429,7 +1835,22 @@ pub fn contactpointsystem_decoder() -> Decoder(Contactpointsystem) {
     "url" -> decode.success(ContactpointsystemUrl)
     "sms" -> decode.success(ContactpointsystemSms)
     "other" -> decode.success(ContactpointsystemOther)
-    _ -> decode.failure(ContactpointsystemPhone, "Contactpointsystem")
+    _ ->
+      decode.failure(
+        ContactpointsystemPhone,
+        "code from valueset Contactpointsystem ["
+          <> {
+          contactpointsystem
+          |> list.map(contactpointsystem_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -1440,6 +1861,14 @@ pub type Contactpointuse {
   ContactpointuseOld
   ContactpointuseMobile
 }
+
+pub const contactpointuse: List(Contactpointuse) = [
+  ContactpointuseHome,
+  ContactpointuseWork,
+  ContactpointuseTemp,
+  ContactpointuseOld,
+  ContactpointuseMobile,
+]
 
 pub fn contactpointuse_to_json(contactpointuse: Contactpointuse) -> Json {
   json.string(contactpointuse_to_code(contactpointuse))
@@ -1474,7 +1903,22 @@ pub fn contactpointuse_decoder() -> Decoder(Contactpointuse) {
     "temp" -> decode.success(ContactpointuseTemp)
     "old" -> decode.success(ContactpointuseOld)
     "mobile" -> decode.success(ContactpointuseMobile)
-    _ -> decode.failure(ContactpointuseHome, "Contactpointuse")
+    _ ->
+      decode.failure(
+        ContactpointuseHome,
+        "code from valueset Contactpointuse ["
+          <> {
+          contactpointuse
+          |> list.map(contactpointuse_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -1484,6 +1928,13 @@ pub type Contributortype {
   ContributortypeReviewer
   ContributortypeEndorser
 }
+
+pub const contributortype: List(Contributortype) = [
+  ContributortypeAuthor,
+  ContributortypeEditor,
+  ContributortypeReviewer,
+  ContributortypeEndorser,
+]
 
 pub fn contributortype_to_json(contributortype: Contributortype) -> Json {
   json.string(contributortype_to_code(contributortype))
@@ -1515,7 +1966,22 @@ pub fn contributortype_decoder() -> Decoder(Contributortype) {
     "editor" -> decode.success(ContributortypeEditor)
     "reviewer" -> decode.success(ContributortypeReviewer)
     "endorser" -> decode.success(ContributortypeEndorser)
-    _ -> decode.failure(ContributortypeAuthor, "Contributortype")
+    _ ->
+      decode.failure(
+        ContributortypeAuthor,
+        "code from valueset Contributortype ["
+          <> {
+          contributortype
+          |> list.map(contributortype_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -1528,6 +1994,16 @@ pub type Daysofweek {
   DaysofweekSat
   DaysofweekSun
 }
+
+pub const daysofweek: List(Daysofweek) = [
+  DaysofweekMon,
+  DaysofweekTue,
+  DaysofweekWed,
+  DaysofweekThu,
+  DaysofweekFri,
+  DaysofweekSat,
+  DaysofweekSun,
+]
 
 pub fn daysofweek_to_json(daysofweek: Daysofweek) -> Json {
   json.string(daysofweek_to_code(daysofweek))
@@ -1568,7 +2044,18 @@ pub fn daysofweek_decoder() -> Decoder(Daysofweek) {
     "fri" -> decode.success(DaysofweekFri)
     "sat" -> decode.success(DaysofweekSat)
     "sun" -> decode.success(DaysofweekSun)
-    _ -> decode.failure(DaysofweekMon, "Daysofweek")
+    _ ->
+      decode.failure(
+        DaysofweekMon,
+        "code from valueset Daysofweek ["
+          <> { daysofweek |> list.map(daysofweek_to_code) |> string.join(", ") }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -2543,6 +3030,978 @@ pub type Detailedethnicity {
   DetailedethnicityOth
   DetailedethnicityUnk
 }
+
+pub const detailedethnicity: List(Detailedethnicity) = [
+  Detailedethnicity10009,
+  Detailedethnicity10025,
+  Detailedethnicity10041,
+  Detailedethnicity10066,
+  Detailedethnicity10082,
+  Detailedethnicity10108,
+  Detailedethnicity10116,
+  Detailedethnicity10124,
+  Detailedethnicity10132,
+  Detailedethnicity10140,
+  Detailedethnicity10157,
+  Detailedethnicity10165,
+  Detailedethnicity10173,
+  Detailedethnicity10181,
+  Detailedethnicity10199,
+  Detailedethnicity10215,
+  Detailedethnicity10223,
+  Detailedethnicity10231,
+  Detailedethnicity10249,
+  Detailedethnicity10264,
+  Detailedethnicity10280,
+  Detailedethnicity10306,
+  Detailedethnicity10314,
+  Detailedethnicity10330,
+  Detailedethnicity10355,
+  Detailedethnicity10371,
+  Detailedethnicity10397,
+  Detailedethnicity10413,
+  Detailedethnicity10421,
+  Detailedethnicity10447,
+  Detailedethnicity10454,
+  Detailedethnicity10462,
+  Detailedethnicity10470,
+  Detailedethnicity10488,
+  Detailedethnicity10496,
+  Detailedethnicity10504,
+  Detailedethnicity10512,
+  Detailedethnicity10538,
+  Detailedethnicity10546,
+  Detailedethnicity10553,
+  Detailedethnicity10561,
+  Detailedethnicity10579,
+  Detailedethnicity10587,
+  Detailedethnicity10595,
+  Detailedethnicity10603,
+  Detailedethnicity10611,
+  Detailedethnicity10629,
+  Detailedethnicity10637,
+  Detailedethnicity10645,
+  Detailedethnicity10652,
+  Detailedethnicity10660,
+  Detailedethnicity10686,
+  Detailedethnicity10694,
+  Detailedethnicity10702,
+  Detailedethnicity10710,
+  Detailedethnicity10728,
+  Detailedethnicity10736,
+  Detailedethnicity10744,
+  Detailedethnicity10769,
+  Detailedethnicity10785,
+  Detailedethnicity10801,
+  Detailedethnicity10827,
+  Detailedethnicity10835,
+  Detailedethnicity10843,
+  Detailedethnicity10868,
+  Detailedethnicity10884,
+  Detailedethnicity10892,
+  Detailedethnicity10900,
+  Detailedethnicity10918,
+  Detailedethnicity10926,
+  Detailedethnicity10934,
+  Detailedethnicity10942,
+  Detailedethnicity10959,
+  Detailedethnicity10967,
+  Detailedethnicity10975,
+  Detailedethnicity10983,
+  Detailedethnicity11007,
+  Detailedethnicity11023,
+  Detailedethnicity11031,
+  Detailedethnicity11049,
+  Detailedethnicity11064,
+  Detailedethnicity11080,
+  Detailedethnicity11098,
+  Detailedethnicity11106,
+  Detailedethnicity11122,
+  Detailedethnicity11148,
+  Detailedethnicity11155,
+  Detailedethnicity11163,
+  Detailedethnicity11171,
+  Detailedethnicity11189,
+  Detailedethnicity11197,
+  Detailedethnicity11205,
+  Detailedethnicity11213,
+  Detailedethnicity11239,
+  Detailedethnicity11247,
+  Detailedethnicity11254,
+  Detailedethnicity11262,
+  Detailedethnicity11270,
+  Detailedethnicity11288,
+  Detailedethnicity11296,
+  Detailedethnicity11304,
+  Detailedethnicity11312,
+  Detailedethnicity11320,
+  Detailedethnicity11338,
+  Detailedethnicity11346,
+  Detailedethnicity11353,
+  Detailedethnicity11361,
+  Detailedethnicity11379,
+  Detailedethnicity11387,
+  Detailedethnicity11395,
+  Detailedethnicity11403,
+  Detailedethnicity11411,
+  Detailedethnicity11429,
+  Detailedethnicity11437,
+  Detailedethnicity11445,
+  Detailedethnicity11452,
+  Detailedethnicity11460,
+  Detailedethnicity11478,
+  Detailedethnicity11486,
+  Detailedethnicity11502,
+  Detailedethnicity11510,
+  Detailedethnicity11536,
+  Detailedethnicity11551,
+  Detailedethnicity11569,
+  Detailedethnicity11577,
+  Detailedethnicity11585,
+  Detailedethnicity11593,
+  Detailedethnicity11601,
+  Detailedethnicity11627,
+  Detailedethnicity11635,
+  Detailedethnicity11650,
+  Detailedethnicity11676,
+  Detailedethnicity11692,
+  Detailedethnicity11718,
+  Detailedethnicity11734,
+  Detailedethnicity11759,
+  Detailedethnicity11767,
+  Detailedethnicity11783,
+  Detailedethnicity11809,
+  Detailedethnicity11825,
+  Detailedethnicity11841,
+  Detailedethnicity11866,
+  Detailedethnicity11874,
+  Detailedethnicity11890,
+  Detailedethnicity11916,
+  Detailedethnicity11932,
+  Detailedethnicity11940,
+  Detailedethnicity11957,
+  Detailedethnicity11965,
+  Detailedethnicity11973,
+  Detailedethnicity11981,
+  Detailedethnicity11999,
+  Detailedethnicity12005,
+  Detailedethnicity12013,
+  Detailedethnicity12021,
+  Detailedethnicity12039,
+  Detailedethnicity12047,
+  Detailedethnicity12054,
+  Detailedethnicity12070,
+  Detailedethnicity12096,
+  Detailedethnicity12112,
+  Detailedethnicity12120,
+  Detailedethnicity12146,
+  Detailedethnicity12153,
+  Detailedethnicity12161,
+  Detailedethnicity12179,
+  Detailedethnicity12187,
+  Detailedethnicity12195,
+  Detailedethnicity12203,
+  Detailedethnicity12229,
+  Detailedethnicity12237,
+  Detailedethnicity12245,
+  Detailedethnicity12252,
+  Detailedethnicity12260,
+  Detailedethnicity12278,
+  Detailedethnicity12286,
+  Detailedethnicity12294,
+  Detailedethnicity12302,
+  Detailedethnicity12310,
+  Detailedethnicity12336,
+  Detailedethnicity12344,
+  Detailedethnicity12351,
+  Detailedethnicity12369,
+  Detailedethnicity12377,
+  Detailedethnicity12385,
+  Detailedethnicity12393,
+  Detailedethnicity12401,
+  Detailedethnicity12419,
+  Detailedethnicity12427,
+  Detailedethnicity12435,
+  Detailedethnicity12443,
+  Detailedethnicity12450,
+  Detailedethnicity12468,
+  Detailedethnicity12476,
+  Detailedethnicity12484,
+  Detailedethnicity12500,
+  Detailedethnicity12526,
+  Detailedethnicity12542,
+  Detailedethnicity12567,
+  Detailedethnicity12583,
+  Detailedethnicity12609,
+  Detailedethnicity12625,
+  Detailedethnicity12641,
+  Detailedethnicity12658,
+  Detailedethnicity12674,
+  Detailedethnicity12690,
+  Detailedethnicity12716,
+  Detailedethnicity12724,
+  Detailedethnicity12732,
+  Detailedethnicity12757,
+  Detailedethnicity12773,
+  Detailedethnicity12799,
+  Detailedethnicity12815,
+  Detailedethnicity12823,
+  Detailedethnicity12831,
+  Detailedethnicity12856,
+  Detailedethnicity12864,
+  Detailedethnicity12872,
+  Detailedethnicity12880,
+  Detailedethnicity12898,
+  Detailedethnicity12906,
+  Detailedethnicity12914,
+  Detailedethnicity12922,
+  Detailedethnicity12930,
+  Detailedethnicity12948,
+  Detailedethnicity12955,
+  Detailedethnicity12971,
+  Detailedethnicity12997,
+  Detailedethnicity13011,
+  Detailedethnicity13037,
+  Detailedethnicity13052,
+  Detailedethnicity13060,
+  Detailedethnicity13078,
+  Detailedethnicity13094,
+  Detailedethnicity13102,
+  Detailedethnicity13128,
+  Detailedethnicity13136,
+  Detailedethnicity13144,
+  Detailedethnicity13151,
+  Detailedethnicity13177,
+  Detailedethnicity13193,
+  Detailedethnicity13219,
+  Detailedethnicity13235,
+  Detailedethnicity13250,
+  Detailedethnicity13268,
+  Detailedethnicity13276,
+  Detailedethnicity13284,
+  Detailedethnicity13292,
+  Detailedethnicity13318,
+  Detailedethnicity13326,
+  Detailedethnicity13334,
+  Detailedethnicity13342,
+  Detailedethnicity13359,
+  Detailedethnicity13367,
+  Detailedethnicity13375,
+  Detailedethnicity13383,
+  Detailedethnicity13409,
+  Detailedethnicity13425,
+  Detailedethnicity13441,
+  Detailedethnicity13458,
+  Detailedethnicity13466,
+  Detailedethnicity13482,
+  Detailedethnicity13508,
+  Detailedethnicity13524,
+  Detailedethnicity13540,
+  Detailedethnicity13565,
+  Detailedethnicity13581,
+  Detailedethnicity13599,
+  Detailedethnicity13607,
+  Detailedethnicity13615,
+  Detailedethnicity13631,
+  Detailedethnicity13656,
+  Detailedethnicity13664,
+  Detailedethnicity13680,
+  Detailedethnicity13706,
+  Detailedethnicity13722,
+  Detailedethnicity13748,
+  Detailedethnicity13763,
+  Detailedethnicity13789,
+  Detailedethnicity13805,
+  Detailedethnicity13821,
+  Detailedethnicity13839,
+  Detailedethnicity13847,
+  Detailedethnicity13854,
+  Detailedethnicity13870,
+  Detailedethnicity13896,
+  Detailedethnicity13912,
+  Detailedethnicity13920,
+  Detailedethnicity13938,
+  Detailedethnicity13946,
+  Detailedethnicity13953,
+  Detailedethnicity13961,
+  Detailedethnicity13979,
+  Detailedethnicity13987,
+  Detailedethnicity13995,
+  Detailedethnicity14001,
+  Detailedethnicity14019,
+  Detailedethnicity14035,
+  Detailedethnicity14050,
+  Detailedethnicity14076,
+  Detailedethnicity14092,
+  Detailedethnicity14118,
+  Detailedethnicity14126,
+  Detailedethnicity14134,
+  Detailedethnicity14142,
+  Detailedethnicity14167,
+  Detailedethnicity14175,
+  Detailedethnicity14183,
+  Detailedethnicity14191,
+  Detailedethnicity14209,
+  Detailedethnicity14217,
+  Detailedethnicity14225,
+  Detailedethnicity14233,
+  Detailedethnicity14241,
+  Detailedethnicity14258,
+  Detailedethnicity14266,
+  Detailedethnicity14274,
+  Detailedethnicity14282,
+  Detailedethnicity14290,
+  Detailedethnicity14308,
+  Detailedethnicity14316,
+  Detailedethnicity14324,
+  Detailedethnicity14332,
+  Detailedethnicity14340,
+  Detailedethnicity14357,
+  Detailedethnicity14365,
+  Detailedethnicity14373,
+  Detailedethnicity14399,
+  Detailedethnicity14415,
+  Detailedethnicity14423,
+  Detailedethnicity14431,
+  Detailedethnicity14456,
+  Detailedethnicity14464,
+  Detailedethnicity14480,
+  Detailedethnicity14506,
+  Detailedethnicity14514,
+  Detailedethnicity14530,
+  Detailedethnicity14548,
+  Detailedethnicity14563,
+  Detailedethnicity14571,
+  Detailedethnicity14589,
+  Detailedethnicity14605,
+  Detailedethnicity14621,
+  Detailedethnicity14647,
+  Detailedethnicity14654,
+  Detailedethnicity14662,
+  Detailedethnicity14670,
+  Detailedethnicity14688,
+  Detailedethnicity14696,
+  Detailedethnicity14704,
+  Detailedethnicity14712,
+  Detailedethnicity14720,
+  Detailedethnicity14746,
+  Detailedethnicity14753,
+  Detailedethnicity14761,
+  Detailedethnicity14787,
+  Detailedethnicity14795,
+  Detailedethnicity14803,
+  Detailedethnicity14811,
+  Detailedethnicity14829,
+  Detailedethnicity14837,
+  Detailedethnicity14845,
+  Detailedethnicity14852,
+  Detailedethnicity14878,
+  Detailedethnicity14894,
+  Detailedethnicity14902,
+  Detailedethnicity14910,
+  Detailedethnicity14928,
+  Detailedethnicity14936,
+  Detailedethnicity14944,
+  Detailedethnicity14951,
+  Detailedethnicity14969,
+  Detailedethnicity14977,
+  Detailedethnicity14985,
+  Detailedethnicity14993,
+  Detailedethnicity15008,
+  Detailedethnicity15016,
+  Detailedethnicity15024,
+  Detailedethnicity15032,
+  Detailedethnicity15040,
+  Detailedethnicity15057,
+  Detailedethnicity15065,
+  Detailedethnicity15073,
+  Detailedethnicity15081,
+  Detailedethnicity15099,
+  Detailedethnicity15107,
+  Detailedethnicity15115,
+  Detailedethnicity15123,
+  Detailedethnicity15131,
+  Detailedethnicity15149,
+  Detailedethnicity15156,
+  Detailedethnicity15164,
+  Detailedethnicity15180,
+  Detailedethnicity15198,
+  Detailedethnicity15206,
+  Detailedethnicity15214,
+  Detailedethnicity15222,
+  Detailedethnicity15230,
+  Detailedethnicity15248,
+  Detailedethnicity15255,
+  Detailedethnicity15263,
+  Detailedethnicity15271,
+  Detailedethnicity15289,
+  Detailedethnicity15297,
+  Detailedethnicity15305,
+  Detailedethnicity15313,
+  Detailedethnicity15321,
+  Detailedethnicity15339,
+  Detailedethnicity15347,
+  Detailedethnicity15354,
+  Detailedethnicity15362,
+  Detailedethnicity15370,
+  Detailedethnicity15388,
+  Detailedethnicity15396,
+  Detailedethnicity15412,
+  Detailedethnicity15438,
+  Detailedethnicity15453,
+  Detailedethnicity15479,
+  Detailedethnicity15495,
+  Detailedethnicity15511,
+  Detailedethnicity15529,
+  Detailedethnicity15537,
+  Detailedethnicity15545,
+  Detailedethnicity15560,
+  Detailedethnicity15586,
+  Detailedethnicity15602,
+  Detailedethnicity15628,
+  Detailedethnicity15644,
+  Detailedethnicity15669,
+  Detailedethnicity15677,
+  Detailedethnicity15685,
+  Detailedethnicity15693,
+  Detailedethnicity15701,
+  Detailedethnicity15719,
+  Detailedethnicity15735,
+  Detailedethnicity15743,
+  Detailedethnicity15768,
+  Detailedethnicity15784,
+  Detailedethnicity15792,
+  Detailedethnicity15800,
+  Detailedethnicity15826,
+  Detailedethnicity15842,
+  Detailedethnicity15867,
+  Detailedethnicity15875,
+  Detailedethnicity15883,
+  Detailedethnicity15891,
+  Detailedethnicity15909,
+  Detailedethnicity15917,
+  Detailedethnicity15925,
+  Detailedethnicity15933,
+  Detailedethnicity15941,
+  Detailedethnicity15958,
+  Detailedethnicity15966,
+  Detailedethnicity15974,
+  Detailedethnicity15982,
+  Detailedethnicity15990,
+  Detailedethnicity16006,
+  Detailedethnicity16022,
+  Detailedethnicity16030,
+  Detailedethnicity16048,
+  Detailedethnicity16055,
+  Detailedethnicity16071,
+  Detailedethnicity16097,
+  Detailedethnicity16105,
+  Detailedethnicity16113,
+  Detailedethnicity16121,
+  Detailedethnicity16139,
+  Detailedethnicity16147,
+  Detailedethnicity16154,
+  Detailedethnicity16162,
+  Detailedethnicity16170,
+  Detailedethnicity16188,
+  Detailedethnicity16196,
+  Detailedethnicity16204,
+  Detailedethnicity16212,
+  Detailedethnicity16220,
+  Detailedethnicity16238,
+  Detailedethnicity16246,
+  Detailedethnicity16253,
+  Detailedethnicity16261,
+  Detailedethnicity16279,
+  Detailedethnicity16287,
+  Detailedethnicity16295,
+  Detailedethnicity16303,
+  Detailedethnicity16311,
+  Detailedethnicity16329,
+  Detailedethnicity16337,
+  Detailedethnicity16345,
+  Detailedethnicity16352,
+  Detailedethnicity16360,
+  Detailedethnicity16378,
+  Detailedethnicity16386,
+  Detailedethnicity16394,
+  Detailedethnicity16402,
+  Detailedethnicity16410,
+  Detailedethnicity16436,
+  Detailedethnicity16451,
+  Detailedethnicity16477,
+  Detailedethnicity16493,
+  Detailedethnicity16519,
+  Detailedethnicity16535,
+  Detailedethnicity16543,
+  Detailedethnicity16550,
+  Detailedethnicity16568,
+  Detailedethnicity16576,
+  Detailedethnicity16592,
+  Detailedethnicity16618,
+  Detailedethnicity16634,
+  Detailedethnicity16659,
+  Detailedethnicity16675,
+  Detailedethnicity16683,
+  Detailedethnicity16709,
+  Detailedethnicity16717,
+  Detailedethnicity16725,
+  Detailedethnicity16733,
+  Detailedethnicity16758,
+  Detailedethnicity16774,
+  Detailedethnicity16790,
+  Detailedethnicity16808,
+  Detailedethnicity16816,
+  Detailedethnicity16832,
+  Detailedethnicity16857,
+  Detailedethnicity16873,
+  Detailedethnicity16881,
+  Detailedethnicity16899,
+  Detailedethnicity16907,
+  Detailedethnicity16923,
+  Detailedethnicity16949,
+  Detailedethnicity16964,
+  Detailedethnicity16972,
+  Detailedethnicity16980,
+  Detailedethnicity17004,
+  Detailedethnicity17020,
+  Detailedethnicity17046,
+  Detailedethnicity17053,
+  Detailedethnicity17079,
+  Detailedethnicity17095,
+  Detailedethnicity17111,
+  Detailedethnicity17129,
+  Detailedethnicity17137,
+  Detailedethnicity17152,
+  Detailedethnicity17178,
+  Detailedethnicity17186,
+  Detailedethnicity17194,
+  Detailedethnicity17202,
+  Detailedethnicity17228,
+  Detailedethnicity17244,
+  Detailedethnicity17251,
+  Detailedethnicity17269,
+  Detailedethnicity17277,
+  Detailedethnicity17285,
+  Detailedethnicity17293,
+  Detailedethnicity17301,
+  Detailedethnicity17319,
+  Detailedethnicity17327,
+  Detailedethnicity17335,
+  Detailedethnicity17350,
+  Detailedethnicity17376,
+  Detailedethnicity17392,
+  Detailedethnicity17400,
+  Detailedethnicity17418,
+  Detailedethnicity17426,
+  Detailedethnicity17434,
+  Detailedethnicity17442,
+  Detailedethnicity17459,
+  Detailedethnicity17467,
+  Detailedethnicity17475,
+  Detailedethnicity17483,
+  Detailedethnicity17491,
+  Detailedethnicity17509,
+  Detailedethnicity17517,
+  Detailedethnicity17525,
+  Detailedethnicity17533,
+  Detailedethnicity17541,
+  Detailedethnicity17558,
+  Detailedethnicity17566,
+  Detailedethnicity17574,
+  Detailedethnicity17582,
+  Detailedethnicity17590,
+  Detailedethnicity17608,
+  Detailedethnicity17616,
+  Detailedethnicity17624,
+  Detailedethnicity17632,
+  Detailedethnicity17640,
+  Detailedethnicity17657,
+  Detailedethnicity17665,
+  Detailedethnicity17673,
+  Detailedethnicity17681,
+  Detailedethnicity17699,
+  Detailedethnicity17707,
+  Detailedethnicity17715,
+  Detailedethnicity17723,
+  Detailedethnicity17731,
+  Detailedethnicity17749,
+  Detailedethnicity17756,
+  Detailedethnicity17764,
+  Detailedethnicity17772,
+  Detailedethnicity17780,
+  Detailedethnicity17798,
+  Detailedethnicity17806,
+  Detailedethnicity17814,
+  Detailedethnicity17822,
+  Detailedethnicity17830,
+  Detailedethnicity17848,
+  Detailedethnicity17855,
+  Detailedethnicity17863,
+  Detailedethnicity17871,
+  Detailedethnicity17889,
+  Detailedethnicity17897,
+  Detailedethnicity17905,
+  Detailedethnicity17913,
+  Detailedethnicity17921,
+  Detailedethnicity17939,
+  Detailedethnicity17947,
+  Detailedethnicity17954,
+  Detailedethnicity17962,
+  Detailedethnicity17970,
+  Detailedethnicity17988,
+  Detailedethnicity17996,
+  Detailedethnicity18002,
+  Detailedethnicity18010,
+  Detailedethnicity18028,
+  Detailedethnicity18036,
+  Detailedethnicity18044,
+  Detailedethnicity18051,
+  Detailedethnicity18069,
+  Detailedethnicity18077,
+  Detailedethnicity18085,
+  Detailedethnicity18093,
+  Detailedethnicity18119,
+  Detailedethnicity18135,
+  Detailedethnicity18143,
+  Detailedethnicity18150,
+  Detailedethnicity18168,
+  Detailedethnicity18176,
+  Detailedethnicity18184,
+  Detailedethnicity18192,
+  Detailedethnicity18200,
+  Detailedethnicity18218,
+  Detailedethnicity18226,
+  Detailedethnicity18234,
+  Detailedethnicity18242,
+  Detailedethnicity18259,
+  Detailedethnicity18267,
+  Detailedethnicity18275,
+  Detailedethnicity18283,
+  Detailedethnicity18291,
+  Detailedethnicity18309,
+  Detailedethnicity18317,
+  Detailedethnicity18325,
+  Detailedethnicity18333,
+  Detailedethnicity18341,
+  Detailedethnicity18358,
+  Detailedethnicity18374,
+  Detailedethnicity18382,
+  Detailedethnicity18408,
+  Detailedethnicity18424,
+  Detailedethnicity18440,
+  Detailedethnicity18457,
+  Detailedethnicity18465,
+  Detailedethnicity18473,
+  Detailedethnicity18481,
+  Detailedethnicity18499,
+  Detailedethnicity18507,
+  Detailedethnicity18515,
+  Detailedethnicity18523,
+  Detailedethnicity18531,
+  Detailedethnicity18549,
+  Detailedethnicity18556,
+  Detailedethnicity18564,
+  Detailedethnicity18572,
+  Detailedethnicity18580,
+  Detailedethnicity18598,
+  Detailedethnicity18606,
+  Detailedethnicity18614,
+  Detailedethnicity18622,
+  Detailedethnicity18630,
+  Detailedethnicity18648,
+  Detailedethnicity18655,
+  Detailedethnicity18663,
+  Detailedethnicity18671,
+  Detailedethnicity18689,
+  Detailedethnicity18697,
+  Detailedethnicity18705,
+  Detailedethnicity18713,
+  Detailedethnicity18721,
+  Detailedethnicity18739,
+  Detailedethnicity18747,
+  Detailedethnicity18754,
+  Detailedethnicity18762,
+  Detailedethnicity18770,
+  Detailedethnicity18788,
+  Detailedethnicity18796,
+  Detailedethnicity18804,
+  Detailedethnicity18812,
+  Detailedethnicity18820,
+  Detailedethnicity18838,
+  Detailedethnicity18846,
+  Detailedethnicity18853,
+  Detailedethnicity18861,
+  Detailedethnicity18879,
+  Detailedethnicity18887,
+  Detailedethnicity18895,
+  Detailedethnicity18911,
+  Detailedethnicity18929,
+  Detailedethnicity18937,
+  Detailedethnicity18945,
+  Detailedethnicity18960,
+  Detailedethnicity18978,
+  Detailedethnicity18986,
+  Detailedethnicity18994,
+  Detailedethnicity19000,
+  Detailedethnicity19018,
+  Detailedethnicity19026,
+  Detailedethnicity19034,
+  Detailedethnicity19042,
+  Detailedethnicity19059,
+  Detailedethnicity19067,
+  Detailedethnicity19075,
+  Detailedethnicity19083,
+  Detailedethnicity19091,
+  Detailedethnicity19109,
+  Detailedethnicity19117,
+  Detailedethnicity19125,
+  Detailedethnicity19133,
+  Detailedethnicity19141,
+  Detailedethnicity19158,
+  Detailedethnicity19166,
+  Detailedethnicity19174,
+  Detailedethnicity19182,
+  Detailedethnicity19190,
+  Detailedethnicity19208,
+  Detailedethnicity19216,
+  Detailedethnicity19224,
+  Detailedethnicity19232,
+  Detailedethnicity19240,
+  Detailedethnicity19257,
+  Detailedethnicity19265,
+  Detailedethnicity19273,
+  Detailedethnicity19281,
+  Detailedethnicity19299,
+  Detailedethnicity19307,
+  Detailedethnicity19315,
+  Detailedethnicity19323,
+  Detailedethnicity19331,
+  Detailedethnicity19349,
+  Detailedethnicity19356,
+  Detailedethnicity19364,
+  Detailedethnicity19372,
+  Detailedethnicity19380,
+  Detailedethnicity19398,
+  Detailedethnicity19406,
+  Detailedethnicity19414,
+  Detailedethnicity19422,
+  Detailedethnicity19430,
+  Detailedethnicity19448,
+  Detailedethnicity19455,
+  Detailedethnicity19463,
+  Detailedethnicity19471,
+  Detailedethnicity19489,
+  Detailedethnicity19497,
+  Detailedethnicity19505,
+  Detailedethnicity19513,
+  Detailedethnicity19521,
+  Detailedethnicity19539,
+  Detailedethnicity19547,
+  Detailedethnicity19554,
+  Detailedethnicity19562,
+  Detailedethnicity19570,
+  Detailedethnicity19588,
+  Detailedethnicity19596,
+  Detailedethnicity19604,
+  Detailedethnicity19612,
+  Detailedethnicity19620,
+  Detailedethnicity19638,
+  Detailedethnicity19646,
+  Detailedethnicity19661,
+  Detailedethnicity19687,
+  Detailedethnicity19695,
+  Detailedethnicity19703,
+  Detailedethnicity19729,
+  Detailedethnicity19737,
+  Detailedethnicity19745,
+  Detailedethnicity19752,
+  Detailedethnicity19760,
+  Detailedethnicity19778,
+  Detailedethnicity19786,
+  Detailedethnicity19794,
+  Detailedethnicity19802,
+  Detailedethnicity19810,
+  Detailedethnicity19828,
+  Detailedethnicity19844,
+  Detailedethnicity19851,
+  Detailedethnicity19869,
+  Detailedethnicity19877,
+  Detailedethnicity19885,
+  Detailedethnicity19901,
+  Detailedethnicity19927,
+  Detailedethnicity19935,
+  Detailedethnicity19943,
+  Detailedethnicity19950,
+  Detailedethnicity19968,
+  Detailedethnicity19976,
+  Detailedethnicity19984,
+  Detailedethnicity19992,
+  Detailedethnicity20008,
+  Detailedethnicity20024,
+  Detailedethnicity20040,
+  Detailedethnicity20065,
+  Detailedethnicity20073,
+  Detailedethnicity20081,
+  Detailedethnicity20099,
+  Detailedethnicity20107,
+  Detailedethnicity20115,
+  Detailedethnicity20123,
+  Detailedethnicity20131,
+  Detailedethnicity20149,
+  Detailedethnicity20156,
+  Detailedethnicity20164,
+  Detailedethnicity20172,
+  Detailedethnicity20180,
+  Detailedethnicity20198,
+  Detailedethnicity20206,
+  Detailedethnicity20214,
+  Detailedethnicity20222,
+  Detailedethnicity20230,
+  Detailedethnicity20248,
+  Detailedethnicity20255,
+  Detailedethnicity20263,
+  Detailedethnicity20289,
+  Detailedethnicity20297,
+  Detailedethnicity20305,
+  Detailedethnicity20313,
+  Detailedethnicity20321,
+  Detailedethnicity20339,
+  Detailedethnicity20347,
+  Detailedethnicity20354,
+  Detailedethnicity20362,
+  Detailedethnicity20370,
+  Detailedethnicity20388,
+  Detailedethnicity20396,
+  Detailedethnicity20404,
+  Detailedethnicity20412,
+  Detailedethnicity20420,
+  Detailedethnicity20438,
+  Detailedethnicity20446,
+  Detailedethnicity20453,
+  Detailedethnicity20461,
+  Detailedethnicity20479,
+  Detailedethnicity20487,
+  Detailedethnicity20495,
+  Detailedethnicity20503,
+  Detailedethnicity20511,
+  Detailedethnicity20529,
+  Detailedethnicity20545,
+  Detailedethnicity20560,
+  Detailedethnicity20586,
+  Detailedethnicity20602,
+  Detailedethnicity20610,
+  Detailedethnicity20628,
+  Detailedethnicity20636,
+  Detailedethnicity20644,
+  Detailedethnicity20651,
+  Detailedethnicity20669,
+  Detailedethnicity20677,
+  Detailedethnicity20685,
+  Detailedethnicity20693,
+  Detailedethnicity20701,
+  Detailedethnicity20719,
+  Detailedethnicity20727,
+  Detailedethnicity20735,
+  Detailedethnicity20743,
+  Detailedethnicity20750,
+  Detailedethnicity20768,
+  Detailedethnicity20784,
+  Detailedethnicity20792,
+  Detailedethnicity20800,
+  Detailedethnicity20818,
+  Detailedethnicity20826,
+  Detailedethnicity20834,
+  Detailedethnicity20859,
+  Detailedethnicity20867,
+  Detailedethnicity20875,
+  Detailedethnicity20883,
+  Detailedethnicity20891,
+  Detailedethnicity20909,
+  Detailedethnicity20917,
+  Detailedethnicity20925,
+  Detailedethnicity20933,
+  Detailedethnicity20941,
+  Detailedethnicity20958,
+  Detailedethnicity20966,
+  Detailedethnicity20974,
+  Detailedethnicity20982,
+  Detailedethnicity21006,
+  Detailedethnicity21014,
+  Detailedethnicity21022,
+  Detailedethnicity21030,
+  Detailedethnicity21048,
+  Detailedethnicity21063,
+  Detailedethnicity21089,
+  Detailedethnicity21097,
+  Detailedethnicity21105,
+  Detailedethnicity21113,
+  Detailedethnicity21121,
+  Detailedethnicity21139,
+  Detailedethnicity21147,
+  Detailedethnicity21154,
+  Detailedethnicity21162,
+  Detailedethnicity21188,
+  Detailedethnicity21196,
+  Detailedethnicity21204,
+  Detailedethnicity21212,
+  Detailedethnicity21220,
+  Detailedethnicity21238,
+  Detailedethnicity21246,
+  Detailedethnicity21253,
+  Detailedethnicity21261,
+  Detailedethnicity21279,
+  Detailedethnicity21295,
+  Detailedethnicity21311,
+  Detailedethnicity21337,
+  Detailedethnicity21352,
+  Detailedethnicity21378,
+  Detailedethnicity21386,
+  Detailedethnicity21394,
+  Detailedethnicity21402,
+  Detailedethnicity21410,
+  Detailedethnicity21428,
+  Detailedethnicity21436,
+  Detailedethnicity21444,
+  Detailedethnicity21451,
+  Detailedethnicity21469,
+  Detailedethnicity21485,
+  Detailedethnicity21493,
+  Detailedethnicity21501,
+  Detailedethnicity21519,
+  Detailedethnicity21527,
+  Detailedethnicity21535,
+  Detailedethnicity21550,
+  Detailedethnicity21568,
+  Detailedethnicity21576,
+  Detailedethnicity21584,
+  Detailedethnicity21592,
+  Detailedethnicity21600,
+  Detailedethnicity21618,
+  Detailedethnicity21626,
+  Detailedethnicity21634,
+  Detailedethnicity21659,
+  Detailedethnicity21667,
+  Detailedethnicity21675,
+  Detailedethnicity21683,
+  Detailedethnicity21691,
+  Detailedethnicity21709,
+  Detailedethnicity21717,
+  Detailedethnicity21725,
+  Detailedethnicity21733,
+  Detailedethnicity21741,
+  Detailedethnicity21758,
+  Detailedethnicity21766,
+  Detailedethnicity21782,
+  Detailedethnicity21808,
+  Detailedethnicity21824,
+  Detailedethnicity21840,
+  Detailedethnicity21865,
+  Detailedethnicity25007,
+  DetailedethnicityAsku,
+  DetailedethnicityOth,
+  DetailedethnicityUnk,
+]
 
 pub fn detailedethnicity_to_json(detailedethnicity: Detailedethnicity) -> Json {
   json.string(detailedethnicity_to_code(detailedethnicity))
@@ -5477,7 +6936,22 @@ pub fn detailedethnicity_decoder() -> Decoder(Detailedethnicity) {
     "ASKU" -> decode.success(DetailedethnicityAsku)
     "OTH" -> decode.success(DetailedethnicityOth)
     "UNK" -> decode.success(DetailedethnicityUnk)
-    _ -> decode.failure(Detailedethnicity10009, "Detailedethnicity")
+    _ ->
+      decode.failure(
+        Detailedethnicity10009,
+        "code from valueset Detailedethnicity ["
+          <> {
+          detailedethnicity
+          |> list.map(detailedethnicity_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -7431,6 +8905,978 @@ pub type Detailedrace {
   DetailedraceOth
   DetailedraceUnk
 }
+
+pub const detailedrace: List(Detailedrace) = [
+  Detailedrace10009,
+  Detailedrace10025,
+  Detailedrace10041,
+  Detailedrace10066,
+  Detailedrace10082,
+  Detailedrace10108,
+  Detailedrace10116,
+  Detailedrace10124,
+  Detailedrace10132,
+  Detailedrace10140,
+  Detailedrace10157,
+  Detailedrace10165,
+  Detailedrace10173,
+  Detailedrace10181,
+  Detailedrace10199,
+  Detailedrace10215,
+  Detailedrace10223,
+  Detailedrace10231,
+  Detailedrace10249,
+  Detailedrace10264,
+  Detailedrace10280,
+  Detailedrace10306,
+  Detailedrace10314,
+  Detailedrace10330,
+  Detailedrace10355,
+  Detailedrace10371,
+  Detailedrace10397,
+  Detailedrace10413,
+  Detailedrace10421,
+  Detailedrace10447,
+  Detailedrace10454,
+  Detailedrace10462,
+  Detailedrace10470,
+  Detailedrace10488,
+  Detailedrace10496,
+  Detailedrace10504,
+  Detailedrace10512,
+  Detailedrace10538,
+  Detailedrace10546,
+  Detailedrace10553,
+  Detailedrace10561,
+  Detailedrace10579,
+  Detailedrace10587,
+  Detailedrace10595,
+  Detailedrace10603,
+  Detailedrace10611,
+  Detailedrace10629,
+  Detailedrace10637,
+  Detailedrace10645,
+  Detailedrace10652,
+  Detailedrace10660,
+  Detailedrace10686,
+  Detailedrace10694,
+  Detailedrace10702,
+  Detailedrace10710,
+  Detailedrace10728,
+  Detailedrace10736,
+  Detailedrace10744,
+  Detailedrace10769,
+  Detailedrace10785,
+  Detailedrace10801,
+  Detailedrace10827,
+  Detailedrace10835,
+  Detailedrace10843,
+  Detailedrace10868,
+  Detailedrace10884,
+  Detailedrace10892,
+  Detailedrace10900,
+  Detailedrace10918,
+  Detailedrace10926,
+  Detailedrace10934,
+  Detailedrace10942,
+  Detailedrace10959,
+  Detailedrace10967,
+  Detailedrace10975,
+  Detailedrace10983,
+  Detailedrace11007,
+  Detailedrace11023,
+  Detailedrace11031,
+  Detailedrace11049,
+  Detailedrace11064,
+  Detailedrace11080,
+  Detailedrace11098,
+  Detailedrace11106,
+  Detailedrace11122,
+  Detailedrace11148,
+  Detailedrace11155,
+  Detailedrace11163,
+  Detailedrace11171,
+  Detailedrace11189,
+  Detailedrace11197,
+  Detailedrace11205,
+  Detailedrace11213,
+  Detailedrace11239,
+  Detailedrace11247,
+  Detailedrace11254,
+  Detailedrace11262,
+  Detailedrace11270,
+  Detailedrace11288,
+  Detailedrace11296,
+  Detailedrace11304,
+  Detailedrace11312,
+  Detailedrace11320,
+  Detailedrace11338,
+  Detailedrace11346,
+  Detailedrace11353,
+  Detailedrace11361,
+  Detailedrace11379,
+  Detailedrace11387,
+  Detailedrace11395,
+  Detailedrace11403,
+  Detailedrace11411,
+  Detailedrace11429,
+  Detailedrace11437,
+  Detailedrace11445,
+  Detailedrace11452,
+  Detailedrace11460,
+  Detailedrace11478,
+  Detailedrace11486,
+  Detailedrace11502,
+  Detailedrace11510,
+  Detailedrace11536,
+  Detailedrace11551,
+  Detailedrace11569,
+  Detailedrace11577,
+  Detailedrace11585,
+  Detailedrace11593,
+  Detailedrace11601,
+  Detailedrace11627,
+  Detailedrace11635,
+  Detailedrace11650,
+  Detailedrace11676,
+  Detailedrace11692,
+  Detailedrace11718,
+  Detailedrace11734,
+  Detailedrace11759,
+  Detailedrace11767,
+  Detailedrace11783,
+  Detailedrace11809,
+  Detailedrace11825,
+  Detailedrace11841,
+  Detailedrace11866,
+  Detailedrace11874,
+  Detailedrace11890,
+  Detailedrace11916,
+  Detailedrace11932,
+  Detailedrace11940,
+  Detailedrace11957,
+  Detailedrace11965,
+  Detailedrace11973,
+  Detailedrace11981,
+  Detailedrace11999,
+  Detailedrace12005,
+  Detailedrace12013,
+  Detailedrace12021,
+  Detailedrace12039,
+  Detailedrace12047,
+  Detailedrace12054,
+  Detailedrace12070,
+  Detailedrace12096,
+  Detailedrace12112,
+  Detailedrace12120,
+  Detailedrace12146,
+  Detailedrace12153,
+  Detailedrace12161,
+  Detailedrace12179,
+  Detailedrace12187,
+  Detailedrace12195,
+  Detailedrace12203,
+  Detailedrace12229,
+  Detailedrace12237,
+  Detailedrace12245,
+  Detailedrace12252,
+  Detailedrace12260,
+  Detailedrace12278,
+  Detailedrace12286,
+  Detailedrace12294,
+  Detailedrace12302,
+  Detailedrace12310,
+  Detailedrace12336,
+  Detailedrace12344,
+  Detailedrace12351,
+  Detailedrace12369,
+  Detailedrace12377,
+  Detailedrace12385,
+  Detailedrace12393,
+  Detailedrace12401,
+  Detailedrace12419,
+  Detailedrace12427,
+  Detailedrace12435,
+  Detailedrace12443,
+  Detailedrace12450,
+  Detailedrace12468,
+  Detailedrace12476,
+  Detailedrace12484,
+  Detailedrace12500,
+  Detailedrace12526,
+  Detailedrace12542,
+  Detailedrace12567,
+  Detailedrace12583,
+  Detailedrace12609,
+  Detailedrace12625,
+  Detailedrace12641,
+  Detailedrace12658,
+  Detailedrace12674,
+  Detailedrace12690,
+  Detailedrace12716,
+  Detailedrace12724,
+  Detailedrace12732,
+  Detailedrace12757,
+  Detailedrace12773,
+  Detailedrace12799,
+  Detailedrace12815,
+  Detailedrace12823,
+  Detailedrace12831,
+  Detailedrace12856,
+  Detailedrace12864,
+  Detailedrace12872,
+  Detailedrace12880,
+  Detailedrace12898,
+  Detailedrace12906,
+  Detailedrace12914,
+  Detailedrace12922,
+  Detailedrace12930,
+  Detailedrace12948,
+  Detailedrace12955,
+  Detailedrace12971,
+  Detailedrace12997,
+  Detailedrace13011,
+  Detailedrace13037,
+  Detailedrace13052,
+  Detailedrace13060,
+  Detailedrace13078,
+  Detailedrace13094,
+  Detailedrace13102,
+  Detailedrace13128,
+  Detailedrace13136,
+  Detailedrace13144,
+  Detailedrace13151,
+  Detailedrace13177,
+  Detailedrace13193,
+  Detailedrace13219,
+  Detailedrace13235,
+  Detailedrace13250,
+  Detailedrace13268,
+  Detailedrace13276,
+  Detailedrace13284,
+  Detailedrace13292,
+  Detailedrace13318,
+  Detailedrace13326,
+  Detailedrace13334,
+  Detailedrace13342,
+  Detailedrace13359,
+  Detailedrace13367,
+  Detailedrace13375,
+  Detailedrace13383,
+  Detailedrace13409,
+  Detailedrace13425,
+  Detailedrace13441,
+  Detailedrace13458,
+  Detailedrace13466,
+  Detailedrace13482,
+  Detailedrace13508,
+  Detailedrace13524,
+  Detailedrace13540,
+  Detailedrace13565,
+  Detailedrace13581,
+  Detailedrace13599,
+  Detailedrace13607,
+  Detailedrace13615,
+  Detailedrace13631,
+  Detailedrace13656,
+  Detailedrace13664,
+  Detailedrace13680,
+  Detailedrace13706,
+  Detailedrace13722,
+  Detailedrace13748,
+  Detailedrace13763,
+  Detailedrace13789,
+  Detailedrace13805,
+  Detailedrace13821,
+  Detailedrace13839,
+  Detailedrace13847,
+  Detailedrace13854,
+  Detailedrace13870,
+  Detailedrace13896,
+  Detailedrace13912,
+  Detailedrace13920,
+  Detailedrace13938,
+  Detailedrace13946,
+  Detailedrace13953,
+  Detailedrace13961,
+  Detailedrace13979,
+  Detailedrace13987,
+  Detailedrace13995,
+  Detailedrace14001,
+  Detailedrace14019,
+  Detailedrace14035,
+  Detailedrace14050,
+  Detailedrace14076,
+  Detailedrace14092,
+  Detailedrace14118,
+  Detailedrace14126,
+  Detailedrace14134,
+  Detailedrace14142,
+  Detailedrace14167,
+  Detailedrace14175,
+  Detailedrace14183,
+  Detailedrace14191,
+  Detailedrace14209,
+  Detailedrace14217,
+  Detailedrace14225,
+  Detailedrace14233,
+  Detailedrace14241,
+  Detailedrace14258,
+  Detailedrace14266,
+  Detailedrace14274,
+  Detailedrace14282,
+  Detailedrace14290,
+  Detailedrace14308,
+  Detailedrace14316,
+  Detailedrace14324,
+  Detailedrace14332,
+  Detailedrace14340,
+  Detailedrace14357,
+  Detailedrace14365,
+  Detailedrace14373,
+  Detailedrace14399,
+  Detailedrace14415,
+  Detailedrace14423,
+  Detailedrace14431,
+  Detailedrace14456,
+  Detailedrace14464,
+  Detailedrace14480,
+  Detailedrace14506,
+  Detailedrace14514,
+  Detailedrace14530,
+  Detailedrace14548,
+  Detailedrace14563,
+  Detailedrace14571,
+  Detailedrace14589,
+  Detailedrace14605,
+  Detailedrace14621,
+  Detailedrace14647,
+  Detailedrace14654,
+  Detailedrace14662,
+  Detailedrace14670,
+  Detailedrace14688,
+  Detailedrace14696,
+  Detailedrace14704,
+  Detailedrace14712,
+  Detailedrace14720,
+  Detailedrace14746,
+  Detailedrace14753,
+  Detailedrace14761,
+  Detailedrace14787,
+  Detailedrace14795,
+  Detailedrace14803,
+  Detailedrace14811,
+  Detailedrace14829,
+  Detailedrace14837,
+  Detailedrace14845,
+  Detailedrace14852,
+  Detailedrace14878,
+  Detailedrace14894,
+  Detailedrace14902,
+  Detailedrace14910,
+  Detailedrace14928,
+  Detailedrace14936,
+  Detailedrace14944,
+  Detailedrace14951,
+  Detailedrace14969,
+  Detailedrace14977,
+  Detailedrace14985,
+  Detailedrace14993,
+  Detailedrace15008,
+  Detailedrace15016,
+  Detailedrace15024,
+  Detailedrace15032,
+  Detailedrace15040,
+  Detailedrace15057,
+  Detailedrace15065,
+  Detailedrace15073,
+  Detailedrace15081,
+  Detailedrace15099,
+  Detailedrace15107,
+  Detailedrace15115,
+  Detailedrace15123,
+  Detailedrace15131,
+  Detailedrace15149,
+  Detailedrace15156,
+  Detailedrace15164,
+  Detailedrace15180,
+  Detailedrace15198,
+  Detailedrace15206,
+  Detailedrace15214,
+  Detailedrace15222,
+  Detailedrace15230,
+  Detailedrace15248,
+  Detailedrace15255,
+  Detailedrace15263,
+  Detailedrace15271,
+  Detailedrace15289,
+  Detailedrace15297,
+  Detailedrace15305,
+  Detailedrace15313,
+  Detailedrace15321,
+  Detailedrace15339,
+  Detailedrace15347,
+  Detailedrace15354,
+  Detailedrace15362,
+  Detailedrace15370,
+  Detailedrace15388,
+  Detailedrace15396,
+  Detailedrace15412,
+  Detailedrace15438,
+  Detailedrace15453,
+  Detailedrace15479,
+  Detailedrace15495,
+  Detailedrace15511,
+  Detailedrace15529,
+  Detailedrace15537,
+  Detailedrace15545,
+  Detailedrace15560,
+  Detailedrace15586,
+  Detailedrace15602,
+  Detailedrace15628,
+  Detailedrace15644,
+  Detailedrace15669,
+  Detailedrace15677,
+  Detailedrace15685,
+  Detailedrace15693,
+  Detailedrace15701,
+  Detailedrace15719,
+  Detailedrace15735,
+  Detailedrace15743,
+  Detailedrace15768,
+  Detailedrace15784,
+  Detailedrace15792,
+  Detailedrace15800,
+  Detailedrace15826,
+  Detailedrace15842,
+  Detailedrace15867,
+  Detailedrace15875,
+  Detailedrace15883,
+  Detailedrace15891,
+  Detailedrace15909,
+  Detailedrace15917,
+  Detailedrace15925,
+  Detailedrace15933,
+  Detailedrace15941,
+  Detailedrace15958,
+  Detailedrace15966,
+  Detailedrace15974,
+  Detailedrace15982,
+  Detailedrace15990,
+  Detailedrace16006,
+  Detailedrace16022,
+  Detailedrace16030,
+  Detailedrace16048,
+  Detailedrace16055,
+  Detailedrace16071,
+  Detailedrace16097,
+  Detailedrace16105,
+  Detailedrace16113,
+  Detailedrace16121,
+  Detailedrace16139,
+  Detailedrace16147,
+  Detailedrace16154,
+  Detailedrace16162,
+  Detailedrace16170,
+  Detailedrace16188,
+  Detailedrace16196,
+  Detailedrace16204,
+  Detailedrace16212,
+  Detailedrace16220,
+  Detailedrace16238,
+  Detailedrace16246,
+  Detailedrace16253,
+  Detailedrace16261,
+  Detailedrace16279,
+  Detailedrace16287,
+  Detailedrace16295,
+  Detailedrace16303,
+  Detailedrace16311,
+  Detailedrace16329,
+  Detailedrace16337,
+  Detailedrace16345,
+  Detailedrace16352,
+  Detailedrace16360,
+  Detailedrace16378,
+  Detailedrace16386,
+  Detailedrace16394,
+  Detailedrace16402,
+  Detailedrace16410,
+  Detailedrace16436,
+  Detailedrace16451,
+  Detailedrace16477,
+  Detailedrace16493,
+  Detailedrace16519,
+  Detailedrace16535,
+  Detailedrace16543,
+  Detailedrace16550,
+  Detailedrace16568,
+  Detailedrace16576,
+  Detailedrace16592,
+  Detailedrace16618,
+  Detailedrace16634,
+  Detailedrace16659,
+  Detailedrace16675,
+  Detailedrace16683,
+  Detailedrace16709,
+  Detailedrace16717,
+  Detailedrace16725,
+  Detailedrace16733,
+  Detailedrace16758,
+  Detailedrace16774,
+  Detailedrace16790,
+  Detailedrace16808,
+  Detailedrace16816,
+  Detailedrace16832,
+  Detailedrace16857,
+  Detailedrace16873,
+  Detailedrace16881,
+  Detailedrace16899,
+  Detailedrace16907,
+  Detailedrace16923,
+  Detailedrace16949,
+  Detailedrace16964,
+  Detailedrace16972,
+  Detailedrace16980,
+  Detailedrace17004,
+  Detailedrace17020,
+  Detailedrace17046,
+  Detailedrace17053,
+  Detailedrace17079,
+  Detailedrace17095,
+  Detailedrace17111,
+  Detailedrace17129,
+  Detailedrace17137,
+  Detailedrace17152,
+  Detailedrace17178,
+  Detailedrace17186,
+  Detailedrace17194,
+  Detailedrace17202,
+  Detailedrace17228,
+  Detailedrace17244,
+  Detailedrace17251,
+  Detailedrace17269,
+  Detailedrace17277,
+  Detailedrace17285,
+  Detailedrace17293,
+  Detailedrace17301,
+  Detailedrace17319,
+  Detailedrace17327,
+  Detailedrace17335,
+  Detailedrace17350,
+  Detailedrace17376,
+  Detailedrace17392,
+  Detailedrace17400,
+  Detailedrace17418,
+  Detailedrace17426,
+  Detailedrace17434,
+  Detailedrace17442,
+  Detailedrace17459,
+  Detailedrace17467,
+  Detailedrace17475,
+  Detailedrace17483,
+  Detailedrace17491,
+  Detailedrace17509,
+  Detailedrace17517,
+  Detailedrace17525,
+  Detailedrace17533,
+  Detailedrace17541,
+  Detailedrace17558,
+  Detailedrace17566,
+  Detailedrace17574,
+  Detailedrace17582,
+  Detailedrace17590,
+  Detailedrace17608,
+  Detailedrace17616,
+  Detailedrace17624,
+  Detailedrace17632,
+  Detailedrace17640,
+  Detailedrace17657,
+  Detailedrace17665,
+  Detailedrace17673,
+  Detailedrace17681,
+  Detailedrace17699,
+  Detailedrace17707,
+  Detailedrace17715,
+  Detailedrace17723,
+  Detailedrace17731,
+  Detailedrace17749,
+  Detailedrace17756,
+  Detailedrace17764,
+  Detailedrace17772,
+  Detailedrace17780,
+  Detailedrace17798,
+  Detailedrace17806,
+  Detailedrace17814,
+  Detailedrace17822,
+  Detailedrace17830,
+  Detailedrace17848,
+  Detailedrace17855,
+  Detailedrace17863,
+  Detailedrace17871,
+  Detailedrace17889,
+  Detailedrace17897,
+  Detailedrace17905,
+  Detailedrace17913,
+  Detailedrace17921,
+  Detailedrace17939,
+  Detailedrace17947,
+  Detailedrace17954,
+  Detailedrace17962,
+  Detailedrace17970,
+  Detailedrace17988,
+  Detailedrace17996,
+  Detailedrace18002,
+  Detailedrace18010,
+  Detailedrace18028,
+  Detailedrace18036,
+  Detailedrace18044,
+  Detailedrace18051,
+  Detailedrace18069,
+  Detailedrace18077,
+  Detailedrace18085,
+  Detailedrace18093,
+  Detailedrace18119,
+  Detailedrace18135,
+  Detailedrace18143,
+  Detailedrace18150,
+  Detailedrace18168,
+  Detailedrace18176,
+  Detailedrace18184,
+  Detailedrace18192,
+  Detailedrace18200,
+  Detailedrace18218,
+  Detailedrace18226,
+  Detailedrace18234,
+  Detailedrace18242,
+  Detailedrace18259,
+  Detailedrace18267,
+  Detailedrace18275,
+  Detailedrace18283,
+  Detailedrace18291,
+  Detailedrace18309,
+  Detailedrace18317,
+  Detailedrace18325,
+  Detailedrace18333,
+  Detailedrace18341,
+  Detailedrace18358,
+  Detailedrace18374,
+  Detailedrace18382,
+  Detailedrace18408,
+  Detailedrace18424,
+  Detailedrace18440,
+  Detailedrace18457,
+  Detailedrace18465,
+  Detailedrace18473,
+  Detailedrace18481,
+  Detailedrace18499,
+  Detailedrace18507,
+  Detailedrace18515,
+  Detailedrace18523,
+  Detailedrace18531,
+  Detailedrace18549,
+  Detailedrace18556,
+  Detailedrace18564,
+  Detailedrace18572,
+  Detailedrace18580,
+  Detailedrace18598,
+  Detailedrace18606,
+  Detailedrace18614,
+  Detailedrace18622,
+  Detailedrace18630,
+  Detailedrace18648,
+  Detailedrace18655,
+  Detailedrace18663,
+  Detailedrace18671,
+  Detailedrace18689,
+  Detailedrace18697,
+  Detailedrace18705,
+  Detailedrace18713,
+  Detailedrace18721,
+  Detailedrace18739,
+  Detailedrace18747,
+  Detailedrace18754,
+  Detailedrace18762,
+  Detailedrace18770,
+  Detailedrace18788,
+  Detailedrace18796,
+  Detailedrace18804,
+  Detailedrace18812,
+  Detailedrace18820,
+  Detailedrace18838,
+  Detailedrace18846,
+  Detailedrace18853,
+  Detailedrace18861,
+  Detailedrace18879,
+  Detailedrace18887,
+  Detailedrace18895,
+  Detailedrace18911,
+  Detailedrace18929,
+  Detailedrace18937,
+  Detailedrace18945,
+  Detailedrace18960,
+  Detailedrace18978,
+  Detailedrace18986,
+  Detailedrace18994,
+  Detailedrace19000,
+  Detailedrace19018,
+  Detailedrace19026,
+  Detailedrace19034,
+  Detailedrace19042,
+  Detailedrace19059,
+  Detailedrace19067,
+  Detailedrace19075,
+  Detailedrace19083,
+  Detailedrace19091,
+  Detailedrace19109,
+  Detailedrace19117,
+  Detailedrace19125,
+  Detailedrace19133,
+  Detailedrace19141,
+  Detailedrace19158,
+  Detailedrace19166,
+  Detailedrace19174,
+  Detailedrace19182,
+  Detailedrace19190,
+  Detailedrace19208,
+  Detailedrace19216,
+  Detailedrace19224,
+  Detailedrace19232,
+  Detailedrace19240,
+  Detailedrace19257,
+  Detailedrace19265,
+  Detailedrace19273,
+  Detailedrace19281,
+  Detailedrace19299,
+  Detailedrace19307,
+  Detailedrace19315,
+  Detailedrace19323,
+  Detailedrace19331,
+  Detailedrace19349,
+  Detailedrace19356,
+  Detailedrace19364,
+  Detailedrace19372,
+  Detailedrace19380,
+  Detailedrace19398,
+  Detailedrace19406,
+  Detailedrace19414,
+  Detailedrace19422,
+  Detailedrace19430,
+  Detailedrace19448,
+  Detailedrace19455,
+  Detailedrace19463,
+  Detailedrace19471,
+  Detailedrace19489,
+  Detailedrace19497,
+  Detailedrace19505,
+  Detailedrace19513,
+  Detailedrace19521,
+  Detailedrace19539,
+  Detailedrace19547,
+  Detailedrace19554,
+  Detailedrace19562,
+  Detailedrace19570,
+  Detailedrace19588,
+  Detailedrace19596,
+  Detailedrace19604,
+  Detailedrace19612,
+  Detailedrace19620,
+  Detailedrace19638,
+  Detailedrace19646,
+  Detailedrace19661,
+  Detailedrace19687,
+  Detailedrace19695,
+  Detailedrace19703,
+  Detailedrace19729,
+  Detailedrace19737,
+  Detailedrace19745,
+  Detailedrace19752,
+  Detailedrace19760,
+  Detailedrace19778,
+  Detailedrace19786,
+  Detailedrace19794,
+  Detailedrace19802,
+  Detailedrace19810,
+  Detailedrace19828,
+  Detailedrace19844,
+  Detailedrace19851,
+  Detailedrace19869,
+  Detailedrace19877,
+  Detailedrace19885,
+  Detailedrace19901,
+  Detailedrace19927,
+  Detailedrace19935,
+  Detailedrace19943,
+  Detailedrace19950,
+  Detailedrace19968,
+  Detailedrace19976,
+  Detailedrace19984,
+  Detailedrace19992,
+  Detailedrace20008,
+  Detailedrace20024,
+  Detailedrace20040,
+  Detailedrace20065,
+  Detailedrace20073,
+  Detailedrace20081,
+  Detailedrace20099,
+  Detailedrace20107,
+  Detailedrace20115,
+  Detailedrace20123,
+  Detailedrace20131,
+  Detailedrace20149,
+  Detailedrace20156,
+  Detailedrace20164,
+  Detailedrace20172,
+  Detailedrace20180,
+  Detailedrace20198,
+  Detailedrace20206,
+  Detailedrace20214,
+  Detailedrace20222,
+  Detailedrace20230,
+  Detailedrace20248,
+  Detailedrace20255,
+  Detailedrace20263,
+  Detailedrace20289,
+  Detailedrace20297,
+  Detailedrace20305,
+  Detailedrace20313,
+  Detailedrace20321,
+  Detailedrace20339,
+  Detailedrace20347,
+  Detailedrace20354,
+  Detailedrace20362,
+  Detailedrace20370,
+  Detailedrace20388,
+  Detailedrace20396,
+  Detailedrace20404,
+  Detailedrace20412,
+  Detailedrace20420,
+  Detailedrace20438,
+  Detailedrace20446,
+  Detailedrace20453,
+  Detailedrace20461,
+  Detailedrace20479,
+  Detailedrace20487,
+  Detailedrace20495,
+  Detailedrace20503,
+  Detailedrace20511,
+  Detailedrace20529,
+  Detailedrace20545,
+  Detailedrace20560,
+  Detailedrace20586,
+  Detailedrace20602,
+  Detailedrace20610,
+  Detailedrace20628,
+  Detailedrace20636,
+  Detailedrace20644,
+  Detailedrace20651,
+  Detailedrace20669,
+  Detailedrace20677,
+  Detailedrace20685,
+  Detailedrace20693,
+  Detailedrace20701,
+  Detailedrace20719,
+  Detailedrace20727,
+  Detailedrace20735,
+  Detailedrace20743,
+  Detailedrace20750,
+  Detailedrace20768,
+  Detailedrace20784,
+  Detailedrace20792,
+  Detailedrace20800,
+  Detailedrace20818,
+  Detailedrace20826,
+  Detailedrace20834,
+  Detailedrace20859,
+  Detailedrace20867,
+  Detailedrace20875,
+  Detailedrace20883,
+  Detailedrace20891,
+  Detailedrace20909,
+  Detailedrace20917,
+  Detailedrace20925,
+  Detailedrace20933,
+  Detailedrace20941,
+  Detailedrace20958,
+  Detailedrace20966,
+  Detailedrace20974,
+  Detailedrace20982,
+  Detailedrace21006,
+  Detailedrace21014,
+  Detailedrace21022,
+  Detailedrace21030,
+  Detailedrace21048,
+  Detailedrace21063,
+  Detailedrace21089,
+  Detailedrace21097,
+  Detailedrace21105,
+  Detailedrace21113,
+  Detailedrace21121,
+  Detailedrace21139,
+  Detailedrace21147,
+  Detailedrace21154,
+  Detailedrace21162,
+  Detailedrace21188,
+  Detailedrace21196,
+  Detailedrace21204,
+  Detailedrace21212,
+  Detailedrace21220,
+  Detailedrace21238,
+  Detailedrace21246,
+  Detailedrace21253,
+  Detailedrace21261,
+  Detailedrace21279,
+  Detailedrace21295,
+  Detailedrace21311,
+  Detailedrace21337,
+  Detailedrace21352,
+  Detailedrace21378,
+  Detailedrace21386,
+  Detailedrace21394,
+  Detailedrace21402,
+  Detailedrace21410,
+  Detailedrace21428,
+  Detailedrace21436,
+  Detailedrace21444,
+  Detailedrace21451,
+  Detailedrace21469,
+  Detailedrace21485,
+  Detailedrace21493,
+  Detailedrace21501,
+  Detailedrace21519,
+  Detailedrace21527,
+  Detailedrace21535,
+  Detailedrace21550,
+  Detailedrace21568,
+  Detailedrace21576,
+  Detailedrace21584,
+  Detailedrace21592,
+  Detailedrace21600,
+  Detailedrace21618,
+  Detailedrace21626,
+  Detailedrace21634,
+  Detailedrace21659,
+  Detailedrace21667,
+  Detailedrace21675,
+  Detailedrace21683,
+  Detailedrace21691,
+  Detailedrace21709,
+  Detailedrace21717,
+  Detailedrace21725,
+  Detailedrace21733,
+  Detailedrace21741,
+  Detailedrace21758,
+  Detailedrace21766,
+  Detailedrace21782,
+  Detailedrace21808,
+  Detailedrace21824,
+  Detailedrace21840,
+  Detailedrace21865,
+  Detailedrace25007,
+  DetailedraceAsku,
+  DetailedraceOth,
+  DetailedraceUnk,
+]
 
 pub fn detailedrace_to_json(detailedrace: Detailedrace) -> Json {
   json.string(detailedrace_to_code(detailedrace))
@@ -10363,7 +12809,20 @@ pub fn detailedrace_decoder() -> Decoder(Detailedrace) {
     "ASKU" -> decode.success(DetailedraceAsku)
     "OTH" -> decode.success(DetailedraceOth)
     "UNK" -> decode.success(DetailedraceUnk)
-    _ -> decode.failure(Detailedrace10009, "Detailedrace")
+    _ ->
+      decode.failure(
+        Detailedrace10009,
+        "code from valueset Detailedrace ["
+          <> {
+          detailedrace |> list.map(detailedrace_to_code) |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11370,6 +13829,35 @@ pub type Eventtiming {
   EventtimingPcv
 }
 
+pub const eventtiming: List(Eventtiming) = [
+  EventtimingMorn,
+  EventtimingMornearly,
+  EventtimingMornlate,
+  EventtimingNoon,
+  EventtimingAft,
+  EventtimingAftearly,
+  EventtimingAftlate,
+  EventtimingEve,
+  EventtimingEveearly,
+  EventtimingEvelate,
+  EventtimingNight,
+  EventtimingPhs,
+  EventtimingHs,
+  EventtimingWake,
+  EventtimingC,
+  EventtimingCm,
+  EventtimingCd,
+  EventtimingCv,
+  EventtimingAc,
+  EventtimingAcm,
+  EventtimingAcd,
+  EventtimingAcv,
+  EventtimingPc,
+  EventtimingPcm,
+  EventtimingPcd,
+  EventtimingPcv,
+]
+
 pub fn eventtiming_to_json(eventtiming: Eventtiming) -> Json {
   json.string(eventtiming_to_code(eventtiming))
 }
@@ -11466,7 +13954,20 @@ pub fn eventtiming_decoder() -> Decoder(Eventtiming) {
     "PCM" -> decode.success(EventtimingPcm)
     "PCD" -> decode.success(EventtimingPcd)
     "PCV" -> decode.success(EventtimingPcv)
-    _ -> decode.failure(EventtimingMorn, "Eventtiming")
+    _ ->
+      decode.failure(
+        EventtimingMorn,
+        "code from valueset Eventtiming ["
+          <> {
+          eventtiming |> list.map(eventtiming_to_code) |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11478,6 +13979,15 @@ pub type Httpverb {
   HttpverbDelete
   HttpverbPatch
 }
+
+pub const httpverb: List(Httpverb) = [
+  HttpverbGet,
+  HttpverbHead,
+  HttpverbPost,
+  HttpverbPut,
+  HttpverbDelete,
+  HttpverbPatch,
+]
 
 pub fn httpverb_to_json(httpverb: Httpverb) -> Json {
   json.string(httpverb_to_code(httpverb))
@@ -11515,7 +14025,18 @@ pub fn httpverb_decoder() -> Decoder(Httpverb) {
     "PUT" -> decode.success(HttpverbPut)
     "DELETE" -> decode.success(HttpverbDelete)
     "PATCH" -> decode.success(HttpverbPatch)
-    _ -> decode.failure(HttpverbGet, "Httpverb")
+    _ ->
+      decode.failure(
+        HttpverbGet,
+        "code from valueset Httpverb ["
+          <> { httpverb |> list.map(httpverb_to_code) |> string.join(", ") }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11526,6 +14047,14 @@ pub type Identifieruse {
   IdentifieruseSecondary
   IdentifieruseOld
 }
+
+pub const identifieruse: List(Identifieruse) = [
+  IdentifieruseUsual,
+  IdentifieruseOfficial,
+  IdentifieruseTemp,
+  IdentifieruseSecondary,
+  IdentifieruseOld,
+]
 
 pub fn identifieruse_to_json(identifieruse: Identifieruse) -> Json {
   json.string(identifieruse_to_code(identifieruse))
@@ -11560,7 +14089,20 @@ pub fn identifieruse_decoder() -> Decoder(Identifieruse) {
     "temp" -> decode.success(IdentifieruseTemp)
     "secondary" -> decode.success(IdentifieruseSecondary)
     "old" -> decode.success(IdentifieruseOld)
-    _ -> decode.failure(IdentifieruseUsual, "Identifieruse")
+    _ ->
+      decode.failure(
+        IdentifieruseUsual,
+        "code from valueset Identifieruse ["
+          <> {
+          identifieruse |> list.map(identifieruse_to_code) |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11570,6 +14112,13 @@ pub type Issueseverity {
   IssueseverityWarning
   IssueseverityInformation
 }
+
+pub const issueseverity: List(Issueseverity) = [
+  IssueseverityFatal,
+  IssueseverityError,
+  IssueseverityWarning,
+  IssueseverityInformation,
+]
 
 pub fn issueseverity_to_json(issueseverity: Issueseverity) -> Json {
   json.string(issueseverity_to_code(issueseverity))
@@ -11601,7 +14150,20 @@ pub fn issueseverity_decoder() -> Decoder(Issueseverity) {
     "error" -> decode.success(IssueseverityError)
     "warning" -> decode.success(IssueseverityWarning)
     "information" -> decode.success(IssueseverityInformation)
-    _ -> decode.failure(IssueseverityFatal, "Issueseverity")
+    _ ->
+      decode.failure(
+        IssueseverityFatal,
+        "code from valueset Issueseverity ["
+          <> {
+          issueseverity |> list.map(issueseverity_to_code) |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11638,6 +14200,40 @@ pub type Issuetype {
   IssuetypeThrottled
   IssuetypeInformational
 }
+
+pub const issuetype: List(Issuetype) = [
+  IssuetypeInvalid,
+  IssuetypeStructure,
+  IssuetypeRequired,
+  IssuetypeValue,
+  IssuetypeInvariant,
+  IssuetypeSecurity,
+  IssuetypeLogin,
+  IssuetypeUnknown,
+  IssuetypeExpired,
+  IssuetypeForbidden,
+  IssuetypeSuppressed,
+  IssuetypeProcessing,
+  IssuetypeNotsupported,
+  IssuetypeDuplicate,
+  IssuetypeMultiplematches,
+  IssuetypeNotfound,
+  IssuetypeDeleted,
+  IssuetypeToolong,
+  IssuetypeCodeinvalid,
+  IssuetypeExtension,
+  IssuetypeToocostly,
+  IssuetypeBusinessrule,
+  IssuetypeConflict,
+  IssuetypeTransient,
+  IssuetypeLockerror,
+  IssuetypeNostore,
+  IssuetypeException,
+  IssuetypeTimeout,
+  IssuetypeIncomplete,
+  IssuetypeThrottled,
+  IssuetypeInformational,
+]
 
 pub fn issuetype_to_json(issuetype: Issuetype) -> Json {
   json.string(issuetype_to_code(issuetype))
@@ -11750,7 +14346,18 @@ pub fn issuetype_decoder() -> Decoder(Issuetype) {
     "incomplete" -> decode.success(IssuetypeIncomplete)
     "throttled" -> decode.success(IssuetypeThrottled)
     "informational" -> decode.success(IssuetypeInformational)
-    _ -> decode.failure(IssuetypeInvalid, "Issuetype")
+    _ ->
+      decode.failure(
+        IssuetypeInvalid,
+        "code from valueset Issuetype ["
+          <> { issuetype |> list.map(issuetype_to_code) |> string.join(", ") }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11760,6 +14367,13 @@ pub type Linktype {
   LinktypeRefer
   LinktypeSeealso
 }
+
+pub const linktype: List(Linktype) = [
+  LinktypeReplacedby,
+  LinktypeReplaces,
+  LinktypeRefer,
+  LinktypeSeealso,
+]
 
 pub fn linktype_to_json(linktype: Linktype) -> Json {
   json.string(linktype_to_code(linktype))
@@ -11791,7 +14405,18 @@ pub fn linktype_decoder() -> Decoder(Linktype) {
     "replaces" -> decode.success(LinktypeReplaces)
     "refer" -> decode.success(LinktypeRefer)
     "seealso" -> decode.success(LinktypeSeealso)
-    _ -> decode.failure(LinktypeReplacedby, "Linktype")
+    _ ->
+      decode.failure(
+        LinktypeReplacedby,
+        "code from valueset Linktype ["
+          <> { linktype |> list.map(linktype_to_code) |> string.join(", ") }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11804,6 +14429,16 @@ pub type Nameuse {
   NameuseOld
   NameuseMaiden
 }
+
+pub const nameuse: List(Nameuse) = [
+  NameuseUsual,
+  NameuseOfficial,
+  NameuseTemp,
+  NameuseNickname,
+  NameuseAnonymous,
+  NameuseOld,
+  NameuseMaiden,
+]
 
 pub fn nameuse_to_json(nameuse: Nameuse) -> Json {
   json.string(nameuse_to_code(nameuse))
@@ -11844,7 +14479,18 @@ pub fn nameuse_decoder() -> Decoder(Nameuse) {
     "anonymous" -> decode.success(NameuseAnonymous)
     "old" -> decode.success(NameuseOld)
     "maiden" -> decode.success(NameuseMaiden)
-    _ -> decode.failure(NameuseUsual, "Nameuse")
+    _ ->
+      decode.failure(
+        NameuseUsual,
+        "code from valueset Nameuse ["
+          <> { nameuse |> list.map(nameuse_to_code) |> string.join(", ") }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11854,6 +14500,13 @@ pub type Narrativestatus {
   NarrativestatusAdditional
   NarrativestatusEmpty
 }
+
+pub const narrativestatus: List(Narrativestatus) = [
+  NarrativestatusGenerated,
+  NarrativestatusExtensions,
+  NarrativestatusAdditional,
+  NarrativestatusEmpty,
+]
 
 pub fn narrativestatus_to_json(narrativestatus: Narrativestatus) -> Json {
   json.string(narrativestatus_to_code(narrativestatus))
@@ -11885,7 +14538,22 @@ pub fn narrativestatus_decoder() -> Decoder(Narrativestatus) {
     "extensions" -> decode.success(NarrativestatusExtensions)
     "additional" -> decode.success(NarrativestatusAdditional)
     "empty" -> decode.success(NarrativestatusEmpty)
-    _ -> decode.failure(NarrativestatusGenerated, "Narrativestatus")
+    _ ->
+      decode.failure(
+        NarrativestatusGenerated,
+        "code from valueset Narrativestatus ["
+          <> {
+          narrativestatus
+          |> list.map(narrativestatus_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11895,6 +14563,13 @@ pub type Ombethnicitycategory {
   OmbethnicitycategoryAsku
   OmbethnicitycategoryUnk
 }
+
+pub const ombethnicitycategory: List(Ombethnicitycategory) = [
+  Ombethnicitycategory21352,
+  Ombethnicitycategory21865,
+  OmbethnicitycategoryAsku,
+  OmbethnicitycategoryUnk,
+]
 
 pub fn ombethnicitycategory_to_json(
   ombethnicitycategory: Ombethnicitycategory,
@@ -11935,7 +14610,22 @@ pub fn ombethnicitycategory_decoder() -> Decoder(Ombethnicitycategory) {
     "2186-5" -> decode.success(Ombethnicitycategory21865)
     "ASKU" -> decode.success(OmbethnicitycategoryAsku)
     "UNK" -> decode.success(OmbethnicitycategoryUnk)
-    _ -> decode.failure(Ombethnicitycategory21352, "Ombethnicitycategory")
+    _ ->
+      decode.failure(
+        Ombethnicitycategory21352,
+        "code from valueset Ombethnicitycategory ["
+          <> {
+          ombethnicitycategory
+          |> list.map(ombethnicitycategory_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -11962,6 +14652,17 @@ pub type Ombracecategory {
   OmbracecategoryAsku
   OmbracecategoryUnk
 }
+
+pub const ombracecategory: List(Ombracecategory) = [
+  Ombracecategory10025,
+  Ombracecategory20289,
+  Ombracecategory20545,
+  Ombracecategory20768,
+  Ombracecategory21063,
+  Ombracecategory21311,
+  OmbracecategoryAsku,
+  OmbracecategoryUnk,
+]
 
 pub fn ombracecategory_to_json(ombracecategory: Ombracecategory) -> Json {
   json.string(ombracecategory_to_code(ombracecategory))
@@ -12010,7 +14711,22 @@ pub fn ombracecategory_decoder() -> Decoder(Ombracecategory) {
     "2131-1" -> decode.success(Ombracecategory21311)
     "ASKU" -> decode.success(OmbracecategoryAsku)
     "UNK" -> decode.success(OmbracecategoryUnk)
-    _ -> decode.failure(Ombracecategory10025, "Ombracecategory")
+    _ ->
+      decode.failure(
+        Ombracecategory10025,
+        "code from valueset Ombracecategory ["
+          <> {
+          ombracecategory
+          |> list.map(ombracecategory_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12031,6 +14747,11 @@ pub type Operationparameteruse {
   OperationparameteruseIn
   OperationparameteruseOut
 }
+
+pub const operationparameteruse: List(Operationparameteruse) = [
+  OperationparameteruseIn,
+  OperationparameteruseOut,
+]
 
 pub fn operationparameteruse_to_json(
   operationparameteruse: Operationparameteruse,
@@ -12062,7 +14783,22 @@ pub fn operationparameteruse_decoder() -> Decoder(Operationparameteruse) {
   case variant {
     "in" -> decode.success(OperationparameteruseIn)
     "out" -> decode.success(OperationparameteruseOut)
-    _ -> decode.failure(OperationparameteruseIn, "Operationparameteruse")
+    _ ->
+      decode.failure(
+        OperationparameteruseIn,
+        "code from valueset Operationparameteruse ["
+          <> {
+          operationparameteruse
+          |> list.map(operationparameteruse_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12072,6 +14808,13 @@ pub type Quantitycomparator {
   QuantitycomparatorGreaterthanequal
   QuantitycomparatorGreaterthan
 }
+
+pub const quantitycomparator: List(Quantitycomparator) = [
+  QuantitycomparatorLessthan,
+  QuantitycomparatorLessthanequal,
+  QuantitycomparatorGreaterthanequal,
+  QuantitycomparatorGreaterthan,
+]
 
 pub fn quantitycomparator_to_json(
   quantitycomparator: Quantitycomparator,
@@ -12109,7 +14852,22 @@ pub fn quantitycomparator_decoder() -> Decoder(Quantitycomparator) {
     "<=" -> decode.success(QuantitycomparatorLessthanequal)
     ">=" -> decode.success(QuantitycomparatorGreaterthanequal)
     ">" -> decode.success(QuantitycomparatorGreaterthan)
-    _ -> decode.failure(QuantitycomparatorLessthan, "Quantitycomparator")
+    _ ->
+      decode.failure(
+        QuantitycomparatorLessthan,
+        "code from valueset Quantitycomparator ["
+          <> {
+          quantitycomparator
+          |> list.map(quantitycomparator_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12118,6 +14876,12 @@ pub type Reactioneventseverity {
   ReactioneventseverityModerate
   ReactioneventseveritySevere
 }
+
+pub const reactioneventseverity: List(Reactioneventseverity) = [
+  ReactioneventseverityMild,
+  ReactioneventseverityModerate,
+  ReactioneventseveritySevere,
+]
 
 pub fn reactioneventseverity_to_json(
   reactioneventseverity: Reactioneventseverity,
@@ -12152,7 +14916,22 @@ pub fn reactioneventseverity_decoder() -> Decoder(Reactioneventseverity) {
     "mild" -> decode.success(ReactioneventseverityMild)
     "moderate" -> decode.success(ReactioneventseverityModerate)
     "severe" -> decode.success(ReactioneventseveritySevere)
-    _ -> decode.failure(ReactioneventseverityMild, "Reactioneventseverity")
+    _ ->
+      decode.failure(
+        ReactioneventseverityMild,
+        "code from valueset Reactioneventseverity ["
+          <> {
+          reactioneventseverity
+          |> list.map(reactioneventseverity_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12166,6 +14945,17 @@ pub type Relatedartifacttype {
   RelatedartifacttypeDependson
   RelatedartifacttypeComposedof
 }
+
+pub const relatedartifacttype: List(Relatedartifacttype) = [
+  RelatedartifacttypeDocumentation,
+  RelatedartifacttypeJustification,
+  RelatedartifacttypeCitation,
+  RelatedartifacttypePredecessor,
+  RelatedartifacttypeSuccessor,
+  RelatedartifacttypeDerivedfrom,
+  RelatedartifacttypeDependson,
+  RelatedartifacttypeComposedof,
+]
 
 pub fn relatedartifacttype_to_json(
   relatedartifacttype: Relatedartifacttype,
@@ -12215,7 +15005,22 @@ pub fn relatedartifacttype_decoder() -> Decoder(Relatedartifacttype) {
     "derived-from" -> decode.success(RelatedartifacttypeDerivedfrom)
     "depends-on" -> decode.success(RelatedartifacttypeDependson)
     "composed-of" -> decode.success(RelatedartifacttypeComposedof)
-    _ -> decode.failure(RelatedartifacttypeDocumentation, "Relatedartifacttype")
+    _ ->
+      decode.failure(
+        RelatedartifacttypeDocumentation,
+        "code from valueset Relatedartifacttype ["
+          <> {
+          relatedartifacttype
+          |> list.map(relatedartifacttype_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12224,6 +15029,12 @@ pub type Searchentrymode {
   SearchentrymodeInclude
   SearchentrymodeOutcome
 }
+
+pub const searchentrymode: List(Searchentrymode) = [
+  SearchentrymodeMatch,
+  SearchentrymodeInclude,
+  SearchentrymodeOutcome,
+]
 
 pub fn searchentrymode_to_json(searchentrymode: Searchentrymode) -> Json {
   json.string(searchentrymode_to_code(searchentrymode))
@@ -12252,7 +15063,22 @@ pub fn searchentrymode_decoder() -> Decoder(Searchentrymode) {
     "match" -> decode.success(SearchentrymodeMatch)
     "include" -> decode.success(SearchentrymodeInclude)
     "outcome" -> decode.success(SearchentrymodeOutcome)
-    _ -> decode.failure(SearchentrymodeMatch, "Searchentrymode")
+    _ ->
+      decode.failure(
+        SearchentrymodeMatch,
+        "code from valueset Searchentrymode ["
+          <> {
+          searchentrymode
+          |> list.map(searchentrymode_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12260,6 +15086,11 @@ pub type Sortdirection {
   SortdirectionAscending
   SortdirectionDescending
 }
+
+pub const sortdirection: List(Sortdirection) = [
+  SortdirectionAscending,
+  SortdirectionDescending,
+]
 
 pub fn sortdirection_to_json(sortdirection: Sortdirection) -> Json {
   json.string(sortdirection_to_code(sortdirection))
@@ -12285,7 +15116,20 @@ pub fn sortdirection_decoder() -> Decoder(Sortdirection) {
   case variant {
     "ascending" -> decode.success(SortdirectionAscending)
     "descending" -> decode.success(SortdirectionDescending)
-    _ -> decode.failure(SortdirectionAscending, "Sortdirection")
+    _ ->
+      decode.failure(
+        SortdirectionAscending,
+        "code from valueset Sortdirection ["
+          <> {
+          sortdirection |> list.map(sortdirection_to_code) |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12299,6 +15143,17 @@ pub type Triggertype {
   TriggertypeDataaccessed
   TriggertypeDataaccessended
 }
+
+pub const triggertype: List(Triggertype) = [
+  TriggertypeNamedevent,
+  TriggertypePeriodic,
+  TriggertypeDatachanged,
+  TriggertypeDataadded,
+  TriggertypeDatamodified,
+  TriggertypeDataremoved,
+  TriggertypeDataaccessed,
+  TriggertypeDataaccessended,
+]
 
 pub fn triggertype_to_json(triggertype: Triggertype) -> Json {
   json.string(triggertype_to_code(triggertype))
@@ -12342,7 +15197,20 @@ pub fn triggertype_decoder() -> Decoder(Triggertype) {
     "data-removed" -> decode.success(TriggertypeDataremoved)
     "data-accessed" -> decode.success(TriggertypeDataaccessed)
     "data-access-ended" -> decode.success(TriggertypeDataaccessended)
-    _ -> decode.failure(TriggertypeNamedevent, "Triggertype")
+    _ ->
+      decode.failure(
+        TriggertypeNamedevent,
+        "code from valueset Triggertype ["
+          <> {
+          triggertype |> list.map(triggertype_to_code) |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12354,6 +15222,15 @@ pub type Two16840111376214102124 {
   Two16840111376214102124Oth
   Two16840111376214102124Unk
 }
+
+pub const two16840111376214102124: List(Two16840111376214102124) = [
+  Two16840111376214102124F,
+  Two16840111376214102124M,
+  Two16840111376214102124Askeddeclined,
+  Two16840111376214102124Asku,
+  Two16840111376214102124Oth,
+  Two16840111376214102124Unk,
+]
 
 pub fn two16840111376214102124_to_json(
   two16840111376214102124: Two16840111376214102124,
@@ -12397,7 +15274,22 @@ pub fn two16840111376214102124_decoder() -> Decoder(Two16840111376214102124) {
     "ASKU" -> decode.success(Two16840111376214102124Asku)
     "OTH" -> decode.success(Two16840111376214102124Oth)
     "UNK" -> decode.success(Two16840111376214102124Unk)
-    _ -> decode.failure(Two16840111376214102124F, "Two16840111376214102124")
+    _ ->
+      decode.failure(
+        Two16840111376214102124F,
+        "code from valueset Two16840111376214102124 ["
+          <> {
+          two16840111376214102124
+          |> list.map(two16840111376214102124_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }
 
@@ -12410,6 +15302,16 @@ pub type Unitsoftime {
   UnitsoftimeMo
   UnitsoftimeA
 }
+
+pub const unitsoftime: List(Unitsoftime) = [
+  UnitsoftimeS,
+  UnitsoftimeMin,
+  UnitsoftimeH,
+  UnitsoftimeD,
+  UnitsoftimeWk,
+  UnitsoftimeMo,
+  UnitsoftimeA,
+]
 
 pub fn unitsoftime_to_json(unitsoftime: Unitsoftime) -> Json {
   json.string(unitsoftime_to_code(unitsoftime))
@@ -12450,6 +15352,19 @@ pub fn unitsoftime_decoder() -> Decoder(Unitsoftime) {
     "wk" -> decode.success(UnitsoftimeWk)
     "mo" -> decode.success(UnitsoftimeMo)
     "a" -> decode.success(UnitsoftimeA)
-    _ -> decode.failure(UnitsoftimeS, "Unitsoftime")
+    _ ->
+      decode.failure(
+        UnitsoftimeS,
+        "code from valueset Unitsoftime ["
+          <> {
+          unitsoftime |> list.map(unitsoftime_to_code) |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
   }
 }

@@ -414,22 +414,22 @@ fn handle_signup(users: storail.Collection(User), req: Request) -> Response {
   let client =
     sansio.FhirClient(..client, print_sent_requests: sansio.LoggingOn)
   let potatoemr_username =
-    resources.us_core_practitioner_identifier_new(
+    complex_types.identifier_required_system_value_new(
       "https://potatoemr.com/system/username",
       username,
     )
-    |> resources.UsCorePractitionerIdentifierComponentOpen
+    |> resources.UsCorePractitionerIdentifierOpen
     |> as_list1
   case find_form_name(form.values, "last_name") {
     Error(_) -> serve_signup(Some("last name required"))
     Ok(last_name) -> {
       let given = find_form_name(form.values, "first_name")
-      let name = resources.us_core_practitioner_name_new(family: last_name)
+      let name = complex_types.humanname_required_family_new(last_name)
       let name =
         case given {
           Error(_) -> name
           Ok(first_name) ->
-            resources.UsCorePractitionerName(..name, given: [first_name])
+            complex_types.HumannameRequiredFamily(..name, given: [first_name])
         }
         |> as_list1
       let new_practitioner =
