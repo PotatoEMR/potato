@@ -6,7 +6,16 @@ import lustre/element/html as h
 import lustre/event
 import modem
 
-const css_files = ["bahunya", "bamboo", "kacit", "pico", "water", "yorha"]
+const css_files = [
+  "bahunya",
+  "bamboo",
+  "kacit",
+  "mvp",
+  "pico",
+  "tacit",
+  "water",
+  "yorha",
+]
 
 pub type Msg {
   Theme(theme: String)
