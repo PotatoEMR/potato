@@ -10,9 +10,11 @@ const css_files = [
   "bahunya",
   "bamboo",
   "kacit",
-  "mvp",
   "pico",
   "tacit",
+  "sakura",
+  "sakura-dark",
+  "sakura-vader",
   "water",
   "yorha",
 ]

@@ -335,47 +335,56 @@ fn view(model: Model(Msg)) -> Element(Msg) {
       a.style("flex-direction", "column"),
     ],
     [
-      h.nav([a.style("width", "100%")], [
-        h.button(
-          [
-            a.command("show-modal"),
-            a.commandfor("search-patient-dialog"),
-          ],
-          [h.text("search patient")],
-        ),
-        h.dialog([a.closedby("any"), a.id("search-patient-dialog")], [
-          h.header([], [
-            h.button(
-              [a.commandfor("search-patient-dialog"), a.command("close")],
+      h.nav(
+        [
+          a.style("width", "100%"),
+          a.style("display", "flex"),
+          a.style("gap", "10px"),
+        ],
+        [
+          h.button(
+            [
+              a.command("show-modal"),
+              a.commandfor("search-patient-dialog"),
+            ],
+            [h.text("search patient")],
+          ),
+          h.dialog([a.closedby("any"), a.id("search-patient-dialog")], [
+            h.header([], [
+              h.button(
+                [a.commandfor("search-patient-dialog"), a.command("close")],
+                [
+                  h.text("close"),
+                ],
+              ),
+            ]),
+            h.label(
               [
-                h.text("close"),
+                a.for("search-patient"),
+              ],
+              [
+                h.text("Name"),
+                h.input([
+                  a.id("search-patient"),
+                  event.on_input(UserTypedSearchPatient),
+                ]),
               ],
             ),
+            patient_results,
           ]),
-          h.label(
-            [
-              a.for("search-patient"),
-            ],
-            [
-              h.text("Name"),
-              h.input([
-                a.id("search-patient"),
-                event.on_input(UserTypedSearchPatient),
-              ]),
-            ],
-          ),
-          patient_results,
-        ]),
-        h.a([href(RouteNoSpecificPatient(Calendar))], [
-          h.text("calendar"),
-        ]),
-        h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
-          h.text("register patient"),
-        ]),
-        h.a([href(RouteNoSpecificPatient(Settings))], [
-          h.text("settings"),
-        ]),
-      ]),
+          h.a([href(RouteNoSpecificPatient(Calendar))], [
+            h.text("calendar"),
+          ]),
+          h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+            h.text("register"),
+            h.br([]),
+            h.text("patient"),
+          ]),
+          h.a([href(RouteNoSpecificPatient(Settings))], [
+            h.text("settings"),
+          ]),
+        ],
+      ),
       h.div(
         [
           a.style("height", "100%"),
