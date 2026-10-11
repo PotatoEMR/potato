@@ -14,12 +14,13 @@ import lustre/element/html as h
 import lustre/event
 import modem
 import pages/no_specific_patient/calendar
-import pages/no_specific_patient/notfound
-import pages/no_specific_patient/registerpatient
+import pages/no_specific_patient/register_patient
+import pages/no_specific_patient/settings
 import pages/patient/demographics
 import pages/patient/growthchart
 import pages/patient/overview
 import pages/patient/vitals
+import potato_ffi
 import utils.{ue}
 
 // MAIN ------------------------------------------------------------------------
@@ -37,6 +38,7 @@ type Model(msg401) {
     route: Route,
     search_patient: SearchPatient,
     client: client_rsvp.FhirClient(msg401),
+    settings_theme: String,
   )
 }
 
@@ -80,7 +82,7 @@ pub type RoutePatientPage {
 pub type RouteNoSpecificPatient {
   Calendar
   RegisterPatient
-  NotFound(notfound: String)
+  Settings
 }
 
 fn init(_) -> #(Model(Msg), Effect(Msg)) {
@@ -94,8 +96,11 @@ fn init(_) -> #(Model(Msg), Effect(Msg)) {
   // when user clicks a link in app, send msg to update fn
   let modem_effect =
     modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
-  let model =
-    Model(route: RouteNoSpecificPatient(Calendar), search_patient:, client:)
+  let assert Ok(route) = modem.initial_uri()
+  let route = route |> uri_to_route
+  let settings_theme = potato_ffi.get_theme()
+  echo settings_theme
+  let model = Model(route:, search_patient:, client:, settings_theme:)
   #(model, modem_effect)
 }
 
@@ -109,9 +114,9 @@ pub fn route_to_urlstring(route: Route) -> String {
   case route {
     RouteNoSpecificPatient(page:) ->
       case page {
-        Calendar -> ""
+        Calendar -> "/"
+        Settings -> "/settings"
         RegisterPatient -> "/registerpatient"
-        NotFound(_) -> "/notfound"
       }
     RoutePatient(id:, patient:, page:) -> {
       let ending = case page {
@@ -127,6 +132,7 @@ pub fn route_to_urlstring(route: Route) -> String {
 
 pub const pages_no_specific_patient: List(#(String, RouteNoSpecificPatient)) = [
   #("calendar", Calendar),
+  #("settings", Settings),
   #("registerpatient", RegisterPatient),
 ]
 
@@ -144,14 +150,14 @@ pub fn uri_to_route(uri: Uri) -> Route {
     [page] ->
       case pages_no_specific_patient |> dict.from_list |> dict.get(page) {
         Ok(page) -> RouteNoSpecificPatient(page:)
-        Error(_) -> uri |> uri.to_string |> NotFound |> RouteNoSpecificPatient
+        Error(_) -> Calendar |> RouteNoSpecificPatient
       }
     ["patient", id, page] ->
       case pages_patient |> dict.from_list |> dict.get(page) {
         Ok(page) -> RoutePatient(id:, patient: PatientLoadStillLoading, page:)
-        Error(_) -> uri |> uri.to_string |> NotFound |> RouteNoSpecificPatient
+        Error(_) -> Calendar |> RouteNoSpecificPatient
       }
-    _ -> uri |> uri.to_string |> NotFound |> RouteNoSpecificPatient
+    _ -> Calendar |> RouteNoSpecificPatient
   }
 }
 
@@ -200,6 +206,9 @@ type Msg {
     Result(List(resources.UsCorePatient), client_rsvp.Err),
   )
   ServerReturnedPatientEverything(Result(resources.Bundle, client_rsvp.Err))
+  // from page with no specific patient
+  NspSettings(settings.Msg)
+  // from patient page
 }
 
 fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
@@ -210,7 +219,6 @@ fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
       let send_to_login = modem.load(url)
       #(model, send_to_login)
     }
-
     UserTypedSearchPatient(search_text) -> {
       case search_text {
         "" -> {
@@ -285,6 +293,7 @@ fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
       }
       #(model, effect.none())
     }
+    NspSettings(msg) -> #(model, settings.update_effect(msg))
   }
 }
 
@@ -318,47 +327,118 @@ fn view(model: Model(Msg)) -> Element(Msg) {
     SearchPatientResultsLoadingMsg -> h.div([], [h.text("loading...")])
     SearchPatientResultsEmptyMsg -> h.div([], [h.text("no results")])
   }
-  h.div([], [
-    h.nav(nav_style(), [
-      h.button(
+  h.div(
+    [
+      a.style("width", "100%"),
+      a.style("height", "100%"),
+      a.style("display", "flex"),
+      a.style("flex-direction", "column"),
+    ],
+    [
+      h.nav(
         [
-          a.command("show-modal"),
-          a.commandfor("search-patient-dialog"),
+          a.style("width", "100%"),
+          // need for classless
+          a.style("position", "static"),
+          a.style("top", "auto"),
         ],
-        [h.text("search patient")],
-      ),
-      h.dialog([a.closedby("any"), a.id("search-patient-dialog")], [
-        h.header([], [
-          h.button([a.commandfor("search-patient-dialog"), a.command("close")], [
-            h.text("close"),
-          ]),
-        ]),
-        h.label(
-          [
-            a.for("search-patient"),
-          ],
-          [
-            h.text("Name"),
-            h.input([
-              a.id("search-patient"),
-              event.on_input(UserTypedSearchPatient),
+        [
+          h.button(
+            [
+              a.command("show-modal"),
+              a.commandfor("search-patient-dialog"),
+            ],
+            [h.text("search patient")],
+          ),
+          h.dialog([a.closedby("any"), a.id("search-patient-dialog")], [
+            h.header([], [
+              h.button(
+                [a.commandfor("search-patient-dialog"), a.command("close")],
+                [
+                  h.text("close"),
+                ],
+              ),
             ]),
-          ],
-        ),
-        patient_results,
-      ]),
-      h.a([], [h.text("register patient")]),
-    ]),
-    h.nav(nav_style(), [
-      h.a([], [h.text("abcabcabc")]),
-      h.a([], [h.text("abcabcabc")]),
-      h.a([], [h.text("abcabcabc")]),
-      h.a([], [h.text("abcabcabc")]),
-      h.a([], [h.text("abcabcabc")]),
-      h.a([], [h.text("abcabcabc")]),
-    ]),
-    h.main([], [h.text("main")]),
-  ])
+            h.label(
+              [
+                a.for("search-patient"),
+              ],
+              [
+                h.text("Name"),
+                h.input([
+                  a.id("search-patient"),
+                  event.on_input(UserTypedSearchPatient),
+                ]),
+              ],
+            ),
+            patient_results,
+          ]),
+          h.a([href(RouteNoSpecificPatient(Calendar))], [
+            h.text("calendar"),
+          ]),
+          h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+            h.text("register patient"),
+          ]),
+          h.a([href(RouteNoSpecificPatient(Settings))], [
+            h.text("settings"),
+          ]),
+        ],
+      ),
+      h.div(
+        [
+          a.style("height", "100%"),
+          a.style("width", "100%"),
+          a.style("display", "flex"),
+          a.style("gap", "5px"),
+          a.style("flex", "1"),
+        ],
+        [
+          h.div(
+            [
+              a.style("display", "flex"),
+              a.style("flex-direction", "column"),
+              a.style("flex-shrink", "0"),
+              a.style("height", "100%"),
+            ],
+            [
+              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+                h.text("abcabcabc"),
+              ]),
+              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+                h.text("abcabcabc"),
+              ]),
+              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+                h.text("abcabcabc"),
+              ]),
+              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+                h.text("abcabcabc"),
+              ]),
+              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+                h.text("abcabcabc"),
+              ]),
+              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+                h.text("abcabcabc"),
+              ]),
+              h.p([], [h.text("hi")]),
+            ],
+          ),
+          h.main([a.style("flex", "1"), a.style("min-width", "0")], [
+            case model.route {
+              RouteNoSpecificPatient(page:) ->
+                case page {
+                  Calendar -> calendar.view()
+                  RegisterPatient -> register_patient.view()
+                  Settings ->
+                    settings.view(model.settings_theme)
+                    |> element.map(NspSettings)
+                }
+              RoutePatient(id:, patient:, page:) -> todo
+            },
+          ]),
+        ],
+      ),
+    ],
+  )
 }
 
 fn table_head(headers: List(String)) -> Element(Msg) {
@@ -367,14 +447,4 @@ fn table_head(headers: List(String)) -> Element(Msg) {
 
 fn table_row(items: List(String)) -> Element(Msg) {
   h.tr([], list.map(items, fn(item) { h.td([], [h.text(item)]) }))
-}
-
-fn nav_style() {
-  [
-    a.styles([
-      #("display", "flex"),
-      #("gap", "5px"),
-      #("border-bottom", "1px solid black"),
-    ]),
-  ]
 }

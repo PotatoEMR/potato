@@ -23,9 +23,9 @@ import storail
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
 
-const fhir_server_path = "fhir"
+const fhir_server_path: String = "fhir"
 
-const fhir_server_port = 8080
+const fhir_server_port: Int = 8080
 
 type Role {
   Practitioner
@@ -34,7 +34,13 @@ type Role {
 
 // stored in storail with username key
 type User {
-  User(password_hash: String, role: Role, id: String)
+  User(
+    password_hash: String,
+    role: Role,
+    id: String,
+    //settings_theme could be an enum but idc
+    settings_theme: String,
+  )
 }
 
 fn user_to_json(user: User) -> json.Json {
@@ -48,6 +54,7 @@ fn user_to_json(user: User) -> json.Json {
       }),
     ),
     #("id", json.string(user.id)),
+    #("settings_theme", json.string(user.settings_theme)),
   ])
 }
 
@@ -55,19 +62,26 @@ fn user_decoder() -> decode.Decoder(User) {
   use password_hash <- decode.field("password_hash", decode.string)
   use id <- decode.field("id", decode.string)
   use role <- decode.field("role", decode.string)
+  use settings_theme <- decode.field("settings_theme", decode.string)
   case role {
     "practitioner" ->
-      decode.success(User(password_hash:, role: Practitioner, id:))
-    "patient" -> decode.success(User(password_hash:, role: Patient, id:))
+      decode.success(User(
+        password_hash:,
+        role: Practitioner,
+        id:,
+        settings_theme:,
+      ))
+    "patient" ->
+      decode.success(User(password_hash:, role: Patient, id:, settings_theme:))
     _ ->
       decode.failure(
-        User(password_hash:, role: Practitioner, id:),
+        User(password_hash:, role: Practitioner, id:, settings_theme:),
         "patient or practitionr",
       )
   }
 }
 
-pub fn main() {
+pub fn main() -> Nil {
   wisp.configure_logger()
   let secret_key_base = wisp.random_string(64)
 
@@ -108,7 +122,7 @@ fn handle_request(
 ) -> Response {
   use client_request <- app_middleware(client_request, static_directory)
   case client_request.method, wisp.path_segments(client_request) {
-    Get, [] -> serve_index(client_request)
+    Get, [] -> serve_index(client_request, users)
     Get, ["auth", "signup"] -> serve_signup(None)
     Post, ["auth", "signup"] -> handle_signup(users, client_request)
     Get, ["auth", "login"] -> serve_login(None)
@@ -141,7 +155,8 @@ fn handle_request(
         }
       }
     }
-    _, _ -> wisp.not_found()
+    Get, ["settings"] -> update_settings(users, client_request)
+    _, _ -> serve_index(client_request, users)
   }
 }
 
@@ -187,21 +202,21 @@ fn forward_to_fhir_server(
   }
 }
 
-fn simple_resp(text: String, status: Int) {
+fn simple_resp(text: String, status: Int) -> response.Response(wisp.Body) {
   text
   |> json.string
   |> json.to_string
   |> wisp.json_response(status)
 }
 
-const full = [
+const full: List(#(String, String)) = [
   #("height", "100%"),
   #("width", "100%"),
   #("margin", "0px"),
   #("padding", "0px"),
 ]
 
-fn potatoemr() {
+fn potatoemr() -> List(element.Element(a)) {
   [
     h.link([
       a.href(
@@ -210,11 +225,13 @@ fn potatoemr() {
       a.rel("icon"),
     ]),
     h.title([], "PotatoEMR"),
-    h.link([a.rel("stylesheet"), a.href("/static/reset.css")]),
   ]
 }
 
-fn auth_shell(contents, error_msg) {
+fn auth_shell(
+  contents: List(element.Element(a)),
+  error_msg: Option(String),
+) -> response.Response(wisp.Body) {
   let html =
     h.html(
       [
@@ -223,28 +240,37 @@ fn auth_shell(contents, error_msg) {
           "font-family",
           "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
         ),
-        a.style("background-image", "url('/static/potato-bg.jpg')"),
-        a.style("background-repeat", "no-repeat"),
-        a.style("background-attachment", "fixed"),
-        a.style("background-size", "cover"),
       ],
       [
-        h.head([], potatoemr()),
+        h.head([], [
+          h.link([
+            a.id("theme"),
+            a.rel("stylesheet"),
+            a.href("/static/pico.css"),
+          ]),
+          ..potatoemr()
+        ]),
         h.body(
           [
+            a.style("background-image", "url('/static/potato-bg.jpg')"),
+            a.style("background-repeat", "no-repeat"),
+            a.style("background-attachment", "fixed"),
+            a.style("background-size", "cover"),
             a.style("display", "flex"),
             a.style("justify-content", "center"),
             a.style("align-items", "center"),
             a.styles(full),
+            // need if trying to swap in classless css and want to keep login centered
+            a.style("max-width", "none"),
           ],
           [
             h.main(
               [
+                a.style("background-color", "inherit"),
                 a.style("width", "20em"),
                 a.style("height", "30em"),
                 a.style("padding", "2em"),
                 a.style("border-radius", "0.5em"),
-                a.style("background-color", "white"),
                 a.style("box-shadow", "0 0 5px rgba(0, 0, 0, 0.8)"),
               ],
               [
@@ -259,15 +285,11 @@ fn auth_shell(contents, error_msg) {
                   [
                     h.input([
                       a.required(True),
-                      pad(),
-                      font_large(),
                       a.name("username"),
                       a.placeholder("username"),
                     ]),
                     h.input([
                       a.required(True),
-                      pad(),
-                      font_large(),
                       a.name("password"),
                       a.type_("password"),
                       a.placeholder("password"),
@@ -298,23 +320,81 @@ fn auth_shell(contents, error_msg) {
   |> wisp.html_response(200)
 }
 
-fn serve_index(request) -> Response {
+fn serve_index(
+  request: request.Request(wisp.Connection),
+  users: storail.Collection(User),
+) -> Response {
   case wisp.get_cookie(request:, name: cookie_name, security: wisp.Signed) {
     Error(_) -> wisp.redirect(to: "/auth/login")
-    Ok(username) -> {
-      let html =
-        h.html([a.styles(full)], [
-          h.head([], [
-            h.script([a.type_("module"), a.src("/static/potato.js")], ""),
-            ..potatoemr()
-          ]),
-          h.body([a.styles(full)], [h.div([a.id("app")], [])]),
-        ])
+    Ok(username) ->
+      case read_user(users, username) {
+        Ok(user) -> serve_index_theme(user.settings_theme)
+        Error(_) -> todo
+      }
+  }
+}
 
-      html
-      |> element.to_document_string
-      |> wisp.html_response(200)
-    }
+fn serve_index_theme(theme) {
+  let html =
+    h.html([a.styles(full)], [
+      h.head([], [
+        h.script([a.type_("module"), a.src("/static/potato.js")], ""),
+        h.link([
+          a.rel("stylesheet"),
+          a.href("/static/" <> theme <> ".css"),
+          a.id("theme-css"),
+          a.attribute("theme-name", theme),
+        ]),
+        ..potatoemr()
+      ]),
+      h.body(
+        [
+          a.styles(full),
+          // need if trying to swap in classless css and want to keep login centered
+          a.style("max-width", "none"),
+        ],
+        [
+          h.div(
+            [
+              a.id("app"),
+              //idk if full needed but why not
+              a.styles(full),
+            ],
+            [],
+          ),
+        ],
+      ),
+    ])
+
+  html
+  |> element.to_document_string
+  |> wisp.html_response(200)
+}
+
+fn update_settings(
+  users: storail.Collection(User),
+  request: request.Request(wisp.Connection),
+) -> response.Response(wisp.Body) {
+  case wisp.get_query(request) |> list.key_find("theme") {
+    Error(_) -> serve_index(request, users)
+    Ok(new_theme) ->
+      case wisp.get_cookie(request:, name: cookie_name, security: wisp.Signed) {
+        Error(_) -> wisp.redirect(to: "/auth/login")
+        Ok(username) ->
+          case read_user(users, username) {
+            Error(err) -> {
+              echo err
+              panic as "idk 1"
+            }
+            Ok(user) -> {
+              let updated_theme = User(..user, settings_theme: new_theme)
+              case write_existing_user(users, updated_theme, username) {
+                Error(_) -> panic as "idk 2"
+                Ok(_) -> serve_index_theme(new_theme)
+              }
+            }
+          }
+      }
   }
 }
 
@@ -330,53 +410,29 @@ fn serve_signup(error_msg: Option(String)) -> Response {
           h.input([
             a.style("flex", "1"),
             a.style("min-width", "0"),
-            pad(),
-            font_large(),
             a.name("first_name"),
             a.placeholder("firstname"),
           ]),
           h.input([
             a.style("flex", "1"),
             a.style("min-width", "0"),
-            pad(),
-            font_large(),
             a.name("last_name"),
             a.placeholder("lastname"),
             a.required(True),
           ]),
         ],
       ),
-      h.button(
-        [
-          pad(),
-          font_large(),
-        ],
-        [h.text("Sign Up")],
-      ),
+      h.button([], [h.text("Sign Up")]),
       h.a([a.href("/auth/login")], [h.text("or log in")]),
     ],
     error_msg,
   )
 }
 
-fn pad() {
-  a.style("padding", "25px")
-}
-
-fn font_large() {
-  a.style("font-size", "18px")
-}
-
 fn serve_login(error_msg: Option(String)) -> Response {
   auth_shell(
     [
-      h.button(
-        [
-          pad(),
-          font_large(),
-        ],
-        [h.text("Log In")],
-      ),
+      h.button([], [h.text("Log In")]),
       h.a([a.href("/auth/signup")], [h.text("or sign up")]),
     ],
     error_msg,
@@ -396,14 +452,17 @@ fn require_username_password(
   }
 }
 
-fn find_form_name(values: List(#(String, String)), name) {
+fn find_form_name(
+  values: List(#(String, String)),
+  name: String,
+) -> Result(String, Nil) {
   case list.find(values, fn(value) { value.0 == name && value.1 != "" }) {
     Ok(val) -> Ok(val.1)
     Error(_) -> Error(Nil)
   }
 }
 
-fn as_list1(item) {
+fn as_list1(item: a) -> complex_types.List1(a) {
   List1(first: item, rest: [])
 }
 
@@ -454,7 +513,13 @@ fn handle_signup(users: storail.Collection(User), req: Request) -> Response {
                 argus.hasher()
                 |> argus.hash(password)
               let password_hash = hashes.encoded_hash
-              let new_user = User(password_hash:, id:, role: Practitioner)
+              let new_user =
+                User(
+                  password_hash:,
+                  id:,
+                  role: Practitioner,
+                  settings_theme: "bahunya",
+                )
               case write_user(users, new_user, username) {
                 Ok(_) -> wisp.redirect("/") |> set_user_cookie(req, username)
                 Error(err) ->
@@ -487,17 +552,29 @@ fn handle_login(users: storail.Collection(User), req: Request) -> Response {
         _ -> not_found()
       }
     }
-    Error(_) -> not_found()
+    Error(err) ->
+      case err {
+        storail.ObjectNotFound(namespace:, id:) -> not_found()
+        _ -> {
+          echo err
+          // idk if we should actually show error if not logged in but did get an error
+          not_found()
+        }
+      }
   }
 }
 
-fn not_found() {
+fn not_found() -> response.Response(wisp.Body) {
   serve_login(Some("username/password not found"))
 }
 
-const cookie_name = "potato_username"
+const cookie_name: String = "potato_username"
 
-fn set_user_cookie(response, request, username) {
+fn set_user_cookie(
+  response: response.Response(wisp.Body),
+  request: request.Request(wisp.Connection),
+  username: String,
+) -> response.Response(wisp.Body) {
   wisp.set_cookie(
     response:,
     request:,
@@ -508,7 +585,10 @@ fn set_user_cookie(response, request, username) {
   )
 }
 
-fn logout_user_cookie(response, request) {
+fn logout_user_cookie(
+  response: response.Response(wisp.Body),
+  request: request.Request(wisp.Connection),
+) -> response.Response(wisp.Body) {
   wisp.set_cookie(
     response:,
     request:,
@@ -552,6 +632,17 @@ fn write_user(
   }
 }
 
-fn read_user(from users: storail.Collection(User), read username: String) {
+fn write_existing_user(
+  to users: storail.Collection(User),
+  write user: User,
+  new_username username: String,
+) -> Result(Nil, storail.StorailError) {
+  storail.key(users, username) |> storail.write(user)
+}
+
+fn read_user(
+  from users: storail.Collection(User),
+  read username: String,
+) -> Result(User, storail.StorailError) {
   storail.key(users, username) |> storail.read
 }

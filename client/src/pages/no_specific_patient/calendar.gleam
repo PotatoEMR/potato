@@ -1,5 +1,5 @@
 import lustre/element/html as h
 
 pub fn view() {
-  [h.p([], [h.text("appointment list and calendar")])]
+  h.p([], [h.text("appointment list and calendar")])
 }
