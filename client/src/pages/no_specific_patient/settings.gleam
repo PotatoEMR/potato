@@ -6,7 +6,7 @@ import lustre/element/html as h
 import lustre/event
 import modem
 
-const css_files = ["bahunya", "pico", "water"]
+const css_files = ["bahunya", "bamboo", "pico", "water"]
 
 pub type Msg {
   Theme(theme: String)
@@ -26,14 +26,13 @@ pub fn update_effect(msg: Msg) {
 
 pub fn view(current_theme: String) {
   h.div([], [
-    h.label([], [h.text("theme")]),
+    h.label([a.for("theme")], [h.text("theme")]),
     h.select(
       [
+        a.id("theme"),
         event.on_input(Theme),
       ],
       list.map(css_files, fn(css_file) {
-        echo css_file
-        echo current_theme
         h.option([a.selected(css_file == current_theme)], css_file)
       }),
     ),

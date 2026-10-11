@@ -246,7 +246,7 @@ fn auth_shell(
           h.link([
             a.id("theme"),
             a.rel("stylesheet"),
-            a.href("/static/pico.css"),
+            a.href("/static/classless/pico.css"),
           ]),
           ..potatoemr()
         ]),
@@ -341,7 +341,7 @@ fn serve_index_theme(theme) {
         h.script([a.type_("module"), a.src("/static/potato.js")], ""),
         h.link([
           a.rel("stylesheet"),
-          a.href("/static/" <> theme <> ".css"),
+          a.href("/static/classless/" <> theme <> ".css"),
           a.id("theme-css"),
           a.attribute("theme-name", theme),
         ]),
