@@ -128,7 +128,9 @@ fn handle_request(
     Get, ["auth", "login"] -> serve_login(None)
     Post, ["auth", "login"] -> handle_login(users, client_request)
     Get, ["auth", "logout"] ->
-      serve_login(None) |> logout_user_cookie(client_request)
+      wisp.redirect("/auth/login")
+      |> logout_user_cookie(client_request)
+      // if it doesnt redirect /auth/login the /auth/logout? form doesnt work just redirects to /auth/login
     _, ["api", ..rest_path] -> {
       case
         wisp.get_cookie(

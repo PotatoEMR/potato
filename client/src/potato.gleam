@@ -383,6 +383,11 @@ fn view(model: Model(Msg)) -> Element(Msg) {
           h.a([href(RouteNoSpecificPatient(Settings))], [
             h.text("settings"),
           ]),
+          // form instead of link because modem would take some more code to make logout link work
+          // also maybe button better
+          h.form([a.action("/auth/logout")], [
+            h.button([], [h.text("log out")]),
+          ]),
         ],
       ),
       h.div(
