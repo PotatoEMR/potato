@@ -1686,6 +1686,103 @@ pub fn alltypes_decoder() -> Decoder(Alltypes) {
   }
 }
 
+pub type Appointmentstatus {
+  AppointmentstatusProposed
+  AppointmentstatusPending
+  AppointmentstatusBooked
+  AppointmentstatusArrived
+  AppointmentstatusFulfilled
+  AppointmentstatusCancelled
+  AppointmentstatusNoshow
+  AppointmentstatusEnteredinerror
+  AppointmentstatusCheckedin
+  AppointmentstatusWaitlist
+}
+
+pub const appointmentstatus: List(Appointmentstatus) = [
+  AppointmentstatusProposed,
+  AppointmentstatusPending,
+  AppointmentstatusBooked,
+  AppointmentstatusArrived,
+  AppointmentstatusFulfilled,
+  AppointmentstatusCancelled,
+  AppointmentstatusNoshow,
+  AppointmentstatusEnteredinerror,
+  AppointmentstatusCheckedin,
+  AppointmentstatusWaitlist,
+]
+
+pub fn appointmentstatus_to_json(appointmentstatus: Appointmentstatus) -> Json {
+  json.string(appointmentstatus_to_code(appointmentstatus))
+}
+
+pub fn appointmentstatus_to_code(
+  appointmentstatus: Appointmentstatus,
+) -> String {
+  case appointmentstatus {
+    AppointmentstatusProposed -> "proposed"
+    AppointmentstatusPending -> "pending"
+    AppointmentstatusBooked -> "booked"
+    AppointmentstatusArrived -> "arrived"
+    AppointmentstatusFulfilled -> "fulfilled"
+    AppointmentstatusCancelled -> "cancelled"
+    AppointmentstatusNoshow -> "noshow"
+    AppointmentstatusEnteredinerror -> "entered-in-error"
+    AppointmentstatusCheckedin -> "checked-in"
+    AppointmentstatusWaitlist -> "waitlist"
+  }
+}
+
+pub fn appointmentstatus_from_code(
+  code: String,
+) -> Result(Appointmentstatus, Nil) {
+  case code {
+    "proposed" -> Ok(AppointmentstatusProposed)
+    "pending" -> Ok(AppointmentstatusPending)
+    "booked" -> Ok(AppointmentstatusBooked)
+    "arrived" -> Ok(AppointmentstatusArrived)
+    "fulfilled" -> Ok(AppointmentstatusFulfilled)
+    "cancelled" -> Ok(AppointmentstatusCancelled)
+    "noshow" -> Ok(AppointmentstatusNoshow)
+    "entered-in-error" -> Ok(AppointmentstatusEnteredinerror)
+    "checked-in" -> Ok(AppointmentstatusCheckedin)
+    "waitlist" -> Ok(AppointmentstatusWaitlist)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn appointmentstatus_decoder() -> Decoder(Appointmentstatus) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "proposed" -> decode.success(AppointmentstatusProposed)
+    "pending" -> decode.success(AppointmentstatusPending)
+    "booked" -> decode.success(AppointmentstatusBooked)
+    "arrived" -> decode.success(AppointmentstatusArrived)
+    "fulfilled" -> decode.success(AppointmentstatusFulfilled)
+    "cancelled" -> decode.success(AppointmentstatusCancelled)
+    "noshow" -> decode.success(AppointmentstatusNoshow)
+    "entered-in-error" -> decode.success(AppointmentstatusEnteredinerror)
+    "checked-in" -> decode.success(AppointmentstatusCheckedin)
+    "waitlist" -> decode.success(AppointmentstatusWaitlist)
+    _ ->
+      decode.failure(
+        AppointmentstatusProposed,
+        "code from valueset Appointmentstatus ["
+          <> {
+          appointmentstatus
+          |> list.map(appointmentstatus_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
+  }
+}
+
 pub type Bundletype {
   BundletypeDocument
   BundletypeMessage
@@ -14790,6 +14887,139 @@ pub fn operationparameteruse_decoder() -> Decoder(Operationparameteruse) {
           <> {
           operationparameteruse
           |> list.map(operationparameteruse_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
+  }
+}
+
+pub type Participantrequired {
+  ParticipantrequiredRequired
+  ParticipantrequiredOptional
+  ParticipantrequiredInformationonly
+}
+
+pub const participantrequired: List(Participantrequired) = [
+  ParticipantrequiredRequired,
+  ParticipantrequiredOptional,
+  ParticipantrequiredInformationonly,
+]
+
+pub fn participantrequired_to_json(
+  participantrequired: Participantrequired,
+) -> Json {
+  json.string(participantrequired_to_code(participantrequired))
+}
+
+pub fn participantrequired_to_code(
+  participantrequired: Participantrequired,
+) -> String {
+  case participantrequired {
+    ParticipantrequiredRequired -> "required"
+    ParticipantrequiredOptional -> "optional"
+    ParticipantrequiredInformationonly -> "information-only"
+  }
+}
+
+pub fn participantrequired_from_code(
+  code: String,
+) -> Result(Participantrequired, Nil) {
+  case code {
+    "required" -> Ok(ParticipantrequiredRequired)
+    "optional" -> Ok(ParticipantrequiredOptional)
+    "information-only" -> Ok(ParticipantrequiredInformationonly)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn participantrequired_decoder() -> Decoder(Participantrequired) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "required" -> decode.success(ParticipantrequiredRequired)
+    "optional" -> decode.success(ParticipantrequiredOptional)
+    "information-only" -> decode.success(ParticipantrequiredInformationonly)
+    _ ->
+      decode.failure(
+        ParticipantrequiredRequired,
+        "code from valueset Participantrequired ["
+          <> {
+          participantrequired
+          |> list.map(participantrequired_to_code)
+          |> string.join(", ")
+        }
+          <> "]",
+      )
+      |> decode.map_errors(fn(errors) {
+        list.map(errors, fn(error) {
+          decode.DecodeError(..error, found: variant)
+        })
+      })
+  }
+}
+
+pub type Participationstatus {
+  ParticipationstatusAccepted
+  ParticipationstatusDeclined
+  ParticipationstatusTentative
+  ParticipationstatusNeedsaction
+}
+
+pub const participationstatus: List(Participationstatus) = [
+  ParticipationstatusAccepted,
+  ParticipationstatusDeclined,
+  ParticipationstatusTentative,
+  ParticipationstatusNeedsaction,
+]
+
+pub fn participationstatus_to_json(
+  participationstatus: Participationstatus,
+) -> Json {
+  json.string(participationstatus_to_code(participationstatus))
+}
+
+pub fn participationstatus_to_code(
+  participationstatus: Participationstatus,
+) -> String {
+  case participationstatus {
+    ParticipationstatusAccepted -> "accepted"
+    ParticipationstatusDeclined -> "declined"
+    ParticipationstatusTentative -> "tentative"
+    ParticipationstatusNeedsaction -> "needs-action"
+  }
+}
+
+pub fn participationstatus_from_code(
+  code: String,
+) -> Result(Participationstatus, Nil) {
+  case code {
+    "accepted" -> Ok(ParticipationstatusAccepted)
+    "declined" -> Ok(ParticipationstatusDeclined)
+    "tentative" -> Ok(ParticipationstatusTentative)
+    "needs-action" -> Ok(ParticipationstatusNeedsaction)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn participationstatus_decoder() -> Decoder(Participationstatus) {
+  use variant <- decode.then(decode.string)
+  case variant {
+    "accepted" -> decode.success(ParticipationstatusAccepted)
+    "declined" -> decode.success(ParticipationstatusDeclined)
+    "tentative" -> decode.success(ParticipationstatusTentative)
+    "needs-action" -> decode.success(ParticipationstatusNeedsaction)
+    _ ->
+      decode.failure(
+        ParticipationstatusAccepted,
+        "code from valueset Participationstatus ["
+          <> {
+          participationstatus
+          |> list.map(participationstatus_to_code)
           |> string.join(", ")
         }
           <> "]",

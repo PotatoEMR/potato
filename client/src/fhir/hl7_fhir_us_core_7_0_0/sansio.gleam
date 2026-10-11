@@ -499,6 +499,7 @@ pub fn resp_to_string(resp: Response(String)) -> String {
 
 pub type GroupedResources {
   GroupedResources(
+    appointment: List(resources.Appointment),
     bundle: List(resources.Bundle),
     operationoutcome: List(resources.Operationoutcome),
     us_core_allergyintolerance: List(resources.UsCoreAllergyintolerance),
@@ -508,6 +509,7 @@ pub type GroupedResources {
 
 pub fn groupedresources_new() -> GroupedResources {
   GroupedResources(
+    appointment: [],
     bundle: [],
     operationoutcome: [],
     us_core_allergyintolerance: [],
@@ -526,6 +528,8 @@ pub fn bundle_to_groupedresources(
         None -> acc
         Some(res) ->
           case res {
+            resources.ResourceAppointment(r) ->
+              GroupedResources(..acc, appointment: [r, ..acc.appointment])
             resources.ResourceBundle(r) ->
               GroupedResources(..acc, bundle: [r, ..acc.bundle])
             resources.ResourceOperationoutcome(r) ->

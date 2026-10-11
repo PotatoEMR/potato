@@ -15,6 +15,589 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 
+///[http://hl7.org/fhir/hl7_fhir_us_core_7_0_0/StructureDefinition/Appointment#resource](http://hl7.org/fhir/hl7_fhir_us_core_7_0_0/StructureDefinition/Appointment#resource)
+pub type Appointment {
+  Appointment(
+    id: Option(String),
+    meta: Option(ct.Meta),
+    implicit_rules: Option(String),
+    language: Option(String),
+    text: Option(ct.Narrative),
+    contained: List(Resource),
+    extension: List(ct.Extension),
+    modifier_extension: List(ct.Extension),
+    identifier: List(ct.Identifier),
+    status: valuesets.Appointmentstatus,
+    cancelation_reason: Option(ct.Codeableconcept),
+    service_category: List(ct.Codeableconcept),
+    service_type: List(ct.Codeableconcept),
+    specialty: List(ct.Codeableconcept),
+    appointment_type: Option(ct.Codeableconcept),
+    reason_code: List(ct.Codeableconcept),
+    reason_reference: List(ct.Reference),
+    priority: Option(Int),
+    description: Option(String),
+    supporting_information: List(ct.Reference),
+    start: Option(Instant),
+    end: Option(Instant),
+    minutes_duration: Option(Int),
+    slot: List(ct.Reference),
+    created: Option(DateTime),
+    comment: Option(String),
+    patient_instruction: Option(String),
+    based_on: List(ct.Reference),
+    participant: List1(AppointmentParticipant),
+    requested_period: List(ct.Period),
+  )
+}
+
+pub fn appointment_new(
+  participant participant: List1(AppointmentParticipant),
+  status status: valuesets.Appointmentstatus,
+) -> Appointment {
+  Appointment(
+    requested_period: [],
+    participant:,
+    based_on: [],
+    patient_instruction: None,
+    comment: None,
+    created: None,
+    slot: [],
+    minutes_duration: None,
+    end: None,
+    start: None,
+    supporting_information: [],
+    description: None,
+    priority: None,
+    reason_reference: [],
+    reason_code: [],
+    appointment_type: None,
+    specialty: [],
+    service_type: [],
+    service_category: [],
+    cancelation_reason: None,
+    status:,
+    identifier: [],
+    modifier_extension: [],
+    extension: [],
+    contained: [],
+    text: None,
+    language: None,
+    implicit_rules: None,
+    meta: None,
+    id: None,
+  )
+}
+
+///[http://hl7.org/fhir/hl7_fhir_us_core_7_0_0/StructureDefinition/Appointment#resource](http://hl7.org/fhir/hl7_fhir_us_core_7_0_0/StructureDefinition/Appointment#resource)
+pub type AppointmentParticipant {
+  AppointmentParticipant(
+    id: Option(String),
+    extension: List(ct.Extension),
+    modifier_extension: List(ct.Extension),
+    type_: List(ct.Codeableconcept),
+    actor: Option(ct.Reference),
+    required: Option(valuesets.Participantrequired),
+    status: valuesets.Participationstatus,
+    period: Option(ct.Period),
+  )
+}
+
+pub fn appointment_participant_new(
+  status status: valuesets.Participationstatus,
+) -> AppointmentParticipant {
+  AppointmentParticipant(
+    period: None,
+    status:,
+    required: None,
+    actor: None,
+    type_: [],
+    modifier_extension: [],
+    extension: [],
+    id: None,
+  )
+}
+
+pub fn appointment_participant_to_json(
+  appointment_participant: AppointmentParticipant,
+) -> Json {
+  let fields = [
+    #(
+      "status",
+      valuesets.participationstatus_to_json(appointment_participant.status),
+    ),
+  ]
+  let fields = case appointment_participant.period {
+    Some(v) -> [#("period", ct.period_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment_participant.required {
+    Some(v) -> [
+      #("required", valuesets.participantrequired_to_json(v)),
+      ..fields
+    ]
+    None -> fields
+  }
+  let fields = case appointment_participant.actor {
+    Some(v) -> [#("actor", ct.reference_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment_participant.type_ {
+    [] -> fields
+    _ -> [
+      #(
+        "type",
+        json.array(appointment_participant.type_, ct.codeableconcept_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment_participant.modifier_extension {
+    [] -> fields
+    _ -> [
+      #(
+        "modifierExtension",
+        json.array(
+          appointment_participant.modifier_extension,
+          ct.extension_to_json,
+        ),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment_participant.extension {
+    [] -> fields
+    _ -> [
+      #(
+        "extension",
+        json.array(appointment_participant.extension, ct.extension_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment_participant.id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  json.object(fields)
+}
+
+pub fn appointment_participant_decoder() -> Decoder(AppointmentParticipant) {
+  use <- decode.recursive
+  use period <- decode.optional_field(
+    "period",
+    None,
+    decode.optional(ct.period_decoder()),
+  )
+  use status <- decode.field("status", valuesets.participationstatus_decoder())
+  use required <- decode.optional_field(
+    "required",
+    None,
+    decode.optional(valuesets.participantrequired_decoder()),
+  )
+  use actor <- decode.optional_field(
+    "actor",
+    None,
+    decode.optional(ct.reference_decoder()),
+  )
+  use type_ <- decode.optional_field(
+    "type",
+    [],
+    decode.list(ct.codeableconcept_decoder()),
+  )
+  use modifier_extension <- decode.optional_field(
+    "modifierExtension",
+    [],
+    decode.list(ct.extension_decoder()),
+  )
+  use extension <- decode.optional_field(
+    "extension",
+    [],
+    decode.list(ct.extension_decoder()),
+  )
+  use id <- decode.optional_field("id", None, decode.optional(decode.string))
+  decode.success(AppointmentParticipant(
+    period:,
+    status:,
+    required:,
+    actor:,
+    type_:,
+    modifier_extension:,
+    extension:,
+    id:,
+  ))
+}
+
+pub fn appointment_to_json(appointment: Appointment) -> Json {
+  let fields = [
+    #(
+      "participant",
+      list1_to_json(appointment.participant, appointment_participant_to_json),
+    ),
+    #("status", valuesets.appointmentstatus_to_json(appointment.status)),
+  ]
+  let fields = case appointment.requested_period {
+    [] -> fields
+    _ -> [
+      #(
+        "requestedPeriod",
+        json.array(appointment.requested_period, ct.period_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment.based_on {
+    [] -> fields
+    _ -> [
+      #("basedOn", json.array(appointment.based_on, ct.reference_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case appointment.patient_instruction {
+    Some(v) -> [#("patientInstruction", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.comment {
+    Some(v) -> [#("comment", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.created {
+    Some(v) -> [#("created", pt.datetime_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.slot {
+    [] -> fields
+    _ -> [
+      #("slot", json.array(appointment.slot, ct.reference_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case appointment.minutes_duration {
+    Some(v) -> [#("minutesDuration", json.int(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.end {
+    Some(v) -> [#("end", pt.instant_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.start {
+    Some(v) -> [#("start", pt.instant_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.supporting_information {
+    [] -> fields
+    _ -> [
+      #(
+        "supportingInformation",
+        json.array(appointment.supporting_information, ct.reference_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment.description {
+    Some(v) -> [#("description", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.priority {
+    Some(v) -> [#("priority", json.int(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.reason_reference {
+    [] -> fields
+    _ -> [
+      #(
+        "reasonReference",
+        json.array(appointment.reason_reference, ct.reference_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment.reason_code {
+    [] -> fields
+    _ -> [
+      #(
+        "reasonCode",
+        json.array(appointment.reason_code, ct.codeableconcept_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment.appointment_type {
+    Some(v) -> [#("appointmentType", ct.codeableconcept_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.specialty {
+    [] -> fields
+    _ -> [
+      #(
+        "specialty",
+        json.array(appointment.specialty, ct.codeableconcept_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment.service_type {
+    [] -> fields
+    _ -> [
+      #(
+        "serviceType",
+        json.array(appointment.service_type, ct.codeableconcept_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment.service_category {
+    [] -> fields
+    _ -> [
+      #(
+        "serviceCategory",
+        json.array(appointment.service_category, ct.codeableconcept_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment.cancelation_reason {
+    Some(v) -> [#("cancelationReason", ct.codeableconcept_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.identifier {
+    [] -> fields
+    _ -> [
+      #("identifier", json.array(appointment.identifier, ct.identifier_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case appointment.modifier_extension {
+    [] -> fields
+    _ -> [
+      #(
+        "modifierExtension",
+        json.array(appointment.modifier_extension, ct.extension_to_json),
+      ),
+      ..fields
+    ]
+  }
+  let fields = case appointment.extension {
+    [] -> fields
+    _ -> [
+      #("extension", json.array(appointment.extension, ct.extension_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case appointment.contained {
+    [] -> fields
+    _ -> [
+      #("contained", json.array(appointment.contained, resource_to_json)),
+      ..fields
+    ]
+  }
+  let fields = case appointment.text {
+    Some(v) -> [#("text", ct.narrative_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.language {
+    Some(v) -> [#("language", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.implicit_rules {
+    Some(v) -> [#("implicitRules", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.meta {
+    Some(v) -> [#("meta", ct.meta_to_json(v)), ..fields]
+    None -> fields
+  }
+  let fields = case appointment.id {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = [#("resourceType", json.string("Appointment")), ..fields]
+  json.object(fields)
+}
+
+pub fn appointment_decoder() -> Decoder(Appointment) {
+  use <- decode.recursive
+  use requested_period <- decode.optional_field(
+    "requestedPeriod",
+    [],
+    decode.list(ct.period_decoder()),
+  )
+  use participant <- list1_decoder(
+    "participant",
+    appointment_participant_decoder(),
+  )
+  use based_on <- decode.optional_field(
+    "basedOn",
+    [],
+    decode.list(ct.reference_decoder()),
+  )
+  use patient_instruction <- decode.optional_field(
+    "patientInstruction",
+    None,
+    decode.optional(decode.string),
+  )
+  use comment <- decode.optional_field(
+    "comment",
+    None,
+    decode.optional(decode.string),
+  )
+  use created <- decode.optional_field(
+    "created",
+    None,
+    decode.optional(pt.datetime_decoder()),
+  )
+  use slot <- decode.optional_field(
+    "slot",
+    [],
+    decode.list(ct.reference_decoder()),
+  )
+  use minutes_duration <- decode.optional_field(
+    "minutesDuration",
+    None,
+    decode.optional(decode.int),
+  )
+  use end <- decode.optional_field(
+    "end",
+    None,
+    decode.optional(pt.instant_decoder()),
+  )
+  use start <- decode.optional_field(
+    "start",
+    None,
+    decode.optional(pt.instant_decoder()),
+  )
+  use supporting_information <- decode.optional_field(
+    "supportingInformation",
+    [],
+    decode.list(ct.reference_decoder()),
+  )
+  use description <- decode.optional_field(
+    "description",
+    None,
+    decode.optional(decode.string),
+  )
+  use priority <- decode.optional_field(
+    "priority",
+    None,
+    decode.optional(decode.int),
+  )
+  use reason_reference <- decode.optional_field(
+    "reasonReference",
+    [],
+    decode.list(ct.reference_decoder()),
+  )
+  use reason_code <- decode.optional_field(
+    "reasonCode",
+    [],
+    decode.list(ct.codeableconcept_decoder()),
+  )
+  use appointment_type <- decode.optional_field(
+    "appointmentType",
+    None,
+    decode.optional(ct.codeableconcept_decoder()),
+  )
+  use specialty <- decode.optional_field(
+    "specialty",
+    [],
+    decode.list(ct.codeableconcept_decoder()),
+  )
+  use service_type <- decode.optional_field(
+    "serviceType",
+    [],
+    decode.list(ct.codeableconcept_decoder()),
+  )
+  use service_category <- decode.optional_field(
+    "serviceCategory",
+    [],
+    decode.list(ct.codeableconcept_decoder()),
+  )
+  use cancelation_reason <- decode.optional_field(
+    "cancelationReason",
+    None,
+    decode.optional(ct.codeableconcept_decoder()),
+  )
+  use status <- decode.field("status", valuesets.appointmentstatus_decoder())
+  use identifier <- decode.optional_field(
+    "identifier",
+    [],
+    decode.list(ct.identifier_decoder()),
+  )
+  use modifier_extension <- decode.optional_field(
+    "modifierExtension",
+    [],
+    decode.list(ct.extension_decoder()),
+  )
+  use extension <- decode.optional_field(
+    "extension",
+    [],
+    decode.list(ct.extension_decoder()),
+  )
+  use contained <- decode.optional_field(
+    "contained",
+    [],
+    decode.list(resource_decoder()),
+  )
+  use text <- decode.optional_field(
+    "text",
+    None,
+    decode.optional(ct.narrative_decoder()),
+  )
+  use language <- decode.optional_field(
+    "language",
+    None,
+    decode.optional(decode.string),
+  )
+  use implicit_rules <- decode.optional_field(
+    "implicitRules",
+    None,
+    decode.optional(decode.string),
+  )
+  use meta <- decode.optional_field(
+    "meta",
+    None,
+    decode.optional(ct.meta_decoder()),
+  )
+  use id <- decode.optional_field("id", None, decode.optional(decode.string))
+
+  use rt <- decode.field("resourceType", decode.string)
+  use <- bool.guard(
+    rt != "Appointment",
+    decode.failure(appointment_new(participant:, status:), "resourceType"),
+  )
+  decode.success(Appointment(
+    requested_period:,
+    participant:,
+    based_on:,
+    patient_instruction:,
+    comment:,
+    created:,
+    slot:,
+    minutes_duration:,
+    end:,
+    start:,
+    supporting_information:,
+    description:,
+    priority:,
+    reason_reference:,
+    reason_code:,
+    appointment_type:,
+    specialty:,
+    service_type:,
+    service_category:,
+    cancelation_reason:,
+    status:,
+    identifier:,
+    modifier_extension:,
+    extension:,
+    contained:,
+    text:,
+    language:,
+    implicit_rules:,
+    meta:,
+    id:,
+  ))
+}
+
 ///[http://hl7.org/fhir/hl7_fhir_us_core_7_0_0/StructureDefinition/Bundle#resource](http://hl7.org/fhir/hl7_fhir_us_core_7_0_0/StructureDefinition/Bundle#resource)
 pub type Bundle {
   Bundle(
@@ -3764,6 +4347,7 @@ pub fn us_core_patient_decoder() -> Decoder(UsCorePatient) {
 }
 
 pub type ResourceType {
+  RtAppointment
   RtBundle
   RtOperationoutcome
   RtParameters
@@ -3773,6 +4357,7 @@ pub type ResourceType {
 
 pub fn resource_type_to_string(resource_type: ResourceType) -> String {
   case resource_type {
+    RtAppointment -> "Appointment"
     RtBundle -> "Bundle"
     RtOperationoutcome -> "OperationOutcome"
     RtParameters -> "Parameters"
@@ -3782,6 +4367,7 @@ pub fn resource_type_to_string(resource_type: ResourceType) -> String {
 }
 
 pub type Resource {
+  ResourceAppointment(Appointment)
   ResourceBundle(Bundle)
   ResourceOperationoutcome(Operationoutcome)
   ResourceParameters(Parameters)
@@ -3791,6 +4377,7 @@ pub type Resource {
 
 pub fn resource_to_json(resource: Resource) {
   case resource {
+    ResourceAppointment(resource) -> appointment_to_json(resource)
     ResourceBundle(resource) -> bundle_to_json(resource)
     ResourceOperationoutcome(resource) -> operationoutcome_to_json(resource)
     ResourceParameters(resource) -> parameters_to_json(resource)
@@ -3803,6 +4390,7 @@ pub fn resource_to_json(resource: Resource) {
 pub fn resource_decoder() -> Decoder(Resource) {
   use tag <- decode.field("resourceType", decode.string)
   case tag {
+    "Appointment" -> appointment_decoder() |> decode.map(ResourceAppointment)
     "Bundle" -> bundle_decoder() |> decode.map(ResourceBundle)
     "OperationOutcome" ->
       operationoutcome_decoder() |> decode.map(ResourceOperationoutcome)

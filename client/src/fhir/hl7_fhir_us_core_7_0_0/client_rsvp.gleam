@@ -303,6 +303,61 @@ fn rsvp_err_to_string(err: rsvp.Error(String)) -> String {
   }
 }
 
+pub fn appointment_create(
+  resource: resources.Appointment,
+  client: FhirClient(msg),
+  handle_response: fn(Result(resources.Appointment, Err)) -> msg,
+) -> Effect(msg) {
+  any_create(
+    resources.appointment_to_json(resource),
+    resources.RtAppointment,
+    resources.appointment_decoder(),
+    client,
+    handle_response,
+  )
+}
+
+pub fn appointment_read(
+  id: String,
+  client: FhirClient(msg),
+  handle_response: fn(Result(resources.Appointment, Err)) -> msg,
+) -> Effect(msg) {
+  any_read(
+    id,
+    resources.RtAppointment,
+    resources.appointment_decoder(),
+    client,
+    handle_response,
+  )
+}
+
+pub fn appointment_update(
+  resource: resources.Appointment,
+  client: FhirClient(msg),
+  handle_response: fn(Result(resources.Appointment, Err)) -> msg,
+) -> Result(Effect(msg), ErrNoId) {
+  any_update(
+    resource.id,
+    resources.appointment_to_json(resource),
+    resources.RtAppointment,
+    resources.appointment_decoder(),
+    client,
+    handle_response,
+  )
+}
+
+pub fn appointment_delete(
+  resource: resources.Appointment,
+  client: FhirClient(msg),
+  handle_response: fn(Result(sansio.OperationoutcomeOrHTTP, Err)) -> msg,
+) -> Result(Effect(msg), ErrNoId) {
+  case resource.id {
+    Some(id) ->
+      Ok(any_delete(id, resources.RtAppointment, client, handle_response))
+    None -> Error(ErrNoId)
+  }
+}
+
 pub fn bundle_create(
   resource: resources.Bundle,
   client: FhirClient(msg),
@@ -519,6 +574,47 @@ pub fn us_core_patient_delete(
     Some(id) -> Ok(any_delete(id, resources.RtPatient, client, handle_response))
     None -> Error(ErrNoId)
   }
+}
+
+pub fn appointment_search_bundled(
+  sp: search_params.Appointment,
+  client: FhirClient(msg),
+  handle_response: fn(Result(resources.Bundle, Err)) -> msg,
+) -> Effect(msg) {
+  search_params.to_string([
+    #("date", sp.date),
+    #("identifier", sp.identifier),
+    #("specialty", sp.specialty),
+    #("service-category", sp.service_category),
+    #("practitioner", sp.practitioner),
+    #("part-status", sp.part_status),
+    #("appointment-type", sp.appointment_type),
+    #("service-type", sp.service_type),
+    #("slot", sp.slot),
+    #("reason-code", sp.reason_code),
+    #("actor", sp.actor),
+    #("based-on", sp.based_on),
+    #("patient", sp.patient),
+    #("reason-reference", sp.reason_reference),
+    #("supporting-info", sp.supporting_info),
+    #("location", sp.location),
+    #("status", sp.status),
+  ])
+  |> search_any(resources.RtAppointment, client, handle_response)
+}
+
+pub fn appointment_search(
+  sp: search_params.Appointment,
+  client: FhirClient(msg),
+  handle_response: fn(Result(List(resources.Appointment), Err)) -> msg,
+) -> Effect(msg) {
+  appointment_search_bundled(sp, client, fn(resp) {
+    handle_response(case resp {
+      Ok(bundle) ->
+        Ok({ bundle |> sansio.bundle_to_groupedresources }.appointment)
+      Error(error) -> Error(error)
+    })
+  })
 }
 
 pub fn bundle_search_bundled(

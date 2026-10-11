@@ -18,6 +18,28 @@ pub fn to_string(params) {
   |> string.join("&")
 }
 
+pub type Appointment {
+  Appointment(
+    date: Option(String),
+    identifier: Option(String),
+    specialty: Option(String),
+    service_category: Option(String),
+    practitioner: Option(String),
+    part_status: Option(String),
+    appointment_type: Option(String),
+    service_type: Option(String),
+    slot: Option(String),
+    reason_code: Option(String),
+    actor: Option(String),
+    based_on: Option(String),
+    patient: Option(String),
+    reason_reference: Option(String),
+    supporting_info: Option(String),
+    location: Option(String),
+    status: Option(String),
+  )
+}
+
 pub type Bundle {
   Bundle(
     identifier: Option(String),
@@ -49,6 +71,28 @@ pub type UsCorePatient {
     given: Option(String),
     identifier: Option(String),
     name: Option(String),
+  )
+}
+
+pub fn appointment_new() {
+  Appointment(
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
   )
 }
 

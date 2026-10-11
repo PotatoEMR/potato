@@ -80,9 +80,9 @@ pub type RoutePatientPage {
 }
 
 pub type RouteNoSpecificPatient {
-  Calendar
-  RegisterPatient
-  Settings
+  RouteCalendar
+  RouteRegisterPatient
+  RouteSettings
 }
 
 fn init(_) -> #(Model(Msg), Effect(Msg)) {
@@ -114,9 +114,9 @@ pub fn route_to_urlstring(route: Route) -> String {
   case route {
     RouteNoSpecificPatient(page:) ->
       case page {
-        Calendar -> "/"
-        Settings -> "/settings"
-        RegisterPatient -> "/registerpatient"
+        RouteCalendar -> "/"
+        RouteSettings -> "/settings"
+        RouteRegisterPatient -> "/registerpatient"
       }
     RoutePatient(id:, patient:, page:) -> {
       let ending = case page {
@@ -131,9 +131,9 @@ pub fn route_to_urlstring(route: Route) -> String {
 }
 
 pub const pages_no_specific_patient: List(#(String, RouteNoSpecificPatient)) = [
-  #("calendar", Calendar),
-  #("settings", Settings),
-  #("registerpatient", RegisterPatient),
+  #("calendar", RouteCalendar),
+  #("settings", RouteSettings),
+  #("registerpatient", RouteRegisterPatient),
 ]
 
 pub const pages_patient: List(#(String, RoutePatientPage)) = [
@@ -145,25 +145,32 @@ pub const pages_patient: List(#(String, RoutePatientPage)) = [
 
 pub fn uri_to_route(uri: Uri) -> Route {
   case uri.path_segments(uri.path) {
-    [] -> RouteNoSpecificPatient(Calendar)
-    [""] -> RouteNoSpecificPatient(Calendar)
+    [] -> RouteNoSpecificPatient(RouteCalendar)
+    [""] -> RouteNoSpecificPatient(RouteCalendar)
     [page] ->
       case pages_no_specific_patient |> dict.from_list |> dict.get(page) {
         Ok(page) -> RouteNoSpecificPatient(page:)
-        Error(_) -> Calendar |> RouteNoSpecificPatient
+        Error(_) -> RouteCalendar |> RouteNoSpecificPatient
       }
     ["patient", id, page] ->
       case pages_patient |> dict.from_list |> dict.get(page) {
         Ok(page) -> RoutePatient(id:, patient: PatientLoadStillLoading, page:)
-        Error(_) -> Calendar |> RouteNoSpecificPatient
+        Error(_) -> RouteCalendar |> RouteNoSpecificPatient
       }
-    _ -> Calendar |> RouteNoSpecificPatient
+    _ -> RouteCalendar |> RouteNoSpecificPatient
   }
 }
 
 fn user_navigated_to(route, model) {
   case route {
-    RouteNoSpecificPatient(page:) -> #(Model(..model, route:), effect.none())
+    RouteNoSpecificPatient(page:) -> {
+      let load_page_effect = case page {
+        RouteCalendar -> effect.none()
+        RouteRegisterPatient -> effect.none()
+        RouteSettings -> effect.none()
+      }
+      #(Model(..model, route:), load_page_effect)
+    }
     RoutePatient(_patient, _page, id:) -> {
       // before getting all patient data, keep current patient data
       // so the sidebar and page will reload with new data if available
@@ -372,15 +379,15 @@ fn view(model: Model(Msg)) -> Element(Msg) {
             ),
             patient_results,
           ]),
-          h.a([href(RouteNoSpecificPatient(Calendar))], [
+          h.a([href(RouteNoSpecificPatient(RouteCalendar))], [
             h.text("calendar"),
           ]),
-          h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+          h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
             h.text("register"),
             h.br([]),
             h.text("patient"),
           ]),
-          h.a([href(RouteNoSpecificPatient(Settings))], [
+          h.a([href(RouteNoSpecificPatient(RouteSettings))], [
             h.text("settings"),
           ]),
           // form instead of link because modem would take some more code to make logout link work
@@ -407,22 +414,7 @@ fn view(model: Model(Msg)) -> Element(Msg) {
               a.style("height", "100%"),
             ],
             [
-              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
-                h.text("abcabcabc"),
-              ]),
-              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
-                h.text("abcabcabc"),
-              ]),
-              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
-                h.text("abcabcabc"),
-              ]),
-              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
-                h.text("abcabcabc"),
-              ]),
-              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
-                h.text("abcabcabc"),
-              ]),
-              h.a([href(RouteNoSpecificPatient(RegisterPatient))], [
+              h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
                 h.text("abcabcabc"),
               ]),
               h.p([], [h.text("hi")]),
@@ -432,9 +424,9 @@ fn view(model: Model(Msg)) -> Element(Msg) {
             case model.route {
               RouteNoSpecificPatient(page:) ->
                 case page {
-                  Calendar -> calendar.view()
-                  RegisterPatient -> register_patient.view()
-                  Settings ->
+                  RouteCalendar -> calendar.view()
+                  RouteRegisterPatient -> register_patient.view()
+                  RouteSettings ->
                     settings.view(model.settings_theme)
                     |> element.map(NspSettings)
                 }
