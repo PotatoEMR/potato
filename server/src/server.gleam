@@ -246,7 +246,7 @@ fn auth_shell(
           h.link([
             a.id("theme"),
             a.rel("stylesheet"),
-            a.href("/static/classless/pico.css"),
+            a.href("/static/classless/bahunya.css"),
           ]),
           ..potatoemr()
         ]),
