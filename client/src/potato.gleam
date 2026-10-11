@@ -380,15 +380,13 @@ fn view(model: Model(Msg)) -> Element(Msg) {
             patient_results,
           ]),
           h.a([href(RouteNoSpecificPatient(RouteCalendar))], [
-            h.text("calendar"),
+            h.text("📅 calendar"),
           ]),
           h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
-            h.text("register"),
-            h.br([]),
-            h.text("patient"),
+            h.text("➕ register patient"),
           ]),
           h.a([href(RouteNoSpecificPatient(RouteSettings))], [
-            h.text("settings"),
+            h.text("⚙️ settings"),
           ]),
           // form instead of link because modem would take some more code to make logout link work
           // also maybe button better
