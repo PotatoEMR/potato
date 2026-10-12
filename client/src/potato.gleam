@@ -25,7 +25,7 @@ import utils.{ue}
 
 // MAIN ------------------------------------------------------------------------
 
-pub fn main() {
+pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
   let assert Ok(_) = lustre.start(app, "#app", Nil)
   Nil
@@ -33,11 +33,11 @@ pub fn main() {
 
 // MODEL -----------------------------------------------------------------------
 
-type Model(msg401) {
+type Model {
   Model(
     route: Route,
     search_patient: SearchPatient,
-    client: client_rsvp.FhirClient(msg401),
+    client: client_rsvp.FhirClient,
     settings_theme: String,
   )
 }
@@ -80,28 +80,23 @@ pub type RoutePatientPage {
 }
 
 pub type RouteNoSpecificPatient {
-  RouteCalendar
+  RouteCalendar(calendar.Model)
   RouteRegisterPatient
   RouteSettings
 }
 
-fn init(_) -> #(Model(Msg), Effect(Msg)) {
+fn init(_: a) -> #(Model, Effect(Msg)) {
   let search_patient = SearchPatient("", False, SearchPatientResultsEmptyMsg)
   let assert Ok(client) = client_rsvp.fhirclient_new("127.0.0.1:3000/api")
-  let client =
-    client_rsvp.FhirClient(
-      ..client,
-      handle_unauthorized: Some(ServerReturned401),
-    )
   // when user clicks a link in app, send msg to update fn
   let modem_effect =
     modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
   let assert Ok(route) = modem.initial_uri()
   let route = route |> uri_to_route
   let settings_theme = potato_ffi.get_theme()
-  echo settings_theme
   let model = Model(route:, search_patient:, client:, settings_theme:)
-  #(model, modem_effect)
+  let #(model, firstload_effect) = user_navigated_to(route, model)
+  #(model, effect.batch([modem_effect, firstload_effect]))
 }
 
 // ROUTING ---------------------------------------------------------------------
@@ -114,7 +109,7 @@ pub fn route_to_urlstring(route: Route) -> String {
   case route {
     RouteNoSpecificPatient(page:) ->
       case page {
-        RouteCalendar -> "/"
+        RouteCalendar(_) -> "/"
         RouteSettings -> "/settings"
         RouteRegisterPatient -> "/registerpatient"
       }
@@ -131,7 +126,7 @@ pub fn route_to_urlstring(route: Route) -> String {
 }
 
 pub const pages_no_specific_patient: List(#(String, RouteNoSpecificPatient)) = [
-  #("calendar", RouteCalendar),
+  #("calendar", RouteCalendar(calendar.StillLoading)),
   #("settings", RouteSettings),
   #("registerpatient", RouteRegisterPatient),
 ]
@@ -145,27 +140,31 @@ pub const pages_patient: List(#(String, RoutePatientPage)) = [
 
 pub fn uri_to_route(uri: Uri) -> Route {
   case uri.path_segments(uri.path) {
-    [] -> RouteNoSpecificPatient(RouteCalendar)
-    [""] -> RouteNoSpecificPatient(RouteCalendar)
+    [] -> RouteNoSpecificPatient(RouteCalendar(calendar.StillLoading))
+    [""] -> RouteNoSpecificPatient(RouteCalendar(calendar.StillLoading))
     [page] ->
       case pages_no_specific_patient |> dict.from_list |> dict.get(page) {
         Ok(page) -> RouteNoSpecificPatient(page:)
-        Error(_) -> RouteCalendar |> RouteNoSpecificPatient
+        Error(_) ->
+          RouteCalendar(calendar.StillLoading) |> RouteNoSpecificPatient
       }
     ["patient", id, page] ->
       case pages_patient |> dict.from_list |> dict.get(page) {
         Ok(page) -> RoutePatient(id:, patient: PatientLoadStillLoading, page:)
-        Error(_) -> RouteCalendar |> RouteNoSpecificPatient
+        Error(_) ->
+          RouteCalendar(calendar.StillLoading) |> RouteNoSpecificPatient
       }
-    _ -> RouteCalendar |> RouteNoSpecificPatient
+    _ -> RouteCalendar(calendar.StillLoading) |> RouteNoSpecificPatient
   }
 }
 
-fn user_navigated_to(route, model) {
+fn user_navigated_to(route: Route, model: Model) -> #(Model, Effect(Msg)) {
   case route {
     RouteNoSpecificPatient(page:) -> {
       let load_page_effect = case page {
-        RouteCalendar -> effect.none()
+        RouteCalendar(_) ->
+          calendar.load_appointments_effect("abc", model.client)
+          |> effect.map(MsgCalendar)
         RouteRegisterPatient -> effect.none()
         RouteSettings -> effect.none()
       }
@@ -214,11 +213,12 @@ type Msg {
   )
   ServerReturnedPatientEverything(Result(resources.Bundle, client_rsvp.Err))
   // from page with no specific patient
-  NspSettings(settings.Msg)
+  MsgSettings(settings.Msg)
+  MsgCalendar(calendar.Msg)
   // from patient page
 }
 
-fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
+fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
   case message {
     UserNavigatedTo(route:) -> user_navigated_to(route, model)
     ServerReturned401(_) -> {
@@ -300,11 +300,17 @@ fn update(model: Model(Msg), message: Msg) -> #(Model(Msg), Effect(Msg)) {
       }
       #(model, effect.none())
     }
-    NspSettings(msg) -> #(model, settings.update_effect(msg))
+    MsgSettings(msg) -> #(model, settings.update_effect(msg))
+    MsgCalendar(msg) -> {
+      let #(calendar, effect) = calendar.update(msg)
+      let model =
+        Model(..model, route: RouteNoSpecificPatient(RouteCalendar(calendar)))
+      #(model, effect)
+    }
   }
 }
 
-fn set_search_result(model: Model(msg401), results: SearchPatientResults) {
+fn set_search_result(model: Model, results: SearchPatientResults) -> Model {
   Model(
     ..model,
     search_patient: SearchPatient(..model.search_patient, results:),
@@ -313,7 +319,7 @@ fn set_search_result(model: Model(msg401), results: SearchPatientResults) {
 
 // VIEW ------------------------------------------------------------------------
 
-fn view(model: Model(Msg)) -> Element(Msg) {
+fn view(model: Model) -> Element(Msg) {
   let patient_results = case model.search_patient.results {
     SearchPatientResultsPats(pats:) ->
       h.table([], [
@@ -379,9 +385,12 @@ fn view(model: Model(Msg)) -> Element(Msg) {
             ),
             patient_results,
           ]),
-          h.a([href(RouteNoSpecificPatient(RouteCalendar))], [
-            h.text("📅 calendar"),
-          ]),
+          h.a(
+            [href(RouteNoSpecificPatient(RouteCalendar(calendar.StillLoading)))],
+            [
+              h.text("📅 calendar"),
+            ],
+          ),
           h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
             h.text("➕ register patient"),
           ]),
@@ -422,11 +431,11 @@ fn view(model: Model(Msg)) -> Element(Msg) {
             case model.route {
               RouteNoSpecificPatient(page:) ->
                 case page {
-                  RouteCalendar -> calendar.view()
+                  RouteCalendar(model) -> calendar.view(model)
                   RouteRegisterPatient -> register_patient.view()
                   RouteSettings ->
                     settings.view(model.settings_theme)
-                    |> element.map(NspSettings)
+                    |> element.map(MsgSettings)
                 }
               RoutePatient(id:, patient:, page:) -> todo
             },

@@ -1,7 +1,10 @@
 import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
 import fhir/hl7_fhir_us_core_7_0_0/resources.{type Appointment}
 import fhir/hl7_fhir_us_core_7_0_0/search_params
+import gleam/int
+import gleam/list
 import gleam/option.{Some}
+import lustre/effect
 import lustre/element/html as h
 
 // currently doing calendar with just Appointment
@@ -18,7 +21,7 @@ pub type Msg {
 
 pub fn load_appointments_effect(
   practitioner_id: String,
-  client: client_rsvp.FhirClient(Msg),
+  client: client_rsvp.FhirClient,
 ) {
   let sp = search_params.appointment_new()
   let sp =
@@ -31,11 +34,19 @@ pub fn load_appointments_effect(
 
 pub fn update(msg: Msg) {
   case msg {
-    ServerReturnedAppointments(Ok(apts)) -> todo
-    ServerReturnedAppointments(Error(err)) -> todo
+    ServerReturnedAppointments(Ok(apts)) -> #(Appointments(apts), effect.none())
+    ServerReturnedAppointments(Error(err)) -> #(LoadError(err), effect.none())
   }
 }
 
-pub fn view() {
-  h.p([], [h.text("appointment list and calendar")])
+pub fn view(model: Model) {
+  case model {
+    LoadError(err) ->
+      h.p([], [
+        h.text("error loading calendar: " <> client_rsvp.err_to_string(err)),
+      ])
+    StillLoading -> h.p([], [h.text("calendar loading...")])
+    Appointments(apts:) ->
+      h.p([], [h.text("num apts " <> int.to_string(list.length(apts)))])
+  }
 }
