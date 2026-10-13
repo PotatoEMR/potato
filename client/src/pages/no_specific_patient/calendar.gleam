@@ -39,11 +39,11 @@ pub fn update(msg: Msg) {
   }
 }
 
-pub fn view(model: Model) {
+pub fn view(model: Model, err_to_string) {
   case model {
     LoadError(err) ->
       h.p([], [
-        h.text("error loading calendar: " <> client_rsvp.err_to_string(err)),
+        h.text("error loading calendar: " <> err_to_string(err)),
       ])
     StillLoading -> h.p([], [h.text("calendar loading...")])
     Appointments(apts:) ->

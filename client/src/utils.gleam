@@ -1,3 +1,4 @@
+import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
 import fhir/hl7_fhir_us_core_7_0_0/complex_types.{type List1} as ct
 import fhir/hl7_fhir_us_core_7_0_0/primitive_types as pt
 import fhir/hl7_fhir_us_core_7_0_0/resources
@@ -6,6 +7,17 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
+import rsvp
+
+pub fn err_to_string(server_url: String) {
+  fn(err: client_rsvp.Err) {
+    case err {
+      client_rsvp.ErrRsvp(rsvp.NetworkError) ->
+        "could not connect to " <> server_url
+      _ -> client_rsvp.err_to_string(err)
+    }
+  }
+}
 
 pub fn humannames_to_single_name_string(names: List1(ct.Humanname)) -> String {
   // for now just taking first name from list

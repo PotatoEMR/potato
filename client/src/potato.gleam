@@ -38,6 +38,7 @@ type Model {
     route: Route,
     search_patient: SearchPatient,
     client: client_rsvp.FhirClient,
+    client_err_msg: fn(client_rsvp.Err) -> String,
     settings_theme: String,
   )
 }
@@ -85,16 +86,26 @@ pub type RouteNoSpecificPatient {
   RouteSettings
 }
 
+const server_url = "127.0.0.1:3000/api"
+
 fn init(_: a) -> #(Model, Effect(Msg)) {
   let search_patient = SearchPatient("", False, SearchPatientResultsEmptyMsg)
-  let assert Ok(client) = client_rsvp.fhirclient_new("127.0.0.1:3000/api")
+  let assert Ok(client) = client_rsvp.fhirclient_new(server_url)
   // when user clicks a link in app, send msg to update fn
   let modem_effect =
     modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
   let assert Ok(route) = modem.initial_uri()
   let route = route |> uri_to_route
   let settings_theme = potato_ffi.get_theme()
-  let model = Model(route:, search_patient:, client:, settings_theme:)
+  let client_error_msg = utils.err_to_string(server_url)
+  let model =
+    Model(
+      route:,
+      search_patient:,
+      client:,
+      client_err_msg: client_error_msg,
+      settings_theme:,
+    )
   let #(model, firstload_effect) = user_navigated_to(route, model)
   #(model, effect.batch([modem_effect, firstload_effect]))
 }
@@ -265,7 +276,7 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
           Error(err) ->
             SearchPatientResultsErrMsg(
               "There was a problem getting patient search from FHIR server: "
-              <> client_rsvp.err_to_string(err),
+              <> model.client_err_msg(err),
             )
         })
       #(model, effect.none())
@@ -290,7 +301,7 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
               ))
           }
         }
-        Error(err) -> PatientLoadNotFound(client_rsvp.err_to_string(err))
+        Error(err) -> PatientLoadNotFound(model.client_err_msg(err))
       }
       let model = case model.route {
         RouteNoSpecificPatient(_) -> model
@@ -431,7 +442,7 @@ fn view(model: Model) -> Element(Msg) {
             case model.route {
               RouteNoSpecificPatient(page:) ->
                 case page {
-                  RouteCalendar(model) -> calendar.view(model)
+                  RouteCalendar(m) -> calendar.view(m, model.client_err_msg)
                   RouteRegisterPatient -> register_patient.view()
                   RouteSettings ->
                     settings.view(model.settings_theme)
