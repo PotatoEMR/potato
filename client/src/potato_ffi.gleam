@@ -1,2 +1,2 @@
-@external(javascript, "./potato_ffi.js", "get_theme")
-pub fn get_theme() -> String
+@external(javascript, "./potato_ffi_js.mjs", "get_text_content")
+pub fn get_text_content(selector: String) -> Result(String, Nil)

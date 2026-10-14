@@ -3,8 +3,9 @@ import fhir/hl7_fhir_us_core_7_0_0/resources
 import fhir/hl7_fhir_us_core_7_0_0/sansio
 import fhir/hl7_fhir_us_core_7_0_0/search_params
 import gleam/dict
+import gleam/json
 import gleam/list
-import gleam/option.{type Option, None, Some}
+import gleam/option.{Some}
 import gleam/uri.{type Uri}
 import lustre
 import lustre/attribute.{type Attribute} as a
@@ -16,10 +17,12 @@ import modem
 import pages/no_specific_patient/calendar
 import pages/no_specific_patient/register_patient
 import pages/no_specific_patient/settings
-import pages/patient/demographics
-import pages/patient/growthchart
-import pages/patient/overview
-import pages/patient/vitals
+import shared
+
+// import pages/patient/demographics
+// import pages/patient/growthchart
+// import pages/patient/overview
+// import pages/patient/vitals
 import potato_ffi
 import utils.{ue}
 
@@ -39,7 +42,7 @@ type Model {
     search_patient: SearchPatient,
     client: client_rsvp.FhirClient,
     client_err_msg: fn(client_rsvp.Err) -> String,
-    settings_theme: String,
+    shared_user: shared.SharedUser,
   )
 }
 
@@ -86,7 +89,7 @@ pub type RouteNoSpecificPatient {
   RouteSettings
 }
 
-const server_url = "127.0.0.1:3000/api"
+const server_url = "127.0.0.1:4000/api"
 
 fn init(_: a) -> #(Model, Effect(Msg)) {
   let search_patient = SearchPatient("", False, SearchPatientResultsEmptyMsg)
@@ -96,7 +99,12 @@ fn init(_: a) -> #(Model, Effect(Msg)) {
     modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
   let assert Ok(route) = modem.initial_uri()
   let route = route |> uri_to_route
-  let settings_theme = potato_ffi.get_theme()
+  // it is not ok to load without shared user from server, and should never happen
+  let assert Ok(shared_user) =
+    potato_ffi.get_text_content("script[type='application/json']")
+  let assert Ok(shared_user) =
+    json.parse(shared_user, shared.shared_user_decoder())
+
   let client_error_msg = utils.err_to_string(server_url)
   let model =
     Model(
@@ -104,7 +112,7 @@ fn init(_: a) -> #(Model, Effect(Msg)) {
       search_patient:,
       client:,
       client_err_msg: client_error_msg,
-      settings_theme:,
+      shared_user:,
     )
   let #(model, firstload_effect) = user_navigated_to(route, model)
   #(model, effect.batch([modem_effect, firstload_effect]))
@@ -174,7 +182,7 @@ fn user_navigated_to(route: Route, model: Model) -> #(Model, Effect(Msg)) {
     RouteNoSpecificPatient(page:) -> {
       let load_page_effect = case page {
         RouteCalendar(_) ->
-          calendar.load_appointments_effect("abc", model.client)
+          calendar.load_appointments_effect(model.shared_user.id, model.client)
           |> effect.map(MsgCalendar)
         RouteRegisterPatient -> effect.none()
         RouteSettings -> effect.none()
@@ -445,7 +453,7 @@ fn view(model: Model) -> Element(Msg) {
                   RouteCalendar(m) -> calendar.view(m, model.client_err_msg)
                   RouteRegisterPatient -> register_patient.view()
                   RouteSettings ->
-                    settings.view(model.settings_theme)
+                    settings.view(model.shared_user.settings_theme)
                     |> element.map(MsgSettings)
                 }
               RoutePatient(id:, patient:, page:) -> todo

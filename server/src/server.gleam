@@ -19,6 +19,7 @@ import lustre/attribute as a
 import lustre/element
 import lustre/element/html as h
 import mist
+import shared
 import storail
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
@@ -34,13 +35,7 @@ type Role {
 
 // stored in storail with username key
 type User {
-  User(
-    password_hash: String,
-    role: Role,
-    id: String,
-    //settings_theme could be an enum but idc
-    settings_theme: String,
-  )
+  User(password_hash: String, role: Role, shared_user: shared.SharedUser)
 }
 
 fn user_to_json(user: User) -> json.Json {
@@ -53,29 +48,22 @@ fn user_to_json(user: User) -> json.Json {
         Patient -> "patient"
       }),
     ),
-    #("id", json.string(user.id)),
-    #("settings_theme", json.string(user.settings_theme)),
+    #("shared_user", shared.shared_user_to_json(user.shared_user)),
   ])
 }
 
 fn user_decoder() -> decode.Decoder(User) {
   use password_hash <- decode.field("password_hash", decode.string)
-  use id <- decode.field("id", decode.string)
   use role <- decode.field("role", decode.string)
-  use settings_theme <- decode.field("settings_theme", decode.string)
+  use shared_user <- decode.field("shared_user", shared.shared_user_decoder())
   case role {
     "practitioner" ->
-      decode.success(User(
-        password_hash:,
-        role: Practitioner,
-        id:,
-        settings_theme:,
-      ))
+      decode.success(User(password_hash:, role: Practitioner, shared_user:))
     "patient" ->
-      decode.success(User(password_hash:, role: Patient, id:, settings_theme:))
+      decode.success(User(password_hash:, role: Patient, shared_user:))
     _ ->
       decode.failure(
-        User(password_hash:, role: Practitioner, id:, settings_theme:),
+        User(password_hash:, role: Practitioner, shared_user:),
         "patient or practitionr",
       )
   }
@@ -93,7 +81,7 @@ pub fn main() -> Nil {
     handle_request(users, priv_directory, _)
     |> wisp_mist.handler(secret_key_base)
     |> mist.new
-    |> mist.port(3000)
+    |> mist.port(4000)
     |> mist.start
 
   process.sleep_forever()
@@ -130,7 +118,7 @@ fn handle_request(
     Get, ["auth", "logout"] ->
       wisp.redirect("/auth/login")
       |> logout_user_cookie(client_request)
-      // if it doesnt redirect /auth/login the /auth/logout? form doesnt work just redirects to /auth/login
+    // if it doesnt redirect /auth/login the /auth/logout? form doesnt work just redirects to /auth/login
     _, ["api", ..rest_path] -> {
       case
         wisp.get_cookie(
@@ -330,22 +318,20 @@ fn serve_index(
     Error(_) -> wisp.redirect(to: "/auth/login")
     Ok(username) ->
       case read_user(users, username) {
-        Ok(user) -> serve_index_theme(user.settings_theme)
+        Ok(user) -> serve_index_theme(user.shared_user)
         Error(_) -> todo
       }
   }
 }
 
-fn serve_index_theme(theme) {
+fn serve_index_theme(shared: shared.SharedUser) {
   let html =
     h.html([a.styles(full)], [
       h.head([], [
         h.script([a.type_("module"), a.src("/static/potato.js")], ""),
         h.link([
           a.rel("stylesheet"),
-          a.href("/static/classless/" <> theme <> ".css"),
-          a.id("theme-css"),
-          a.attribute("theme-name", theme),
+          a.href("/static/classless/" <> shared.settings_theme <> ".css"),
         ]),
         ..potatoemr()
       ]),
@@ -356,6 +342,11 @@ fn serve_index_theme(theme) {
           a.style("max-width", "none"),
         ],
         [
+          h.script(
+            [a.type_("application/json")],
+            // client will get user id and setting out of this
+            shared |> shared.shared_user_to_json |> json.to_string,
+          ),
           h.div(
             [
               a.id("app"),
@@ -389,10 +380,12 @@ fn update_settings(
               panic as "idk 1"
             }
             Ok(user) -> {
-              let updated_theme = User(..user, settings_theme: new_theme)
+              let shared_user =
+                shared.SharedUser(..user.shared_user, settings_theme: new_theme)
+              let updated_theme = User(..user, shared_user:)
               case write_existing_user(users, updated_theme, username) {
                 Error(_) -> panic as "idk 2"
-                Ok(_) -> serve_index_theme(new_theme)
+                Ok(_) -> serve_index_theme(user.shared_user)
               }
             }
           }
@@ -518,9 +511,8 @@ fn handle_signup(users: storail.Collection(User), req: Request) -> Response {
               let new_user =
                 User(
                   password_hash:,
-                  id:,
                   role: Practitioner,
-                  settings_theme: "bahunya",
+                  shared_user: shared.SharedUser(id:, settings_theme: "bahunya"),
                 )
               case write_user(users, new_user, username) {
                 Ok(_) -> wisp.redirect("/") |> set_user_cookie(req, username)
