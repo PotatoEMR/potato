@@ -4,6 +4,9 @@ import fhir/hl7_fhir_us_core_7_0_0/search_params
 import gleam/int
 import gleam/list
 import gleam/option.{Some}
+import gleam/time/calendar
+import gleam/time/timestamp
+import lustre/attribute as a
 import lustre/effect
 import lustre/element/html as h
 
@@ -40,6 +43,7 @@ pub fn update(msg: Msg) {
 }
 
 pub fn view(model: Model, err_to_string) {
+  let now = timestamp.system_time() |> timestamp.to_http_date
   case model {
     LoadError(err) ->
       h.p([], [
@@ -47,6 +51,100 @@ pub fn view(model: Model, err_to_string) {
       ])
     StillLoading -> h.p([], [h.text("calendar loading...")])
     Appointments(apts:) ->
-      h.p([], [h.text("num apts " <> int.to_string(list.length(apts)))])
+      h.div(
+        [
+          // so that scrollbar goes on table right instead of all the way to page right
+          a.styles([
+            #("width", "max-content"),
+            #("max-width", "100%"),
+            #("height", "100%"),
+            #("overflow", "auto;"),
+            #("scrollbar-gutter", "stable"),
+            #("padding-right", "5px"),
+          ]),
+        ],
+        [
+          h.table(
+            [
+              a.style("table-layout", "fixed"),
+              // 120 * 7 = 840 for days
+              // + 70 for hour
+              // might be a better way idk 
+              a.style("width", "940px"),
+              a.style("border-collapse", "collapse"),
+            ],
+            [
+              h.tr(
+                [],
+                [
+                  "Mon",
+                  "Tue",
+                  "Wed",
+                  "Thu",
+                  "Fri",
+                  "Sat",
+                  "Sun",
+                ]
+                  |> list.map(day_column_head)
+                  // first empty because we have times in first col
+                  |> list.prepend(h.th([a.style("border", "0")], [])),
+              ),
+              ..list.reverse(
+                int.range(from: 0, to: 24, with: [], run: fn(acc, num) {
+                  let hour = case num {
+                    0 -> "12 AM"
+                    12 -> "12 PM"
+                    _ ->
+                      case num < 12 {
+                        True -> int.to_string(num) <> " AM"
+                        False -> int.to_string(num - 12) <> " PM"
+                      }
+                  }
+                  let hour =
+                    h.td(
+                      [
+                        a.style("width", "100px"),
+                        a.style("min-width", "100px"),
+                        a.style("white-space", "nowrap"),
+                        a.style("vertical-align", "top"),
+                        a.style("padding-top", "0"),
+                        a.style("position", "relative"),
+                        a.style("top", "-0.7em"),
+                        a.style("text-align", "right"),
+                        a.style("border", "0px"),
+                      ],
+                      [h.text(hour)],
+                    )
+                  let hour_row =
+                    h.tr([], [
+                      hour,
+                      ..list.repeat(
+                        h.td([a.style("border", "1px solid currentColor")], []),
+                        7,
+                      )
+                    ])
+                  [hour_row, ..acc]
+                }),
+              )
+            ],
+          ),
+        ],
+      )
+    // h.p([], [h.text(now <> "num apts " <> int.to_string(list.length(apts)))])
   }
+}
+
+fn day_column_head(day: String) {
+  h.th(
+    [
+      a.style("background-color", "Canvas"),
+      a.style("position", "sticky"),
+      a.style("top", "0"),
+      a.style("z-index", "2"),
+      a.style("width", "120px"),
+      a.style("box-sizing", "border-box"),
+      a.style("border", "0px"),
+    ],
+    [h.text(day)],
+  )
 }

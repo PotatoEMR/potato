@@ -426,11 +426,10 @@ fn view(model: Model) -> Element(Msg) {
       ),
       h.div(
         [
-          a.style("height", "100%"),
-          a.style("width", "100%"),
           a.style("display", "flex"),
           a.style("gap", "5px"),
           a.style("flex", "1"),
+          a.style("min-height", "0"),
         ],
         [
           h.div(
@@ -438,7 +437,6 @@ fn view(model: Model) -> Element(Msg) {
               a.style("display", "flex"),
               a.style("flex-direction", "column"),
               a.style("flex-shrink", "0"),
-              a.style("height", "100%"),
             ],
             [
               h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
@@ -447,19 +445,27 @@ fn view(model: Model) -> Element(Msg) {
               h.p([], [h.text("hi")]),
             ],
           ),
-          h.main([a.style("flex", "1"), a.style("min-width", "0")], [
-            case model.route {
-              RouteNoSpecificPatient(page:) ->
-                case page {
-                  RouteCalendar(m) -> calendar.view(m, model.client_err_msg)
-                  RouteRegisterPatient -> register_patient.view()
-                  RouteSettings ->
-                    settings.view(model.shared_user.settings_theme)
-                    |> element.map(MsgSettings)
-                }
-              RoutePatient(id:, patient:, page:) -> todo
-            },
-          ]),
+          h.main(
+            [
+              a.style("flex", "1"),
+              a.style("min-width", "0"),
+              a.style("min-height", "0"),
+              a.style("overflow", "auto"),
+            ],
+            [
+              case model.route {
+                RouteNoSpecificPatient(page:) ->
+                  case page {
+                    RouteCalendar(m) -> calendar.view(m, model.client_err_msg)
+                    RouteRegisterPatient -> register_patient.view()
+                    RouteSettings ->
+                      settings.view(model.shared_user.settings_theme)
+                      |> element.map(MsgSettings)
+                  }
+                RoutePatient(id:, patient:, page:) -> todo
+              },
+            ],
+          ),
         ],
       ),
     ],
