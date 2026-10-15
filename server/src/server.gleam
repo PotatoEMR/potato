@@ -382,8 +382,8 @@ fn update_settings(
             Ok(user) -> {
               let shared_user =
                 shared.SharedUser(..user.shared_user, settings_theme: new_theme)
-              let updated_theme = User(..user, shared_user:)
-              case write_existing_user(users, updated_theme, username) {
+              let user = User(..user, shared_user:)
+              case write_existing_user(users, user, username) {
                 Error(_) -> panic as "idk 2"
                 Ok(_) -> serve_index_theme(user.shared_user)
               }
@@ -479,6 +479,12 @@ fn handle_signup(users: storail.Collection(User), req: Request) -> Response {
     Ok(last_name) -> {
       let given = find_form_name(form.values, "first_name")
       let name = complex_types.humanname_required_family_new(last_name)
+      let name_text = case given {
+        Error(_) -> last_name
+        Ok(first_name) -> first_name <> " " <> last_name
+      }
+      let name =
+        complex_types.HumannameRequiredFamily(..name, text: Some(name_text))
       let name =
         case given {
           Error(_) -> name
@@ -512,7 +518,11 @@ fn handle_signup(users: storail.Collection(User), req: Request) -> Response {
                 User(
                   password_hash:,
                   role: Practitioner,
-                  shared_user: shared.SharedUser(id:, settings_theme: "bahunya"),
+                  shared_user: shared.SharedUser(
+                    id:,
+                    settings_theme: "bahunya",
+                    name: name_text,
+                  ),
                 )
               case write_user(users, new_user, username) {
                 Ok(_) -> wisp.redirect("/") |> set_user_cookie(req, username)

@@ -421,6 +421,7 @@ fn view(model: Model) -> Element(Msg) {
           h.form([a.action("/auth/logout")], [
             h.button([], [h.text("log out")]),
           ]),
+          h.text(model.shared_user.name),
         ],
       ),
       h.div(
