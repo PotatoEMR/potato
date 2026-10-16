@@ -177,8 +177,7 @@ pub type ErrReq {
   ErrNoId
 }
 
-pub const err_req_to_string =
-  "the resource you're using has no id, but a resource id is needed for this operation"
+pub const err_req_to_string = "the resource you're using has no id, but a resource id is needed for this operation"
 
 pub fn any_create_req(
   resource_json: Json,

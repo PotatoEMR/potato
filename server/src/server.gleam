@@ -3,13 +3,14 @@ import fhir/hl7_fhir_us_core_7_0_0/client_httpc
 import fhir/hl7_fhir_us_core_7_0_0/complex_types.{List1}
 import fhir/hl7_fhir_us_core_7_0_0/resources
 import fhir/hl7_fhir_us_core_7_0_0/sansio
+import glaze/oat/card
+import glaze/oat/form
 import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/http.{Get, Post}
 import gleam/http/request
 import gleam/http/response
 import gleam/httpc
-import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -214,8 +215,23 @@ fn potatoemr() -> List(element.Element(a)) {
       ),
       a.rel("icon"),
     ]),
+    h.script([a.src("/static/oat.js"), a.attribute("defer", "defer")], ""),
+    h.link([
+      a.rel("stylesheet"),
+      a.href("/static/oat.css"),
+    ]),
     h.title([], "PotatoEMR"),
   ]
+}
+
+fn oat_field(attrs) {
+  h.label([a.attribute("data-field", "")], [
+    h.input(attrs),
+  ])
+}
+
+fn oat_hstack(elts) {
+  h.div([a.class("hstack")], elts)
 }
 
 fn auth_shell(
@@ -232,14 +248,7 @@ fn auth_shell(
         ),
       ],
       [
-        h.head([], [
-          h.link([
-            a.id("theme"),
-            a.rel("stylesheet"),
-            a.href("/static/classless/bahunya.css"),
-          ]),
-          ..potatoemr()
-        ]),
+        h.head([], potatoemr()),
         h.body(
           [
             a.style("background-image", "url('/static/potato-bg.jpg')"),
@@ -250,56 +259,41 @@ fn auth_shell(
             a.style("justify-content", "center"),
             a.style("align-items", "center"),
             a.styles(full),
-            // need if trying to swap in classless css and want to keep login centered
-            a.style("max-width", "none"),
           ],
           [
-            h.main(
-              [
-                a.style("background-color", "inherit"),
-                a.style("width", "20em"),
-                a.style("height", "30em"),
-                a.style("padding", "2em"),
-                a.style("border-radius", "0.5em"),
-                a.style("box-shadow", "0 0 5px rgba(0, 0, 0, 0.8)"),
-              ],
-              [
-                h.h1([], [h.text("PotatoEMR")]),
-                h.form(
-                  [
-                    a.method("post"),
-                    a.style("display", "flex"),
-                    a.style("flex-direction", "column"),
-                    a.style("gap", "5px"),
-                  ],
-                  [
-                    h.input([
-                      a.required(True),
-                      a.name("username"),
-                      a.placeholder("username"),
-                    ]),
-                    h.input([
-                      a.required(True),
-                      a.name("password"),
-                      a.type_("password"),
-                      a.placeholder("password"),
-                    ]),
-                    ..contents
-                  ],
-                ),
-                h.p(
-                  [
-                    a.style("color", "red"),
-                  ],
-                  [
-                    case error_msg {
-                      None -> element.none()
-                      Some(error_msg) -> h.text(error_msg)
-                    },
-                  ],
-                ),
-              ],
-            ),
+            card.card([], [
+              h.h1([], [h.text("PotatoEMR")]),
+              h.form(
+                [
+                  a.method("post"),
+                ],
+                [
+                  oat_field([
+                    a.required(True),
+                    a.name("username"),
+                    a.placeholder("username"),
+                  ]),
+                  oat_field([
+                    a.required(True),
+                    a.name("password"),
+                    a.type_("password"),
+                    a.placeholder("password"),
+                  ]),
+                  ..contents
+                ],
+              ),
+              h.p(
+                [
+                  a.style("color", "red"),
+                ],
+                [
+                  case error_msg {
+                    None -> element.none()
+                    Some(error_msg) -> h.text(error_msg)
+                  },
+                ],
+              ),
+            ]),
           ],
         ),
       ],
@@ -329,17 +323,11 @@ fn serve_index_theme(shared: shared.SharedUser) {
     h.html([a.styles(full)], [
       h.head([], [
         h.script([a.type_("module"), a.src("/static/potato.js")], ""),
-        h.link([
-          a.rel("stylesheet"),
-          a.href("/static/classless/" <> shared.settings_theme <> ".css"),
-        ]),
         ..potatoemr()
       ]),
       h.body(
         [
           a.styles(full),
-          // need if trying to swap in classless css and want to keep login centered
-          a.style("max-width", "none"),
         ],
         [
           h.script(
@@ -399,26 +387,26 @@ fn serve_signup(error_msg: Option(String)) -> Response {
       h.div(
         [
           a.style("display", "flex"),
-          a.style("gap", "5px"),
+          a.style("gap", "1em"),
         ],
         [
-          h.input([
+          oat_field([
             a.style("flex", "1"),
-            a.style("min-width", "0"),
             a.name("first_name"),
             a.placeholder("firstname"),
           ]),
-          h.input([
+          oat_field([
             a.style("flex", "1"),
-            a.style("min-width", "0"),
             a.name("last_name"),
             a.placeholder("lastname"),
             a.required(True),
           ]),
         ],
       ),
-      h.button([], [h.text("Sign Up")]),
-      h.a([a.href("/auth/login")], [h.text("or log in")]),
+      oat_hstack([
+        h.button([], [h.text("Sign Up")]),
+        h.a([a.href("/auth/login")], [h.text("or log in")]),
+      ]),
     ],
     error_msg,
   )
@@ -427,8 +415,10 @@ fn serve_signup(error_msg: Option(String)) -> Response {
 fn serve_login(error_msg: Option(String)) -> Response {
   auth_shell(
     [
-      h.button([], [h.text("Log In")]),
-      h.a([a.href("/auth/signup")], [h.text("or sign up")]),
+      oat_hstack([
+        h.button([], [h.text("Log In")]),
+        h.a([a.href("/auth/signup")], [h.text("or sign up")]),
+      ]),
     ],
     error_msg,
   )
@@ -558,7 +548,7 @@ fn handle_login(users: storail.Collection(User), req: Request) -> Response {
     }
     Error(err) ->
       case err {
-        storail.ObjectNotFound(namespace:, id:) -> not_found()
+        storail.ObjectNotFound(_, _) -> not_found()
         _ -> {
           echo err
           // idk if we should actually show error if not logged in but did get an error
