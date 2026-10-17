@@ -1,4 +1,9 @@
 /* https://unpkg.com/@knadh/oat@0.8.3/oat.min.css */
+/*one change to btn hover
+-        --_hov: color-mix(in srgb, var(--primary), white 25%);
++        --_hov: color-mix(in srgb, var(--primary), var(--secondary) 25%);
+*/
+
 
 @layer theme, base, components, animations, utilities;
 
@@ -395,7 +400,7 @@
 
     :is(button, [type=submit], [type=reset], [type=button], a.button),
     ::file-selector-button {
-        --_hov: color-mix(in srgb, var(--primary), white 25%);
+        --_hov: color-mix(in srgb, var(--primary), var(--secondary) 25%);
         display: inline-flex;
         align-items: center;
         justify-content: center;

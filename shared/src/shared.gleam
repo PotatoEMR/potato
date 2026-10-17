@@ -1,5 +1,7 @@
 import gleam/dynamic/decode
 import gleam/json
+import lustre/attribute as a
+import lustre/element/html as h
 
 pub type SharedUser {
   SharedUser(
@@ -25,4 +27,14 @@ pub fn shared_user_to_json(user: SharedUser) {
     #("name", json.string(user.name)),
   ]
   |> json.object
+}
+
+pub fn oat_field(attrs) {
+  h.label([a.attribute("data-field", "")], [
+    h.input(attrs),
+  ])
+}
+
+pub fn oat_hstack(elts) {
+  h.div([a.class("hstack")], elts)
 }

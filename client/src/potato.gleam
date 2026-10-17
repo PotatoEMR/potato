@@ -2,6 +2,7 @@ import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
 import fhir/hl7_fhir_us_core_7_0_0/resources
 import fhir/hl7_fhir_us_core_7_0_0/sansio
 import fhir/hl7_fhir_us_core_7_0_0/search_params
+import glaze/oat/sidebar
 import gleam/dict
 import gleam/json
 import gleam/list
@@ -359,117 +360,85 @@ fn view(model: Model) -> Element(Msg) {
     SearchPatientResultsLoadingMsg -> h.div([], [h.text("loading...")])
     SearchPatientResultsEmptyMsg -> h.div([], [h.text("no results")])
   }
-  h.div(
-    [
-      a.style("width", "100%"),
-      a.style("height", "100%"),
-      a.style("display", "flex"),
-      a.style("flex-direction", "column"),
-    ],
-    [
-      h.nav(
+  sidebar.sidebar(h.div, [], [
+    sidebar.topnav([], [
+      h.button(
         [
-          a.style("width", "100%"),
-          a.style("display", "flex"),
-          a.style("gap", "10px"),
+          a.command("show-modal"),
+          a.commandfor("search-patient-dialog"),
         ],
-        [
-          h.button(
-            [
-              a.command("show-modal"),
-              a.commandfor("search-patient-dialog"),
-            ],
-            [h.text("search patient")],
-          ),
-          h.dialog([a.closedby("any"), a.id("search-patient-dialog")], [
-            h.header([], [
-              h.button(
-                [a.commandfor("search-patient-dialog"), a.command("close")],
-                [
-                  h.text("close"),
-                ],
-              ),
+        [h.text("🔍 search patient")],
+      ),
+      h.dialog([a.closedby("any"), a.id("search-patient-dialog")], [
+        h.header([], [
+          h.button([a.commandfor("search-patient-dialog"), a.command("close")], [
+            h.text("close"),
+          ]),
+        ]),
+        h.label(
+          [
+            a.for("search-patient"),
+          ],
+          [
+            h.text("Name"),
+            h.input([
+              a.id("search-patient"),
+              event.on_input(UserTypedSearchPatient),
             ]),
-            h.label(
-              [
-                a.for("search-patient"),
-              ],
-              [
-                h.text("Name"),
-                h.input([
-                  a.id("search-patient"),
-                  event.on_input(UserTypedSearchPatient),
-                ]),
-              ],
-            ),
-            patient_results,
-          ]),
-          h.a(
-            [href(RouteNoSpecificPatient(RouteCalendar(calendar.StillLoading)))],
-            [
-              h.text("📅 calendar"),
-            ],
-          ),
-          h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
-            h.text("➕ register patient"),
-          ]),
-          h.a([href(RouteNoSpecificPatient(RouteSettings))], [
-            h.text("⚙️ settings"),
-          ]),
-          // form instead of link because modem would take some more code to make logout link work
-          // also maybe button better
-          h.form([a.action("/auth/logout")], [
-            h.button([], [h.text("log out")]),
-          ]),
-          h.text(model.shared_user.name),
-        ],
-      ),
-      h.div(
-        [
-          a.style("display", "flex"),
-          a.style("gap", "5px"),
-          a.style("flex", "1"),
-          a.style("min-height", "0"),
-        ],
-        [
-          h.div(
-            [
-              a.style("display", "flex"),
-              a.style("flex-direction", "column"),
-              a.style("flex-shrink", "0"),
-            ],
-            [
-              h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
-                h.text("abcabcabc"),
-              ]),
-              h.p([], [h.text("hi")]),
-            ],
-          ),
-          h.main(
-            [
-              a.style("flex", "1"),
-              a.style("min-width", "0"),
-              a.style("min-height", "0"),
-              a.style("overflow", "auto"),
-            ],
-            [
-              case model.route {
-                RouteNoSpecificPatient(page:) ->
-                  case page {
-                    RouteCalendar(m) -> calendar.view(m, model.client_err_msg)
-                    RouteRegisterPatient -> register_patient.view()
-                    RouteSettings ->
-                      settings.view(model.shared_user.settings_theme)
-                      |> element.map(MsgSettings)
-                  }
-                RoutePatient(id:, patient:, page:) -> todo
-              },
-            ],
-          ),
-        ],
-      ),
-    ],
-  )
+          ],
+        ),
+        patient_results,
+      ]),
+      h.a([href(RouteNoSpecificPatient(RouteCalendar(calendar.StillLoading)))], [
+        h.text("📅 calendar"),
+      ]),
+      h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
+        h.text("➕ register patient"),
+      ]),
+      h.a([href(RouteNoSpecificPatient(RouteSettings))], [
+        h.text("⚙️ settings"),
+      ]),
+      // form instead of link because modem would take some more code to make logout link work
+      // also maybe button better
+      h.form([a.action("/auth/logout")], [
+        h.button([], [h.text("➜] log out")]),
+      ]),
+      h.text(model.shared_user.name),
+    ]),
+    sidebar.aside([], [
+      h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
+        h.text("abcabcabc"),
+      ]),
+      h.p([], [h.text("hi")]),
+      h.p([], [h.text("hi")]),
+      h.p([], [h.text("hi")]),
+      h.p([], [h.text("hi")]),
+      h.p([], [h.text("hi")]),
+      h.p([], [h.text("hi")]),
+      h.p([], [h.text("hi")]),
+    ]),
+    h.main(
+      [
+        a.style("padding", "20px"),
+        // a.style("flex", "1"),
+      // a.style("min-width", "0"),
+      // a.style("min-height", "0"),
+      ],
+      [
+        case model.route {
+          RouteNoSpecificPatient(page:) ->
+            case page {
+              RouteCalendar(m) -> calendar.view(m, model.client_err_msg)
+              RouteRegisterPatient -> register_patient.view()
+              RouteSettings ->
+                settings.view(model.shared_user.settings_theme)
+                |> element.map(MsgSettings)
+            }
+          RoutePatient(id:, patient:, page:) -> todo
+        },
+      ],
+    ),
+  ])
 }
 
 fn table_head(headers: List(String)) -> Element(Msg) {

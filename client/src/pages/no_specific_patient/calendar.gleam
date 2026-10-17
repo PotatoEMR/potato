@@ -1,6 +1,7 @@
 import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
 import fhir/hl7_fhir_us_core_7_0_0/resources.{type Appointment}
 import fhir/hl7_fhir_us_core_7_0_0/search_params
+import glaze/oat/table
 import gleam/int
 import gleam/list
 import gleam/option.{Some}
@@ -51,45 +52,66 @@ pub fn view(model: Model, err_to_string) {
       ])
     StillLoading -> h.p([], [h.text("calendar loading...")])
     Appointments(apts:) ->
-      h.div(
-        [
-          // so that scrollbar goes on table right instead of all the way to page right
-          a.styles([
-            #("width", "max-content"),
-            #("max-width", "100%"),
-            #("height", "100%"),
-            #("overflow", "auto;"),
-            #("scrollbar-gutter", "stable"),
-            #("padding-right", "5px"),
-          ]),
-        ],
-        [
-          h.table(
-            [
-              a.style("table-layout", "fixed"),
-              // 120 * 7 = 840 for days
-              // + 70 for hour
-              // might be a better way idk 
-              a.style("width", "940px"),
-              a.style("border-collapse", "collapse"),
-            ],
-            [
-              h.tr(
-                [],
-                [
-                  "Mon",
-                  "Tue",
-                  "Wed",
-                  "Thu",
-                  "Fri",
-                  "Sat",
-                  "Sun",
-                ]
-                  |> list.map(day_column_head)
-                  // first empty because we have times in first col
-                  |> list.prepend(h.th([a.style("border", "0")], [])),
-              ),
-              ..list.reverse(
+      table.container([], [
+        h.style(
+          [],
+          // can't do hover style inline
+          // oat puts hover on row, but for calendar we want it on individual cell, and not first hour cell
+          "
+              tbody tr {
+                    &:hover {
+                        background-color: transparent;
+                    }
+                }
+              tbody td:not(:first-child) {
+                  transition: background-color var(--transition-fast);
+                  &:hover {
+                      background-color: rgb(from var(--muted) r g b / .5)
+                  }
+              }
+          ",
+        ),
+        table.table(
+          [
+            a.style("table-layout", "fixed"),
+            // // 120 * 7 = 840 for days
+            // // + 70 for hour
+            // // might be a better way idk 
+            a.style("width", "100%"),
+          ],
+          [
+            h.thead(
+              [
+                a.style("border", "0px"),
+              ],
+              [
+                h.tr(
+                  [],
+                  [
+                    "Mon",
+                    "Tue",
+                    "Wed",
+                    "Thu",
+                    "Fri",
+                    "Sat",
+                    "Sun",
+                  ]
+                    |> list.map(day_column_head)
+                    // first empty because we have times in first col
+                    |> list.prepend(
+                      h.th(
+                        [
+                          a.style("width", "5em"),
+                        ],
+                        [],
+                      ),
+                    ),
+                ),
+              ],
+            ),
+            h.tbody(
+              [],
+              list.reverse(
                 int.range(from: 0, to: 24, with: [], run: fn(acc, num) {
                   let hour = case num {
                     0 -> "12 AM"
@@ -103,8 +125,6 @@ pub fn view(model: Model, err_to_string) {
                   let hour =
                     h.td(
                       [
-                        a.style("width", "100px"),
-                        a.style("min-width", "100px"),
                         a.style("white-space", "nowrap"),
                         a.style("vertical-align", "top"),
                         a.style("padding-top", "0"),
@@ -116,20 +136,26 @@ pub fn view(model: Model, err_to_string) {
                       [h.text(hour)],
                     )
                   let hour_row =
-                    h.tr([], [
+                    h.tr([a.style("border", "0px")], [
                       hour,
                       ..list.repeat(
-                        h.td([a.style("border", "1px solid currentColor")], []),
+                        h.td(
+                          [
+                            a.style("border", "1px solid"),
+                            a.style("height", "50px"),
+                          ],
+                          [],
+                        ),
                         7,
                       )
                     ])
                   [hour_row, ..acc]
                 }),
-              )
-            ],
-          ),
-        ],
-      )
+              ),
+            ),
+          ],
+        ),
+      ])
     // h.p([], [h.text(now <> "num apts " <> int.to_string(list.length(apts)))])
   }
 }
@@ -137,13 +163,12 @@ pub fn view(model: Model, err_to_string) {
 fn day_column_head(day: String) {
   h.th(
     [
-      a.style("background-color", "Canvas"),
-      a.style("position", "sticky"),
-      a.style("top", "0"),
-      a.style("z-index", "2"),
-      a.style("width", "120px"),
-      a.style("box-sizing", "border-box"),
-      a.style("border", "0px"),
+      // a.style("position", "sticky"),
+    // a.style("top", "0"),
+    // a.style("z-index", "2"),
+    // a.style("width", "120px"),
+    // a.style("box-sizing", "border-box"),
+    // a.style("border", "0px"),
     ],
     [h.text(day)],
   )

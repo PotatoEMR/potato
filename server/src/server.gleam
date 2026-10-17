@@ -4,7 +4,6 @@ import fhir/hl7_fhir_us_core_7_0_0/complex_types.{List1}
 import fhir/hl7_fhir_us_core_7_0_0/resources
 import fhir/hl7_fhir_us_core_7_0_0/sansio
 import glaze/oat/card
-import glaze/oat/form
 import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/http.{Get, Post}
@@ -20,7 +19,7 @@ import lustre/attribute as a
 import lustre/element
 import lustre/element/html as h
 import mist
-import shared
+import shared.{oat_field, oat_hstack}
 import storail
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
@@ -222,16 +221,6 @@ fn potatoemr() -> List(element.Element(a)) {
     ]),
     h.title([], "PotatoEMR"),
   ]
-}
-
-fn oat_field(attrs) {
-  h.label([a.attribute("data-field", "")], [
-    h.input(attrs),
-  ])
-}
-
-fn oat_hstack(elts) {
-  h.div([a.class("hstack")], elts)
 }
 
 fn auth_shell(
