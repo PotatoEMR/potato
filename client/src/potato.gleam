@@ -133,7 +133,7 @@ pub fn route_to_urlstring(route: Route) -> String {
         RouteSettings -> "/settings"
         RouteRegisterPatient -> "/registerpatient"
       }
-    RoutePatient(id:, patient:, page:) -> {
+    RoutePatient(_patient, id:, page:) -> {
       let ending = case page {
         PatientOverview -> "overview"
         PatientDemographics -> "demographics"
@@ -146,7 +146,7 @@ pub fn route_to_urlstring(route: Route) -> String {
 }
 
 pub const pages_no_specific_patient: List(#(String, RouteNoSpecificPatient)) = [
-  #("calendar", RouteCalendar(calendar.StillLoading)),
+  #("calendar", RouteCalendar(calendar.new)),
   #("settings", RouteSettings),
   #("registerpatient", RouteRegisterPatient),
 ]
@@ -160,21 +160,20 @@ pub const pages_patient: List(#(String, RoutePatientPage)) = [
 
 pub fn uri_to_route(uri: Uri) -> Route {
   case uri.path_segments(uri.path) {
-    [] -> RouteNoSpecificPatient(RouteCalendar(calendar.StillLoading))
-    [""] -> RouteNoSpecificPatient(RouteCalendar(calendar.StillLoading))
+    [] -> RouteNoSpecificPatient(RouteCalendar(calendar.new))
+    [""] -> RouteNoSpecificPatient(RouteCalendar(calendar.new))
     [page] ->
       case pages_no_specific_patient |> dict.from_list |> dict.get(page) {
         Ok(page) -> RouteNoSpecificPatient(page:)
-        Error(_) ->
-          RouteCalendar(calendar.StillLoading) |> RouteNoSpecificPatient
+        Error(_) -> RouteCalendar(calendar.new) |> RouteNoSpecificPatient
       }
     ["patient", id, page] ->
       case pages_patient |> dict.from_list |> dict.get(page) {
         Ok(page) -> RoutePatient(id:, patient: PatientLoadStillLoading, page:)
-        Error(_) ->
-          RouteCalendar(calendar.StillLoading) |> RouteNoSpecificPatient
+        Error(_) -> RouteCalendar(calendar.new) |> RouteNoSpecificPatient
       }
-    _ -> RouteCalendar(calendar.StillLoading) |> RouteNoSpecificPatient
+    // could put a 404 page here
+    _ -> RouteCalendar(calendar.new) |> RouteNoSpecificPatient
   }
 }
 
@@ -322,10 +321,19 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
     }
     MsgSettings(msg) -> #(model, settings.update_effect(msg))
     MsgCalendar(msg) -> {
-      let #(calendar, effect) = calendar.update(msg)
-      let model =
-        Model(..model, route: RouteNoSpecificPatient(RouteCalendar(calendar)))
-      #(model, effect)
+      case model.route {
+        RouteNoSpecificPatient(RouteCalendar(page)) -> {
+          let #(page, calendar_effect) = calendar.update(page, msg)
+          let route = RouteNoSpecificPatient(RouteCalendar(page))
+          #(Model(..model, route:), effect.map(calendar_effect, MsgCalendar))
+        }
+        // if we get a calendar message while not on calendar page, just ignore it
+        _ -> #(model, effect.none())
+      }
+      // let #(calendar, effect) = calendar.update(msg)
+      // let model =
+      //   Model(..model, route: RouteNoSpecificPatient(RouteCalendar(calendar)))
+      // #(model, effect)
     }
   }
 }
@@ -389,7 +397,7 @@ fn view(model: Model) -> Element(Msg) {
         ),
         patient_results,
       ]),
-      h.a([href(RouteNoSpecificPatient(RouteCalendar(calendar.StillLoading)))], [
+      h.a([href(RouteNoSpecificPatient(RouteCalendar(calendar.new)))], [
         h.text("📅 calendar"),
       ]),
       h.a([href(RouteNoSpecificPatient(RouteRegisterPatient))], [
@@ -428,13 +436,15 @@ fn view(model: Model) -> Element(Msg) {
         case model.route {
           RouteNoSpecificPatient(page:) ->
             case page {
-              RouteCalendar(m) -> calendar.view(m, model.client_err_msg)
+              RouteCalendar(m) ->
+                calendar.view(m, model.client_err_msg)
+                |> element.map(MsgCalendar)
               RouteRegisterPatient -> register_patient.view()
               RouteSettings ->
                 settings.view(model.shared_user.settings_theme)
                 |> element.map(MsgSettings)
             }
-          RoutePatient(id:, patient:, page:) -> todo
+          RoutePatient(_id, _patient, _page) -> h.text("todo")
         },
       ],
     ),

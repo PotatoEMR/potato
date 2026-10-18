@@ -10,3 +10,7 @@ export function get_text_content(selector) {
 
   return new Ok(textContent);
 }
+
+export function open_dialog(id) {
+  document.getElementById(id).showModal();
+}
