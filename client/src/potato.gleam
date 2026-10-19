@@ -81,7 +81,6 @@ const server_url = "127.0.0.1:4000/api"
 
 fn init(_: a) -> #(Model, Effect(Msg)) {
   let assert Ok(client) = client_rsvp.fhirclient_new(server_url)
-  let main_search_patient = search_patient.new("main-search")
   // when user clicks a link in app, send msg to update fn
   let modem_effect =
     modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
@@ -97,7 +96,7 @@ fn init(_: a) -> #(Model, Effect(Msg)) {
   let model =
     Model(
       route:,
-      main_search_patient:,
+      main_search_patient: search_patient.new,
       client:,
       client_err_msg: client_error_msg,
       shared_user:,
@@ -285,7 +284,14 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
     MsgCalendar(msg) -> {
       case model.route {
         RouteNoSpecificPatient(RouteCalendar(page)) -> {
-          let #(page, calendar_effect) = calendar.update(page, msg)
+          let #(page, calendar_effect) =
+            calendar.update(
+              page,
+              msg,
+              model.client,
+              model.client_err_msg,
+              model.shared_user.id,
+            )
           let route = RouteNoSpecificPatient(RouteCalendar(page))
           #(Model(..model, route:), effect.map(calendar_effect, MsgCalendar))
         }
@@ -305,7 +311,7 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
 fn view(model: Model) -> Element(Msg) {
   sidebar.sidebar(h.div, [], [
     sidebar.topnav([], [
-      search_patient.view(model.main_search_patient)
+      search_patient.view(model.main_search_patient, "main-search-patient")
         |> element.map(MsgMainSearchPatient),
       h.a([href(RouteNoSpecificPatient(RouteCalendar(calendar.new)))], [
         h.text("📅 calendar"),

@@ -10,15 +10,21 @@ import lustre/element/html as h
 import lustre/event
 import utils.{ue}
 
+// search and select patient for whatever purpose
+// use by:
+//  add search_patient.Model to model
+//  add search_patient.Msg as message variant
+//  in update fn, handle clicked_patient
+//  in view, open dialog button comes from search_patient.view(model.search_pat_xyz) |> element.map(MsgXyzSearchPatient)
+// elm locality of behavior kind of sucks idk? but the type safety is really nice it does all snap together eventually
+
 // model
 
 pub type Model {
-  Model(id: String, search_patient: SearchPatient)
+  Model(search_patient: SearchPatient)
 }
 
-pub fn new(id) {
-  Model(id, SearchPatient("", SearchPatientResultsEmptyMsg))
-}
+pub const new = Model(SearchPatient("", SearchPatientResultsEmptyMsg))
 
 pub type SearchPatient {
   SearchPatient(text: String, results: SearchPatientResults)
@@ -71,7 +77,6 @@ pub fn update(
             )
           let model =
             Model(
-              ..model,
               search_patient: SearchPatient(
                 ..model.search_patient,
                 results: SearchPatientResultsLoadingMsg,
@@ -110,20 +115,20 @@ fn set_search_result(model: Model, results: SearchPatientResults) -> Model {
 
 // view
 
-pub fn view(model: Model) {
+pub fn view(model: Model, unique_id: String) {
   h.div([], [
     h.button(
       [
         a.command("show-modal"),
-        a.commandfor(model.id),
+        a.commandfor(unique_id),
       ],
       [
         h.text("🔍 search patient"),
       ],
     ),
-    h.dialog([a.closedby("any"), a.id(model.id)], [
+    h.dialog([a.closedby("any"), a.id(unique_id)], [
       h.header([], [
-        h.button([a.commandfor(model.id), a.command("close")], [
+        h.button([a.commandfor(unique_id), a.command("close")], [
           h.text("close"),
         ]),
       ]),
