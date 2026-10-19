@@ -2,6 +2,8 @@ import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
 import fhir/hl7_fhir_us_core_7_0_0/primitive_types
 import fhir/hl7_fhir_us_core_7_0_0/resources.{type Appointment}
 import fhir/hl7_fhir_us_core_7_0_0/search_params
+import fhir/hl7_fhir_us_core_7_0_0/valuesets
+import glaze/oat/button
 import glaze/oat/dialog
 import glaze/oat/table
 import gleam/int
@@ -15,6 +17,8 @@ import lustre/effect.{type Effect}
 import lustre/element/html as h
 import lustre/event
 import potato_ffi
+import ui
+import utils
 
 const apt_id = "appointment-dialog"
 
@@ -64,22 +68,35 @@ pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       // want the cells directly clickable though, maybe should put a btn in them but this feels easier
       potato_ffi.open_dialog(apt_id)
       let cal = timestamp.to_calendar(date, calendar.utc_offset)
-      echo cal
-      echo calendar.day_of_week(cal.0)
-      echo cal.1
       let t = cal.1
       let time =
         primitive_types.Time(
           hour: t.hours,
           minute: t.minutes,
           second: t.seconds,
+          // including sec and nanosec although it's probably just zero
           nanosec: Some(primitive_types.NanosecWithPrecision(
             t.nanoseconds,
             None,
           )),
         )
-      let apt_start =
-        primitive_types.Instant(date: cal.0, time: cal.1, timezone: todo)
+      let start =
+        Some(primitive_types.Instant(
+          date: cal.0,
+          time:,
+          // todo actual timezone?
+          timezone: primitive_types.Z,
+        ))
+      let choosing =
+        resources.appointment_new(
+          participant: utils.as_list1(resources.appointment_participant_new(
+            status: valuesets.ParticipationstatusAccepted,
+          )),
+          status: valuesets.AppointmentstatusBooked,
+        )
+      let choosing = Some(resources.Appointment(..choosing, start:))
+      // technically we can have an appointment with no patient but idk if that is really a valid state
+      let model = Model(..model, choosing:)
       #(model, effect.none())
     }
   }
@@ -122,12 +139,12 @@ pub fn view(model: Model, err_to_string) {
           // can't do hover style inline
           // oat puts hover on row, but for calendar we want it on individual cell, and not first hour cell
           "
-              tbody tr {
+              .highlight-one-cell tbody tr {
                     &:hover {
                         background-color: transparent;
                     }
                 }
-              tbody td:not(:first-child) {
+              .highlight-one-cell tbody td:not(:first-child) {
                   transition: background-color var(--transition-fast);
                   &:hover {
                       background-color: rgb(from var(--muted) r g b / .5)
@@ -137,6 +154,7 @@ pub fn view(model: Model, err_to_string) {
         ),
         table.table(
           [
+            a.class("higlight-one-cell"),
             a.style("table-layout", "fixed"),
             a.style("width", "100%"),
           ],
@@ -228,14 +246,28 @@ pub fn view(model: Model, err_to_string) {
             ),
           ],
         ),
-        h.div([], [
-          h.button(dialog.open_for(apt_id), [h.text("Delete")]),
-          dialog.dialog([dialog.id(apt_id), dialog.closed_by_any()], [
-            dialog.header([], [dialog.title([], [h.text("Delete item?")])]),
-            h.p([], [h.text("This action cannot be undone.")]),
+        dialog.dialog([dialog.id(apt_id), dialog.closed_by_any()], [
+          dialog.form([], [
+            dialog.header([], [dialog.title([], [h.text("Book Visit")])]),
+            ui.vstack([
+              ui.field("Patient", []),
+              ui.field("Time", [
+                a.type_("datetime-local"),
+                case model.choosing {
+                  None -> a.none()
+                  Some(appointment) ->
+                    case appointment.start {
+                      None -> a.none()
+                      Some(start) -> ui.instant_to_datetime_local(start)
+                    }
+                },
+              ]),
+            ]),
             dialog.footer([], [
-              h.button(dialog.close_for(apt_id), [h.text("Cancel")]),
-              h.button([a.class("danger")], [h.text("Delete")]),
+              button.button([button.danger(), ..dialog.close_for(apt_id)], [
+                h.text("Cancel"),
+              ]),
+              button.button([], [h.text("Schedule Appointment")]),
             ]),
           ]),
         ]),

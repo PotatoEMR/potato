@@ -1,5 +1,5 @@
 import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
-import fhir/hl7_fhir_us_core_7_0_0/complex_types.{type List1} as ct
+import fhir/hl7_fhir_us_core_7_0_0/complex_types.{type List1, List1} as ct
 import fhir/hl7_fhir_us_core_7_0_0/primitive_types as pt
 import fhir/hl7_fhir_us_core_7_0_0/resources
 import fhir/hl7_fhir_us_core_7_0_0/valuesets
@@ -62,6 +62,10 @@ pub fn humanname_to_string(name: ct.Humanname) -> String {
 
 pub fn ue(res: Result(String, a)) {
   result.unwrap(res, "")
+}
+
+pub fn as_list1(item: a) -> List1(a) {
+  List1(first: item, rest: [])
 }
 
 pub fn first_zip(patient: resources.UsCorePatient) {

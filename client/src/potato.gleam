@@ -1,23 +1,21 @@
 import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
 import fhir/hl7_fhir_us_core_7_0_0/resources
 import fhir/hl7_fhir_us_core_7_0_0/sansio
-import fhir/hl7_fhir_us_core_7_0_0/search_params
 import glaze/oat/sidebar
 import gleam/dict
 import gleam/json
-import gleam/list
-import gleam/option.{Some}
+import gleam/option.{None, Some}
 import gleam/uri.{type Uri}
 import lustre
 import lustre/attribute.{type Attribute} as a
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html as h
-import lustre/event
 import modem
 import pages/no_specific_patient/calendar
 import pages/no_specific_patient/register_patient
 import pages/no_specific_patient/settings
+import search_patient
 import shared
 
 // import pages/patient/demographics
@@ -25,7 +23,7 @@ import shared
 // import pages/patient/overview
 // import pages/patient/vitals
 import potato_ffi
-import utils.{ue}
+import utils
 
 // MAIN ------------------------------------------------------------------------
 
@@ -40,22 +38,11 @@ pub fn main() -> Nil {
 type Model {
   Model(
     route: Route,
-    search_patient: SearchPatient,
+    main_search_patient: search_patient.Model,
     client: client_rsvp.FhirClient,
     client_err_msg: fn(client_rsvp.Err) -> String,
     shared_user: shared.SharedUser,
   )
-}
-
-pub type SearchPatient {
-  SearchPatient(text: String, visible: Bool, results: SearchPatientResults)
-}
-
-pub type SearchPatientResults {
-  SearchPatientResultsPats(pats: List(resources.UsCorePatient))
-  SearchPatientResultsErrMsg(err_msg: String)
-  SearchPatientResultsLoadingMsg
-  SearchPatientResultsEmptyMsg
 }
 
 // routes, uri_to_route type -> uri
@@ -93,8 +80,8 @@ pub type RouteNoSpecificPatient {
 const server_url = "127.0.0.1:4000/api"
 
 fn init(_: a) -> #(Model, Effect(Msg)) {
-  let search_patient = SearchPatient("", False, SearchPatientResultsEmptyMsg)
   let assert Ok(client) = client_rsvp.fhirclient_new(server_url)
+  let main_search_patient = search_patient.new("main-search")
   // when user clicks a link in app, send msg to update fn
   let modem_effect =
     modem.init(fn(uri) { uri |> uri_to_route |> UserNavigatedTo })
@@ -110,7 +97,7 @@ fn init(_: a) -> #(Model, Effect(Msg)) {
   let model =
     Model(
       route:,
-      search_patient:,
+      main_search_patient:,
       client:,
       client_err_msg: client_error_msg,
       shared_user:,
@@ -223,13 +210,8 @@ fn user_navigated_to(route: Route, model: Model) -> #(Model, Effect(Msg)) {
 
 type Msg {
   UserNavigatedTo(route: Route)
-  // any unauthorized response
-  ServerReturned401(err: sansio.ErrResp)
   // patient search
-  UserTypedSearchPatient(String)
-  ServerReturnedSearchPatients(
-    Result(List(resources.UsCorePatient), client_rsvp.Err),
-  )
+  MsgMainSearchPatient(search_patient.Msg)
   ServerReturnedPatientEverything(Result(resources.Bundle, client_rsvp.Err))
   // from page with no specific patient
   MsgSettings(settings.Msg)
@@ -240,54 +222,34 @@ type Msg {
 fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
   case message {
     UserNavigatedTo(route:) -> user_navigated_to(route, model)
-    ServerReturned401(_) -> {
-      let assert Ok(url) = uri.parse("/auth/login")
-      let send_to_login = modem.load(url)
-      #(model, send_to_login)
-    }
-    UserTypedSearchPatient(search_text) -> {
-      case search_text {
-        "" -> {
-          let model =
-            model
-            |> set_search_result(SearchPatientResultsEmptyMsg)
-          #(model, effect.none())
-        }
-        _ -> {
-          let search: Effect(Msg) =
-            client_rsvp.us_core_patient_search(
-              search_params.UsCorePatient(
-                ..search_params.us_core_patient_new(),
-                name: Some(search_text),
-              ),
-              model.client,
-              ServerReturnedSearchPatients,
-            )
-          let model =
-            Model(
-              ..model,
-              search_patient: SearchPatient(
-                ..model.search_patient,
-                visible: True,
-                results: SearchPatientResultsLoadingMsg,
-              ),
-            )
-          #(model, search)
-        }
+    MsgMainSearchPatient(msg) -> {
+      let #(main_search_patient, search_effect, clicked_patient) =
+        search_patient.update(
+          model.main_search_patient,
+          msg,
+          model.client,
+          model.client_err_msg,
+        )
+      let idk = #(
+        Model(..model, main_search_patient:),
+        effect.map(search_effect, MsgMainSearchPatient),
+      )
+      case clicked_patient {
+        None -> idk
+        Some(clicked_patient) ->
+          case clicked_patient.id {
+            None -> idk
+            Some(id) -> {
+              let to_patient =
+                UserNavigatedTo(RoutePatient(
+                  id,
+                  PatientLoadStillLoading,
+                  PatientOverview,
+                ))
+              update(model, to_patient)
+            }
+          }
       }
-    }
-    ServerReturnedSearchPatients(patient_result) -> {
-      let model =
-        model
-        |> set_search_result(case patient_result {
-          Ok(patients) -> SearchPatientResultsPats(patients)
-          Error(err) ->
-            SearchPatientResultsErrMsg(
-              "There was a problem getting patient search from FHIR server: "
-              <> model.client_err_msg(err),
-            )
-        })
-      #(model, effect.none())
     }
     ServerReturnedPatientEverything(patient_search_result) -> {
       let patient_info = case patient_search_result {
@@ -338,65 +300,13 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
   }
 }
 
-fn set_search_result(model: Model, results: SearchPatientResults) -> Model {
-  Model(
-    ..model,
-    search_patient: SearchPatient(..model.search_patient, results:),
-  )
-}
-
 // VIEW ------------------------------------------------------------------------
 
 fn view(model: Model) -> Element(Msg) {
-  let patient_results = case model.search_patient.results {
-    SearchPatientResultsPats(pats:) ->
-      h.table([], [
-        table_head(["", "Name", "MRN", "Birth Date", "Zip", "SSN", "Phone"]),
-        ..list.map(pats, fn(patient) {
-          table_row([
-            "pic todo",
-            utils.humannames_to_single_name_string(patient.name),
-            patient |> utils.mrn |> ue,
-            patient |> utils.birth_date |> ue,
-            patient |> utils.first_zip |> ue,
-            patient |> utils.ssn |> ue,
-            patient |> utils.first_phone |> ue,
-          ])
-        })
-      ])
-    SearchPatientResultsErrMsg(err_msg:) -> h.div([], [h.text(err_msg)])
-    SearchPatientResultsLoadingMsg -> h.div([], [h.text("loading...")])
-    SearchPatientResultsEmptyMsg -> h.div([], [h.text("no results")])
-  }
   sidebar.sidebar(h.div, [], [
     sidebar.topnav([], [
-      h.button(
-        [
-          a.command("show-modal"),
-          a.commandfor("search-patient-dialog"),
-        ],
-        [h.text("🔍 search patient")],
-      ),
-      h.dialog([a.closedby("any"), a.id("search-patient-dialog")], [
-        h.header([], [
-          h.button([a.commandfor("search-patient-dialog"), a.command("close")], [
-            h.text("close"),
-          ]),
-        ]),
-        h.label(
-          [
-            a.for("search-patient"),
-          ],
-          [
-            h.text("Name"),
-            h.input([
-              a.id("search-patient"),
-              event.on_input(UserTypedSearchPatient),
-            ]),
-          ],
-        ),
-        patient_results,
-      ]),
+      search_patient.view(model.main_search_patient)
+        |> element.map(MsgMainSearchPatient),
       h.a([href(RouteNoSpecificPatient(RouteCalendar(calendar.new)))], [
         h.text("📅 calendar"),
       ]),
@@ -444,17 +354,9 @@ fn view(model: Model) -> Element(Msg) {
                 settings.view(model.shared_user.settings_theme)
                 |> element.map(MsgSettings)
             }
-          RoutePatient(_id, _patient, _page) -> h.text("todo")
+          RoutePatient(id, _patient, _page) -> h.text("todo " <> id)
         },
       ],
     ),
   ])
-}
-
-fn table_head(headers: List(String)) -> Element(Msg) {
-  h.tr([], list.map(headers, fn(header) { h.th([], [h.text(header)]) }))
-}
-
-fn table_row(items: List(String)) -> Element(Msg) {
-  h.tr([], list.map(items, fn(item) { h.td([], [h.text(item)]) }))
 }
