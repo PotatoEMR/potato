@@ -12,6 +12,8 @@ import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/order
+import gleam/result
+import gleam/string
 import gleam/time/calendar
 import gleam/time/duration
 import gleam/time/timestamp
@@ -51,7 +53,10 @@ pub type AppointmentList {
 pub type Msg {
   ServerReturnedAppointments(Result(List(Appointment), client_rsvp.Err))
   UserClickedCalendarSlot(timestamp.Timestamp)
-  SelectPatient(search_patient.Msg)
+  UserEnterStart(String)
+  UserEnterEnd(String)
+  UserSelectPatient(search_patient.Msg)
+  UserEnterComment(String)
   UserClickedSchedule
   ServerReturnedClickSchedule(Result(Appointment, client_rsvp.Err))
 }
@@ -134,7 +139,7 @@ pub fn update(
       let model = Model(..model, choosing:, selected_patient_name: "")
       #(model, effect.none())
     }
-    SelectPatient(msg) -> {
+    UserSelectPatient(msg) -> {
       let #(choose_schedule_patient, search_effect, clicked_patient) =
         search_patient.update(
           model.choose_schedule_patient,
@@ -144,7 +149,7 @@ pub fn update(
         )
       let idk = #(
         Model(..model, choose_schedule_patient:),
-        effect.map(search_effect, SelectPatient),
+        effect.map(search_effect, UserSelectPatient),
       )
       case clicked_patient {
         None -> idk
@@ -189,19 +194,6 @@ pub fn update(
           }
       }
     }
-    UserClickedSchedule ->
-      case model.choosing {
-        None -> #(model, effect.none())
-        Some(choosing) -> {
-          let create_appointment =
-            client_rsvp.appointment_create(
-              choosing,
-              client,
-              ServerReturnedClickSchedule,
-            )
-          #(model, create_appointment)
-        }
-      }
     ServerReturnedClickSchedule(Error(err)) -> {
       let model = Model(..model, submit_error: Some(err))
       #(model, effect.none())
@@ -218,6 +210,88 @@ pub fn update(
         StillLoading -> todo
       }
     }
+    // clearly a lot of duplication here, will clean up later maybe
+    UserEnterStart(start) ->
+      case model.choosing {
+        None -> #(model, effect.none())
+        Some(choosing) -> {
+          let date = start |> string.slice(0, 10) |> primitive_types.parse_date
+          let model = case date {
+            Ok(primitive_types.YearMonthDay(year:, month:, day:)) -> {
+              let date = calendar.Date(year:, month:, day:)
+              let time =
+                start
+                |> string.slice(11, string.length(start))
+                |> primitive_types.parse_time
+                |> result.unwrap(primitive_types.Time(
+                  hour: 0,
+                  minute: 0,
+                  second: 0,
+                  nanosec: None,
+                ))
+              // timezone idk
+              let timezone = primitive_types.Z
+              let start = Some(primitive_types.Instant(date:, time:, timezone:))
+              let choosing = Some(resources.Appointment(..choosing, start:))
+              Model(..model, choosing:)
+            }
+            _ -> model
+          }
+          #(model, effect.none())
+        }
+      }
+    UserEnterEnd(end) ->
+      case model.choosing {
+        None -> #(model, effect.none())
+        Some(choosing) -> {
+          let date = end |> string.slice(0, 10) |> primitive_types.parse_date
+          let model = case date {
+            Ok(primitive_types.YearMonthDay(year:, month:, day:)) -> {
+              let date = calendar.Date(year:, month:, day:)
+              let time =
+                end
+                |> string.slice(11, string.length(end))
+                |> primitive_types.parse_time
+                |> result.unwrap(primitive_types.Time(
+                  hour: 0,
+                  minute: 0,
+                  second: 0,
+                  nanosec: None,
+                ))
+              // timezone idk
+              let timezone = primitive_types.Z
+              let end = Some(primitive_types.Instant(date:, time:, timezone:))
+              let choosing = Some(resources.Appointment(..choosing, end:))
+              Model(..model, choosing:)
+            }
+            _ -> model
+          }
+          #(model, effect.none())
+        }
+      }
+    UserEnterComment(comment) ->
+      case model.choosing {
+        None -> #(model, effect.none())
+        Some(choosing) -> {
+          let choosing =
+            Some(resources.Appointment(..choosing, comment: Some(comment)))
+          let model = Model(..model, choosing:)
+          #(model, effect.none())
+        }
+      }
+    UserClickedSchedule ->
+      case model.choosing {
+        None -> #(model, effect.none())
+        Some(choosing) -> {
+          let create_appointment =
+            client_rsvp.appointment_create(
+              choosing,
+              client,
+              ServerReturnedClickSchedule,
+            )
+          #(model, create_appointment)
+        }
+      }
   }
 }
 
@@ -273,7 +347,7 @@ pub fn view(model: Model, err_to_string) {
         ),
         table.table(
           [
-            a.class("higlight-one-cell"),
+            a.class("highlight-one-cell"),
             a.style("table-layout", "fixed"),
             a.style("width", "100%"),
           ],
@@ -377,10 +451,6 @@ pub fn view(model: Model, err_to_string) {
                                   let cell_end_time =
                                     cell_start_time
                                     |> timestamp.add(duration.hours(1))
-                                  echo "hi"
-                                  echo apt_time
-                                  echo cell_start_time
-                                  echo cell_end_time
                                   case
                                     timestamp.compare(apt_time, cell_start_time),
                                     timestamp.compare(apt_time, cell_end_time)
@@ -388,18 +458,27 @@ pub fn view(model: Model, err_to_string) {
                                     order.Gt, order.Lt | order.Eq, order.Lt ->
                                       Ok(
                                         h.div([], [
-                                          h.text(case apt.participant.rest {
-                                            [patient] ->
-                                              case patient.actor {
-                                                Some(ref) ->
-                                                  case ref.reference {
-                                                    Some(ref) -> ref
-                                                    None -> "idk 3"
-                                                  }
-                                                None -> "idk 2"
-                                              }
-                                            _ -> "idk 1"
-                                          }),
+                                          h.text(
+                                            case apt.start {
+                                              None -> "?"
+                                              Some(start) ->
+                                                primitive_types.instant_to_string(
+                                                  start,
+                                                )
+                                            }
+                                            <> " - "
+                                            <> case apt.end {
+                                              None -> "?"
+                                              Some(end) ->
+                                                primitive_types.instant_to_string(
+                                                  end,
+                                                )
+                                            },
+                                          ),
+                                          h.br([]),
+                                          h.text(
+                                            apt.comment |> option.unwrap(""),
+                                          ),
                                         ]),
                                       )
                                     _, _ -> Error(Nil)
@@ -425,13 +504,14 @@ pub fn view(model: Model, err_to_string) {
                 model.choose_schedule_patient,
                 "calendar-search-patient",
               )
-                |> element.map(SelectPatient),
+                |> element.map(UserSelectPatient),
               ui.field("Patient", [
                 a.disabled(True),
                 a.value(model.selected_patient_name),
               ]),
             ]),
-            ui.field("Time", [
+            ui.field("Start", [
+              event.on_input(UserEnterStart),
               a.type_("datetime-local"),
               case model.choosing {
                 None -> a.none()
@@ -439,6 +519,29 @@ pub fn view(model: Model, err_to_string) {
                   case appointment.start {
                     None -> a.none()
                     Some(start) -> ui.instant_to_datetime_local(start)
+                  }
+              },
+            ]),
+            ui.field("End", [
+              a.type_("datetime-local"),
+              event.on_input(UserEnterEnd),
+              case model.choosing {
+                None -> a.none()
+                Some(appointment) ->
+                  case appointment.end {
+                    None -> a.none()
+                    Some(end) -> ui.instant_to_datetime_local(end)
+                  }
+              },
+            ]),
+            ui.field("Comment", [
+              event.on_input(UserEnterComment),
+              case model.choosing {
+                None -> a.none()
+                Some(appointment) ->
+                  case appointment.comment {
+                    None -> a.none()
+                    Some(comment) -> a.value(comment)
                   }
               },
             ]),
