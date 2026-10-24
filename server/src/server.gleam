@@ -1,8 +1,8 @@
 import argus
-import fhir/hl7_fhir_us_core_7_0_0/client_httpc
-import fhir/hl7_fhir_us_core_7_0_0/complex_types.{List1}
-import fhir/hl7_fhir_us_core_7_0_0/resources
-import fhir/hl7_fhir_us_core_7_0_0/sansio
+import fhir/potato_server_1_0_0/client_httpc
+import fhir/potato_server_1_0_0/complex_types.{List1}
+import fhir/potato_server_1_0_0/resources
+import fhir/potato_server_1_0_0/sansio
 import glaze/oat/card
 import gleam/dynamic/decode
 import gleam/erlang/process
@@ -447,34 +447,42 @@ fn handle_signup(users: storail.Collection(User), req: Request) -> Response {
   let client =
     sansio.FhirClient(..client, print_sent_requests: sansio.LoggingOn)
   let potatoemr_username =
-    complex_types.identifier_required_system_value_new(
+    complex_types.identifier_required_system_value_omit_id_extension_use_type_period_assigner_new(
       "https://potatoemr.com/system/username",
       username,
     )
-    |> resources.UsCorePractitionerIdentifierOpen
     |> as_list1
   case find_form_name(form.values, "last_name") {
     Error(_) -> serve_signup(Some("last name required"))
     Ok(last_name) -> {
       let given = find_form_name(form.values, "first_name")
-      let name = complex_types.humanname_required_family_new(last_name)
+      let name =
+        complex_types.humanname_required_family_omit_id_extension_use_prefix_suffix_period_new(
+          last_name,
+        )
       let name_text = case given {
         Error(_) -> last_name
         Ok(first_name) -> first_name <> " " <> last_name
       }
       let name =
-        complex_types.HumannameRequiredFamily(..name, text: Some(name_text))
+        complex_types.HumannameRequiredFamilyOmitIdExtensionUsePrefixSuffixPeriod(
+          ..name,
+          text: Some(name_text),
+        )
       let name =
         case given {
           Error(_) -> name
           Ok(first_name) ->
-            complex_types.HumannameRequiredFamily(..name, given: [first_name])
+            complex_types.HumannameRequiredFamilyOmitIdExtensionUsePrefixSuffixPeriod(
+              ..name,
+              given: [first_name],
+            )
         }
         |> as_list1
       let new_practitioner =
-        echo resources.us_core_practitioner_new(potatoemr_username, name)
+        echo resources.potatoserverpractitioner_new(potatoemr_username, name)
       let new_practitioner =
-        client_httpc.us_core_practitioner_create(new_practitioner, client)
+        client_httpc.potatoserverpractitioner_create(new_practitioner, client)
       case new_practitioner {
         Error(err) -> {
           echo err

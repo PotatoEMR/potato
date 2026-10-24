@@ -1,9 +1,9 @@
-import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
-import fhir/hl7_fhir_us_core_7_0_0/complex_types
-import fhir/hl7_fhir_us_core_7_0_0/primitive_types
-import fhir/hl7_fhir_us_core_7_0_0/resources.{type Appointment}
-import fhir/hl7_fhir_us_core_7_0_0/search_params
-import fhir/hl7_fhir_us_core_7_0_0/valuesets
+import fhir/potato_client_1_0_0/client_rsvp
+import fhir/potato_client_1_0_0/complex_types
+import fhir/potato_client_1_0_0/primitive_types
+import fhir/potato_client_1_0_0/resources.{type Potatoappointment}
+import fhir/potato_client_1_0_0/search_params
+import fhir/potato_client_1_0_0/valuesets
 import glaze/oat/button
 import glaze/oat/dialog
 import glaze/oat/form
@@ -32,7 +32,7 @@ const apt_id = "appointment-dialog"
 pub type Model {
   Model(
     calendar: AppointmentList,
-    choosing: Option(resources.Appointment),
+    choosing: Option(resources.Potatoappointment),
     choose_schedule_patient: search_patient.Model,
     // name is just to show in disabled input; actual chosen patient for appointment is in actor Reference
     selected_patient_name: String,
@@ -45,33 +45,33 @@ pub const new = Model(StillLoading, None, search_patient.new, "", None)
 // currently doing calendar with just Appointment
 // there is also Slot if we want to let ppl define availability
 pub type AppointmentList {
-  Appointments(apts: List(Appointment))
+  Appointments(apts: List(Potatoappointment))
   LoadError(client_rsvp.Err)
   StillLoading
 }
 
 pub type Msg {
-  ServerReturnedAppointments(Result(List(Appointment), client_rsvp.Err))
+  ServerReturnedAppointments(Result(List(Potatoappointment), client_rsvp.Err))
   UserClickedCalendarSlot(timestamp.Timestamp)
   UserEnterStart(String)
   UserEnterEnd(String)
   UserSelectPatient(search_patient.Msg)
   UserEnterComment(String)
   UserClickedSchedule
-  ServerReturnedClickSchedule(Result(Appointment, client_rsvp.Err))
+  ServerReturnedClickSchedule(Result(Potatoappointment, client_rsvp.Err))
 }
 
 pub fn load_appointments_effect(
   practitioner_id: String,
   client: client_rsvp.FhirClient,
 ) {
-  let sp = search_params.appointment_new()
+  let sp = search_params.potatoappointment_new()
   let sp =
-    search_params.Appointment(
+    search_params.Potatoappointment(
       ..sp,
       practitioner: Some("Practitioner/" <> practitioner_id),
     )
-  client_rsvp.appointment_search(sp, client, ServerReturnedAppointments)
+  client_rsvp.potatoappointment_search(sp, client, ServerReturnedAppointments)
 }
 
 pub fn update(
@@ -116,25 +116,25 @@ pub fn update(
       // here assuming the person who schedules appointment is the practitioner doing it
       // obviously not necessarily true but whatever
       let practitioner_reference =
-        complex_types.Reference(
-          ..complex_types.reference_new(),
+        complex_types.Potatoreference(
+          ..complex_types.potatoreference_new(),
           reference: Some("Practitioner/" <> scheduler_id),
         )
       let practitioner_participant =
-        resources.appointment_participant_new(
+        resources.potatoappointment_participant_new(
           status: valuesets.ParticipationstatusAccepted,
         )
       let practitioner_participant =
-        resources.AppointmentParticipant(
+        resources.PotatoappointmentParticipant(
           ..practitioner_participant,
           actor: Some(practitioner_reference),
         )
       let choosing =
-        resources.appointment_new(
+        resources.potatoappointment_new(
           participant: utils.as_list1(practitioner_participant),
           status: valuesets.AppointmentstatusBooked,
         )
-      let choosing = Some(resources.Appointment(..choosing, start:))
+      let choosing = Some(resources.Potatoappointment(..choosing, start:))
       // technically we can have an appointment with no patient but idk if that is really a valid state
       let model = Model(..model, choosing:, selected_patient_name: "")
       #(model, effect.none())
@@ -158,8 +158,8 @@ pub fn update(
             None -> idk
             Some(id) -> {
               let patient_reference =
-                complex_types.Reference(
-                  ..complex_types.reference_new(),
+                complex_types.Potatoreference(
+                  ..complex_types.potatoreference_new(),
                   reference: Some("Patient/" <> id),
                 )
               let choosing = case model.choosing {
@@ -167,11 +167,11 @@ pub fn update(
                 None -> None
                 Some(choosing) -> {
                   let patient_participant =
-                    resources.appointment_participant_new(
+                    resources.potatoappointment_participant_new(
                       status: valuesets.ParticipationstatusAccepted,
                     )
                   let patient_participant =
-                    resources.AppointmentParticipant(
+                    resources.PotatoappointmentParticipant(
                       ..patient_participant,
                       actor: Some(patient_reference),
                     )
@@ -181,7 +181,7 @@ pub fn update(
                       patient_participant,
                     ])
                   echo participant
-                  Some(resources.Appointment(..choosing, participant:))
+                  Some(resources.Potatoappointment(..choosing, participant:))
                 }
               }
               let selected_patient_name =
@@ -232,7 +232,8 @@ pub fn update(
               // timezone idk
               let timezone = primitive_types.Z
               let start = Some(primitive_types.Instant(date:, time:, timezone:))
-              let choosing = Some(resources.Appointment(..choosing, start:))
+              let choosing =
+                Some(resources.Potatoappointment(..choosing, start:))
               Model(..model, choosing:)
             }
             _ -> model
@@ -261,7 +262,7 @@ pub fn update(
               // timezone idk
               let timezone = primitive_types.Z
               let end = Some(primitive_types.Instant(date:, time:, timezone:))
-              let choosing = Some(resources.Appointment(..choosing, end:))
+              let choosing = Some(resources.Potatoappointment(..choosing, end:))
               Model(..model, choosing:)
             }
             _ -> model
@@ -274,7 +275,9 @@ pub fn update(
         None -> #(model, effect.none())
         Some(choosing) -> {
           let choosing =
-            Some(resources.Appointment(..choosing, comment: Some(comment)))
+            Some(
+              resources.Potatoappointment(..choosing, comment: Some(comment)),
+            )
           let model = Model(..model, choosing:)
           #(model, effect.none())
         }
@@ -284,7 +287,7 @@ pub fn update(
         None -> #(model, effect.none())
         Some(choosing) -> {
           let create_appointment =
-            client_rsvp.appointment_create(
+            client_rsvp.potatoappointment_create(
               choosing,
               client,
               ServerReturnedClickSchedule,

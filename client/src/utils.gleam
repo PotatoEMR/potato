@@ -1,8 +1,8 @@
-import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
-import fhir/hl7_fhir_us_core_7_0_0/complex_types.{type List1, List1} as ct
-import fhir/hl7_fhir_us_core_7_0_0/primitive_types as pt
-import fhir/hl7_fhir_us_core_7_0_0/resources
-import fhir/hl7_fhir_us_core_7_0_0/valuesets
+import fhir/potato_client_1_0_0/client_rsvp
+import fhir/potato_client_1_0_0/complex_types.{type List1, List1} as ct
+import fhir/potato_client_1_0_0/primitive_types as pt
+import fhir/potato_client_1_0_0/resources
+import fhir/potato_client_1_0_0/valuesets
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/result
@@ -19,7 +19,9 @@ pub fn err_to_string(server_url: String) {
   }
 }
 
-pub fn humannames_to_single_name_string(names: List1(ct.Humanname)) -> String {
+pub fn humannames_to_single_name_string(
+  names: List1(ct.HumannamePotatopatientName),
+) -> String {
   // for now just taking first name from list
   // i have code from old project comparing period starts
   // but could also compare period ends
@@ -27,7 +29,7 @@ pub fn humannames_to_single_name_string(names: List1(ct.Humanname)) -> String {
   humanname_to_string(names.first)
 }
 
-pub fn humanname_to_string(name: ct.Humanname) -> String {
+pub fn humanname_to_string(name: ct.HumannamePotatopatientName) -> String {
   case name.text {
     Some(txt) -> txt
     None -> {
@@ -68,7 +70,7 @@ pub fn as_list1(item: a) -> List1(a) {
   List1(first: item, rest: [])
 }
 
-pub fn first_zip(patient: resources.UsCorePatient) {
+pub fn first_zip(patient: resources.Potatopatient) {
   patient.address
   |> list.find_map(fn(address) {
     case address.postal_code {
@@ -80,7 +82,7 @@ pub fn first_zip(patient: resources.UsCorePatient) {
 }
 
 // could sort by rank but again, whatever
-pub fn first_phone(patient: resources.UsCorePatient) {
+pub fn first_phone(patient: resources.Potatopatient) {
   patient.telecom
   |> list.find_map(fn(telecom) {
     case telecom.system {
@@ -90,7 +92,7 @@ pub fn first_phone(patient: resources.UsCorePatient) {
   })
 }
 
-pub fn birth_date(patient: resources.UsCorePatient) {
+pub fn birth_date(patient: resources.Potatopatient) {
   case patient.birth_date {
     None -> Error(Nil)
     // mary insists DD/MM/YYYY is right
@@ -101,7 +103,7 @@ pub fn birth_date(patient: resources.UsCorePatient) {
   }
 }
 
-pub fn mrn(patient: resources.UsCorePatient) {
+pub fn mrn(patient: resources.Potatopatient) {
   identifier_value_by_system_code(
     patient,
     "http://terminology.hl7.org/CodeSystem/v2-0203",
@@ -109,7 +111,7 @@ pub fn mrn(patient: resources.UsCorePatient) {
   )
 }
 
-pub fn ssn(patient: resources.UsCorePatient) {
+pub fn ssn(patient: resources.Potatopatient) {
   identifier_value_by_system_code(
     patient,
     "http://terminology.hl7.org/CodeSystem/v2-0203",
@@ -118,7 +120,7 @@ pub fn ssn(patient: resources.UsCorePatient) {
 }
 
 pub fn identifier_value_by_system_code(
-  patient: resources.UsCorePatient,
+  patient: resources.Potatopatient,
   find_system system: String,
   find_code code: String,
 ) {
@@ -142,7 +144,7 @@ pub fn identifier_value_by_system_code(
 }
 
 pub fn has_system_code(
-  one_of codings: List(ct.Coding),
+  one_of codings: List(ct.Potatocoding),
   has_system system: String,
   and_code code: String,
 ) {

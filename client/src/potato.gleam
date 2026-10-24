@@ -1,6 +1,6 @@
-import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
-import fhir/hl7_fhir_us_core_7_0_0/resources
-import fhir/hl7_fhir_us_core_7_0_0/sansio
+import fhir/potato_client_1_0_0/client_rsvp
+import fhir/potato_client_1_0_0/resources
+import fhir/potato_client_1_0_0/sansio
 import glaze/oat/sidebar
 import gleam/dict
 import gleam/json
@@ -61,7 +61,7 @@ pub type PatientLoad {
 }
 
 pub type PatientData {
-  PatientData(patient: resources.UsCorePatient)
+  PatientData(patient: resources.Potatopatient)
 }
 
 pub type RoutePatientPage {
@@ -254,7 +254,7 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
       let patient_info = case patient_search_result {
         Ok(pat_bundle) -> {
           let resources = sansio.bundle_to_groupedresources(pat_bundle)
-          case resources.us_core_patient {
+          case resources.potatopatient {
             [] -> PatientLoadNotFound("no patient found")
             [first, ..] ->
               PatientLoadFound(PatientData(

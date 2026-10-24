@@ -1,0 +1,338 @@
+{
+  "index-version": 2,
+  "files": [
+    {
+      "filename": "StructureDefinition-PotatoAddress.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoAddress",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoAddress",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Address"
+    },
+    {
+      "filename": "StructureDefinition-PotatoAge.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoAge",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoAge",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Age"
+    },
+    {
+      "filename": "StructureDefinition-PotatoAllergyIntolerance.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoAllergyIntolerance",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoAllergyIntolerance",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "AllergyIntolerance"
+    },
+    {
+      "filename": "StructureDefinition-PotatoAnnotation.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoAnnotation",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoAnnotation",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Annotation"
+    },
+    {
+      "filename": "StructureDefinition-PotatoAppointment.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoAppointment",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoAppointment",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "Appointment"
+    },
+    {
+      "filename": "StructureDefinition-PotatoAttachment.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoAttachment",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoAttachment",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Attachment"
+    },
+    {
+      "filename": "StructureDefinition-PotatoBirthsex.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoBirthsex",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoBirthsex",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Extension"
+    },
+    {
+      "filename": "StructureDefinition-PotatoCodeableConcept.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoCodeableConcept",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoCodeableConcept",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "CodeableConcept"
+    },
+    {
+      "filename": "StructureDefinition-PotatoCoding.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoCoding",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoCoding",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Coding"
+    },
+    {
+      "filename": "StructureDefinition-PotatoCondition.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoCondition",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoCondition",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "Condition"
+    },
+    {
+      "filename": "StructureDefinition-PotatoConditionAssertedDate.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoConditionAssertedDate",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoConditionAssertedDate",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Extension"
+    },
+    {
+      "filename": "StructureDefinition-PotatoContactPoint.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoContactPoint",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoContactPoint",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "ContactPoint"
+    },
+    {
+      "filename": "StructureDefinition-PotatoDocumentReference.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoDocumentReference",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoDocumentReference",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "DocumentReference"
+    },
+    {
+      "filename": "StructureDefinition-PotatoDosage.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoDosage",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoDosage",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Dosage"
+    },
+    {
+      "filename": "StructureDefinition-PotatoDuration.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoDuration",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoDuration",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Duration"
+    },
+    {
+      "filename": "StructureDefinition-PotatoEncounter.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoEncounter",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoEncounter",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "Encounter"
+    },
+    {
+      "filename": "StructureDefinition-PotatoEthnicity.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoEthnicity",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoEthnicity",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Extension"
+    },
+    {
+      "filename": "StructureDefinition-PotatoGenderIdentity.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoGenderIdentity",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoGenderIdentity",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Extension"
+    },
+    {
+      "filename": "StructureDefinition-PotatoHumanName.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoHumanName",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoHumanName",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "HumanName"
+    },
+    {
+      "filename": "StructureDefinition-PotatoIdentifier.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoIdentifier",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoIdentifier",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Identifier"
+    },
+    {
+      "filename": "StructureDefinition-PotatoImmunization.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoImmunization",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoImmunization",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "Immunization"
+    },
+    {
+      "filename": "StructureDefinition-PotatoMedicationAdherence.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoMedicationAdherence",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoMedicationAdherence",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Extension"
+    },
+    {
+      "filename": "StructureDefinition-PotatoMedicationRequest.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoMedicationRequest",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoMedicationRequest",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "MedicationRequest"
+    },
+    {
+      "filename": "StructureDefinition-PotatoMedicationStatement.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoMedicationStatement",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoMedicationStatement",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "MedicationStatement"
+    },
+    {
+      "filename": "StructureDefinition-PotatoMeta.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoMeta",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoMeta",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Meta"
+    },
+    {
+      "filename": "StructureDefinition-PotatoNarrative.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoNarrative",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoNarrative",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Narrative"
+    },
+    {
+      "filename": "StructureDefinition-PotatoPatient.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoPatient",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoPatient",
+      "version": "1.0.0",
+      "kind": "resource",
+      "type": "Patient"
+    },
+    {
+      "filename": "StructureDefinition-PotatoPeriod.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoPeriod",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoPeriod",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Period"
+    },
+    {
+      "filename": "StructureDefinition-PotatoQuantity.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoQuantity",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoQuantity",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Quantity"
+    },
+    {
+      "filename": "StructureDefinition-PotatoRace.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoRace",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoRace",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Extension"
+    },
+    {
+      "filename": "StructureDefinition-PotatoRange.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoRange",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoRange",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Range"
+    },
+    {
+      "filename": "StructureDefinition-PotatoRatio.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoRatio",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoRatio",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Ratio"
+    },
+    {
+      "filename": "StructureDefinition-PotatoReference.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoReference",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoReference",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Reference"
+    },
+    {
+      "filename": "StructureDefinition-PotatoSex.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoSex",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoSex",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Extension"
+    },
+    {
+      "filename": "StructureDefinition-PotatoSimpleQuantity.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoSimpleQuantity",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoSimpleQuantity",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Quantity"
+    },
+    {
+      "filename": "StructureDefinition-PotatoTiming.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoTiming",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoTiming",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Timing"
+    },
+    {
+      "filename": "StructureDefinition-PotatoTribalAffiliation.json",
+      "resourceType": "StructureDefinition",
+      "id": "PotatoTribalAffiliation",
+      "url": "https://potatoemr.com/fhir/StructureDefinition/PotatoTribalAffiliation",
+      "version": "1.0.0",
+      "kind": "complex-type",
+      "type": "Extension"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+gleam run -m codegen r4 custom=potato.client/1.0.0 structuredefinitions=PotatoPatient,PotatoAppointment,PotatoAllergyIntolerance,PotatoDocumentReference,PotatoImmunization,PotatoMedicationRequest,PotatoMedicationStatement,PotatoCondition,PotatoEncounter
+rm src/fhir/potato_client_1_0_0/client_httpc.gleam
+gleam format

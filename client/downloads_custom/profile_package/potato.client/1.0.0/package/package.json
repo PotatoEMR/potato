@@ -1,0 +1,8 @@
+{
+  "name": "potato.client",
+  "version": "1.0.0",
+  "dependencies": {
+    "hl7.fhir.r4.core": "4.0.1",
+    "hl7.fhir.us.core": "7.0.0"
+  }
+}

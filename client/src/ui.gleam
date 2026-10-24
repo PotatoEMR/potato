@@ -1,4 +1,4 @@
-import fhir/hl7_fhir_us_core_7_0_0/primitive_types
+import fhir/potato_client_1_0_0/primitive_types
 import gleam/string
 import lustre/attribute as a
 import lustre/element/html as h

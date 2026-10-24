@@ -1,6 +1,6 @@
-import fhir/hl7_fhir_us_core_7_0_0/client_rsvp
-import fhir/hl7_fhir_us_core_7_0_0/resources
-import fhir/hl7_fhir_us_core_7_0_0/search_params
+import fhir/potato_client_1_0_0/client_rsvp
+import fhir/potato_client_1_0_0/resources
+import fhir/potato_client_1_0_0/search_params
 import glaze/oat/table
 import gleam/list
 import gleam/option.{None, Some}
@@ -31,7 +31,7 @@ pub type SearchPatient {
 }
 
 pub type SearchPatientResults {
-  SearchPatientResultsPats(pats: List(resources.UsCorePatient))
+  SearchPatientResultsPats(pats: List(resources.Potatopatient))
   SearchPatientResultsErrMsg(err_msg: String)
   SearchPatientResultsLoadingMsg
   SearchPatientResultsEmptyMsg
@@ -42,9 +42,9 @@ pub type SearchPatientResults {
 pub type Msg {
   UserTypedSearchPatient(String)
   ServerReturnedSearchPatients(
-    Result(List(resources.UsCorePatient), client_rsvp.Err),
+    Result(List(resources.Potatopatient), client_rsvp.Err),
   )
-  UserClickedPatient(patient: resources.UsCorePatient)
+  UserClickedPatient(patient: resources.Potatopatient)
 }
 
 // in addition to returning a search patient model and effect,
@@ -55,7 +55,7 @@ pub fn update(
   msg: Msg,
   client: client_rsvp.FhirClient,
   client_err_msg: fn(client_rsvp.Err) -> String,
-) -> #(Model, Effect(Msg), option.Option(resources.UsCorePatient)) {
+) -> #(Model, Effect(Msg), option.Option(resources.Potatopatient)) {
   case msg {
     UserTypedSearchPatient(search_text) -> {
       case search_text {
@@ -67,9 +67,9 @@ pub fn update(
         }
         _ -> {
           let search: Effect(Msg) =
-            client_rsvp.us_core_patient_search(
-              search_params.UsCorePatient(
-                ..search_params.us_core_patient_new(),
+            client_rsvp.potatopatient_search(
+              search_params.Potatopatient(
+                ..search_params.potatopatient_new(),
                 name: Some(search_text),
               ),
               client,
@@ -189,7 +189,7 @@ fn patient_column_headers(headers: List(String)) {
 }
 
 fn clickable_patient_row(
-  patient: resources.UsCorePatient,
+  patient: resources.Potatopatient,
   items: List(String),
 ) {
   table.tr(

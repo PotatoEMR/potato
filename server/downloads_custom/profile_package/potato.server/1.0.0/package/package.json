@@ -1,0 +1,7 @@
+{
+    "name": "potato.server",
+    "version": "1.0.0",
+    "dependencies": {
+        "hl7.fhir.r4.core": "4.0.1"
+    }
+}

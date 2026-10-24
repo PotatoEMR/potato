@@ -1,0 +1,85 @@
+////[https://hl7.org/fhir/r4](https://hl7.org/fhir/r4) r4 search params
+
+import gleam/list
+import gleam/option.{type Option, None, Some}
+import gleam/string
+
+pub fn to_string(params) {
+  list.fold(
+    from: [],
+    over: params,
+    with: fn(acc, param: #(String, Option(String))) {
+      case param.1 {
+        None -> acc
+        Some(p) -> [param.0 <> "=" <> p, ..acc]
+      }
+    },
+  )
+  |> string.join("&")
+}
+
+pub type Bundle {
+  Bundle(
+    identifier: Option(String),
+    composition: Option(String),
+    type_: Option(String),
+    message: Option(String),
+    timestamp: Option(String),
+  )
+}
+
+pub type Operationoutcome {
+  Operationoutcome
+}
+
+pub type Potatoserverpractitioner {
+  Potatoserverpractitioner(
+    identifier: Option(String),
+    given: Option(String),
+    address: Option(String),
+    address_state: Option(String),
+    gender: Option(String),
+    active: Option(String),
+    address_postalcode: Option(String),
+    address_country: Option(String),
+    phonetic: Option(String),
+    phone: Option(String),
+    name: Option(String),
+    address_use: Option(String),
+    telecom: Option(String),
+    family: Option(String),
+    address_city: Option(String),
+    communication: Option(String),
+    email: Option(String),
+  )
+}
+
+pub fn bundle_new() {
+  Bundle(None, None, None, None, None)
+}
+
+pub fn operationoutcome_new() {
+  Operationoutcome
+}
+
+pub fn potatoserverpractitioner_new() {
+  Potatoserverpractitioner(
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+  )
+}

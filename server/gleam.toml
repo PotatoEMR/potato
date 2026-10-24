@@ -29,4 +29,4 @@ glaze_oat = ">= 3.0.0 and < 4.0.0"
 
 [dev_dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
-fhir = {git = "https://github.com/PotatoEMR/gleam-fhir.git", ref="main"}
+fhir = {path = "../../fhir/gleam-fhir"}
