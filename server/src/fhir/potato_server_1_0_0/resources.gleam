@@ -11,19 +11,6 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 
 ///[http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource](http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource)
-pub type Bundle {
-  Bundle(
-    type_: valuesets.Bundletype,
-    link: List(BundleLink),
-    entry: List(BundleEntry),
-  )
-}
-
-pub fn bundle_new(type_ type_: valuesets.Bundletype) -> Bundle {
-  Bundle(entry: [], link: [], type_:)
-}
-
-///[http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource](http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource)
 pub type BundleLink {
   BundleLink(relation: String, url: String)
 }
@@ -44,59 +31,17 @@ pub fn bundle_entry_new() -> BundleEntry {
   BundleEntry(resource: None)
 }
 
-pub fn bundle_entry_to_json(bundle_entry: BundleEntry) -> Json {
-  let fields = []
-  let fields = case bundle_entry.resource {
-    Some(v) -> [#("resource", resource_to_json(v)), ..fields]
-    None -> fields
-  }
-  json.object(fields)
-}
-
-pub fn bundle_entry_decoder() -> Decoder(BundleEntry) {
-  use <- decode.recursive
-  use resource <- decode.optional_field(
-    "resource",
-    None,
-    decode.optional(resource_decoder()),
-  )
-  decode.success(BundleEntry(resource:))
-}
-
-pub type BundleEntryForgiving {
-  BundleEntryForgiving(
-    resource: Option(Result(Resource, List(decode.DecodeError))),
+///[http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource](http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource)
+pub type Bundle {
+  Bundle(
+    type_: valuesets.Bundletype,
+    link: List(BundleLink),
+    entry: List(BundleEntry),
   )
 }
 
-pub fn bundle_entry_decoder_forgiving() -> Decoder(BundleEntryForgiving) {
-  use <- decode.recursive
-  use resource <- decode.optional_field(
-    "resource",
-    None,
-    decode.optional(
-      decode.one_of(resource_decoder() |> decode.map(Ok), [
-        decode.dynamic
-        |> decode.map(fn(res_json) { decode.run(res_json, resource_decoder()) }),
-      ]),
-    ),
-  )
-  decode.success(BundleEntryForgiving(resource:))
-}
-
-pub fn bundle_link_to_json(bundle_link: BundleLink) -> Json {
-  let fields = [
-    #("url", json.string(bundle_link.url)),
-    #("relation", json.string(bundle_link.relation)),
-  ]
-  json.object(fields)
-}
-
-pub fn bundle_link_decoder() -> Decoder(BundleLink) {
-  use <- decode.recursive
-  use url <- decode.field("url", decode.string)
-  use relation <- decode.field("relation", decode.string)
-  decode.success(BundleLink(url:, relation:))
+pub fn bundle_new(type_ type_: valuesets.Bundletype) -> Bundle {
+  Bundle(entry: [], link: [], type_:)
 }
 
 pub fn bundle_to_json(bundle: Bundle) -> Json {
@@ -167,15 +112,59 @@ pub fn bundle_decoder_forgiving() -> Decoder(BundleForgiving) {
   decode.success(BundleForgiving(entry:, link:, type_:))
 }
 
-///[http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource](http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource)
-pub type Operationoutcome {
-  Operationoutcome(issue: List1(OperationoutcomeIssue))
+pub fn bundle_entry_to_json(bundle_entry: BundleEntry) -> Json {
+  let fields = []
+  let fields = case bundle_entry.resource {
+    Some(v) -> [#("resource", resource_to_json(v)), ..fields]
+    None -> fields
+  }
+  json.object(fields)
 }
 
-pub fn operationoutcome_new(
-  issue issue: List1(OperationoutcomeIssue),
-) -> Operationoutcome {
-  Operationoutcome(issue:)
+pub fn bundle_entry_decoder() -> Decoder(BundleEntry) {
+  use <- decode.recursive
+  use resource <- decode.optional_field(
+    "resource",
+    None,
+    decode.optional(resource_decoder()),
+  )
+  decode.success(BundleEntry(resource:))
+}
+
+pub type BundleEntryForgiving {
+  BundleEntryForgiving(
+    resource: Option(Result(Resource, List(decode.DecodeError))),
+  )
+}
+
+pub fn bundle_entry_decoder_forgiving() -> Decoder(BundleEntryForgiving) {
+  use <- decode.recursive
+  use resource <- decode.optional_field(
+    "resource",
+    None,
+    decode.optional(
+      decode.one_of(resource_decoder() |> decode.map(Ok), [
+        decode.dynamic
+        |> decode.map(fn(res_json) { decode.run(res_json, resource_decoder()) }),
+      ]),
+    ),
+  )
+  decode.success(BundleEntryForgiving(resource:))
+}
+
+pub fn bundle_link_to_json(bundle_link: BundleLink) -> Json {
+  let fields = [
+    #("url", json.string(bundle_link.url)),
+    #("relation", json.string(bundle_link.relation)),
+  ]
+  json.object(fields)
+}
+
+pub fn bundle_link_decoder() -> Decoder(BundleLink) {
+  use <- decode.recursive
+  use url <- decode.field("url", decode.string)
+  use relation <- decode.field("relation", decode.string)
+  decode.success(BundleLink(url:, relation:))
 }
 
 ///[http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource](http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource)
@@ -193,24 +182,15 @@ pub fn operationoutcome_issue_new(
   OperationoutcomeIssue(code:, severity:)
 }
 
-pub fn operationoutcome_issue_to_json(
-  operationoutcome_issue: OperationoutcomeIssue,
-) -> Json {
-  let fields = [
-    #("code", valuesets.issuetype_to_json(operationoutcome_issue.code)),
-    #(
-      "severity",
-      valuesets.issueseverity_to_json(operationoutcome_issue.severity),
-    ),
-  ]
-  json.object(fields)
+///[http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource](http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource)
+pub type Operationoutcome {
+  Operationoutcome(issue: List1(OperationoutcomeIssue))
 }
 
-pub fn operationoutcome_issue_decoder() -> Decoder(OperationoutcomeIssue) {
-  use <- decode.recursive
-  use code <- decode.field("code", valuesets.issuetype_decoder())
-  use severity <- decode.field("severity", valuesets.issueseverity_decoder())
-  decode.success(OperationoutcomeIssue(code:, severity:))
+pub fn operationoutcome_new(
+  issue issue: List1(OperationoutcomeIssue),
+) -> Operationoutcome {
+  Operationoutcome(issue:)
 }
 
 pub fn operationoutcome_to_json(operationoutcome: Operationoutcome) -> Json {
@@ -234,6 +214,26 @@ pub fn operationoutcome_decoder() -> Decoder(Operationoutcome) {
     decode.failure(operationoutcome_new(issue:), "resourceType"),
   )
   decode.success(Operationoutcome(issue:))
+}
+
+pub fn operationoutcome_issue_to_json(
+  operationoutcome_issue: OperationoutcomeIssue,
+) -> Json {
+  let fields = [
+    #("code", valuesets.issuetype_to_json(operationoutcome_issue.code)),
+    #(
+      "severity",
+      valuesets.issueseverity_to_json(operationoutcome_issue.severity),
+    ),
+  ]
+  json.object(fields)
+}
+
+pub fn operationoutcome_issue_decoder() -> Decoder(OperationoutcomeIssue) {
+  use <- decode.recursive
+  use code <- decode.field("code", valuesets.issuetype_decoder())
+  use severity <- decode.field("severity", valuesets.issueseverity_decoder())
+  decode.success(OperationoutcomeIssue(code:, severity:))
 }
 
 ///[http://hl7.org/fhir/r4/StructureDefinition/Parameters#resource](http://hl7.org/fhir/r4/StructureDefinition/Parameters#resource)
