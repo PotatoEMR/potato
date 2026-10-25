@@ -1,13 +1,13 @@
 ////[https://hl7.org/fhir/r4](https://hl7.org/fhir/r4) resources
 
-import fhir/potato_client_1_0_0/complex_types.{
+import fhir/potato_client_1_0_0/complex_type.{
   type List1, decode_optional_bool, decode_optional_string, list1_decoder,
   list1_to_json, none_if_omitted,
 } as ct
-import fhir/potato_client_1_0_0/primitive_types.{
+import fhir/potato_client_1_0_0/primitive_type.{
   type Date, type DateTime, type Instant,
 } as pt
-import fhir/potato_client_1_0_0/valuesets
+import fhir/potato_client_1_0_0/valueset
 import gleam/bool
 import gleam/dynamic/decode.{type Decoder}
 import gleam/int
@@ -40,19 +40,19 @@ pub fn bundle_entry_new() -> BundleEntry {
 ///[http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource](http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource)
 pub type Bundle {
   Bundle(
-    type_: valuesets.Bundletype,
+    type_: valueset.BundleType,
     link: List(BundleLink),
     entry: List(BundleEntry),
   )
 }
 
-pub fn bundle_new(type_ type_: valuesets.Bundletype) -> Bundle {
+pub fn bundle_new(type_ type_: valueset.BundleType) -> Bundle {
   Bundle(entry: [], link: [], type_:)
 }
 
 pub fn bundle_to_json(bundle: Bundle) -> Json {
   let fields = [
-    #("type", valuesets.bundletype_to_json(bundle.type_)),
+    #("type", valueset.bundle_type_to_json(bundle.type_)),
   ]
   let fields = case bundle.entry {
     [] -> fields
@@ -78,11 +78,11 @@ pub fn bundle_decoder() -> Decoder(Bundle) {
     [],
     decode.list(bundle_link_decoder()),
   )
-  use type_ <- decode.field("type", valuesets.bundletype_decoder())
+  use type_ <- decode.field("type", valueset.bundle_type_decoder())
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "Bundle",
+    resource_type != "Bundle",
     decode.failure(bundle_new(type_:), "resourceType"),
   )
   decode.success(Bundle(entry:, link:, type_:))
@@ -90,7 +90,7 @@ pub fn bundle_decoder() -> Decoder(Bundle) {
 
 pub type BundleForgiving {
   BundleForgiving(
-    type_: valuesets.Bundletype,
+    type_: valueset.BundleType,
     link: List(BundleLink),
     entry: List(BundleEntryForgiving),
   )
@@ -108,11 +108,11 @@ pub fn bundle_decoder_forgiving() -> Decoder(BundleForgiving) {
     [],
     decode.list(bundle_link_decoder()),
   )
-  use type_ <- decode.field("type", valuesets.bundletype_decoder())
+  use type_ <- decode.field("type", valueset.bundle_type_decoder())
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "Bundle",
+    resource_type != "Bundle",
     decode.failure(BundleForgiving(entry:, link:, type_:), "resourceType"),
   )
   decode.success(BundleForgiving(entry:, link:, type_:))
@@ -121,7 +121,7 @@ pub fn bundle_decoder_forgiving() -> Decoder(BundleForgiving) {
 pub fn bundle_entry_to_json(bundle_entry: BundleEntry) -> Json {
   let fields = []
   let fields = case bundle_entry.resource {
-    Some(v) -> [#("resource", resource_to_json(v)), ..fields]
+    Some(v) -> [#("resource", to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
@@ -151,7 +151,9 @@ pub fn bundle_entry_decoder_forgiving() -> Decoder(BundleEntryForgiving) {
     decode.optional(
       decode.one_of(resource_decoder() |> decode.map(Ok), [
         decode.dynamic
-        |> decode.map(fn(res_json) { decode.run(res_json, resource_decoder()) }),
+        |> decode.map(fn(resource_json) {
+          decode.run(resource_json, resource_decoder())
+        }),
       ]),
     ),
   )
@@ -176,14 +178,14 @@ pub fn bundle_link_decoder() -> Decoder(BundleLink) {
 ///[http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource](http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource)
 pub type OperationoutcomeIssue {
   OperationoutcomeIssue(
-    severity: valuesets.Issueseverity,
-    code: valuesets.Issuetype,
+    severity: valueset.IssueSeverity,
+    code: valueset.IssueType,
   )
 }
 
 pub fn operationoutcome_issue_new(
-  code code: valuesets.Issuetype,
-  severity severity: valuesets.Issueseverity,
+  code code: valueset.IssueType,
+  severity severity: valueset.IssueSeverity,
 ) -> OperationoutcomeIssue {
   OperationoutcomeIssue(code:, severity:)
 }
@@ -214,9 +216,9 @@ pub fn operationoutcome_decoder() -> Decoder(Operationoutcome) {
   use <- decode.recursive
   use issue <- list1_decoder("issue", operationoutcome_issue_decoder())
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "OperationOutcome",
+    resource_type != "OperationOutcome",
     decode.failure(operationoutcome_new(issue:), "resourceType"),
   )
   decode.success(Operationoutcome(issue:))
@@ -226,10 +228,10 @@ pub fn operationoutcome_issue_to_json(
   operationoutcome_issue: OperationoutcomeIssue,
 ) -> Json {
   let fields = [
-    #("code", valuesets.issuetype_to_json(operationoutcome_issue.code)),
+    #("code", valueset.issue_type_to_json(operationoutcome_issue.code)),
     #(
       "severity",
-      valuesets.issueseverity_to_json(operationoutcome_issue.severity),
+      valueset.issue_severity_to_json(operationoutcome_issue.severity),
     ),
   ]
   json.object(fields)
@@ -237,8 +239,8 @@ pub fn operationoutcome_issue_to_json(
 
 pub fn operationoutcome_issue_decoder() -> Decoder(OperationoutcomeIssue) {
   use <- decode.recursive
-  use code <- decode.field("code", valuesets.issuetype_decoder())
-  use severity <- decode.field("severity", valuesets.issueseverity_decoder())
+  use code <- decode.field("code", valueset.issue_type_decoder())
+  use severity <- decode.field("severity", valueset.issue_severity_decoder())
   decode.success(OperationoutcomeIssue(code:, severity:))
 }
 
@@ -260,24 +262,24 @@ pub fn parameters_to_json(_parameters: Parameters) -> Json {
 pub fn parameters_decoder() -> Decoder(Parameters) {
   use <- decode.recursive
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "Parameters",
+    resource_type != "Parameters",
     decode.failure(parameters_new(), "resourceType"),
   )
   decode.success(Parameters)
 }
 
-pub type Potatoallergyintolerance {
-  Potatoallergyintolerance(
+pub type PotatoAllergyintolerance {
+  PotatoAllergyintolerance(
     asserter: Option(ct.Potatoreference),
-    category: List(valuesets.Allergyintolerancecategory),
+    category: List(valueset.AllergyintoleranceCategory),
     clinical_status: Option(
-      ct.CodeableconceptPotatoallergyintoleranceClinicalstatus,
+      ct.CodeableconceptPotatoAllergyintoleranceClinicalstatus,
     ),
     code: ct.Potatocodeableconcept,
     contained: List(Resource),
-    criticality: Option(valuesets.Allergyintolerancecriticality),
+    criticality: Option(valueset.AllergyintoleranceCriticality),
     encounter: Option(ct.Potatoreference),
     id: Option(String),
     identifier: List(ct.Potatoidentifier),
@@ -286,24 +288,24 @@ pub type Potatoallergyintolerance {
     last_occurrence: Option(DateTime),
     meta: Option(ct.Potatometa),
     note: List(ct.Potatoannotation),
-    onset: Option(PotatoallergyintoleranceOnset),
+    onset: Option(PotatoAllergyintoleranceOnset),
     patient: ct.Potatoreference,
-    reaction: List(PotatoallergyintoleranceReaction),
+    reaction: List(PotatoAllergyintoleranceReaction),
     recorded_date: Option(DateTime),
     recorder: Option(ct.Potatoreference),
     text: Option(ct.Potatonarrative),
-    type_: Option(valuesets.Allergyintolerancetype),
+    type_: Option(valueset.AllergyintoleranceType),
     verification_status: Option(
-      ct.CodeableconceptPotatoallergyintoleranceVerificationstatus,
+      ct.CodeableconceptPotatoAllergyintoleranceVerificationstatus,
     ),
   )
 }
 
-pub fn potatoallergyintolerance_new(
+pub fn potato_allergyintolerance_new(
   code code: ct.Potatocodeableconcept,
   patient patient: ct.Potatoreference,
-) -> Potatoallergyintolerance {
-  Potatoallergyintolerance(
+) -> PotatoAllergyintolerance {
+  PotatoAllergyintolerance(
     asserter: None,
     category: [],
     clinical_status: None,
@@ -334,31 +336,31 @@ pub fn potatoallergyintolerance_new(
   )
 }
 
-pub type PotatoallergyintoleranceOnset {
-  PotatoallergyintoleranceOnsetDatetime(value: DateTime)
-  PotatoallergyintoleranceOnsetAge(value: ct.Potatoage)
-  PotatoallergyintoleranceOnsetPeriod(value: ct.Potatoperiod)
-  PotatoallergyintoleranceOnsetRange(value: ct.Potatorange)
-  PotatoallergyintoleranceOnsetString(value: String)
+pub type PotatoAllergyintoleranceOnset {
+  PotatoAllergyintoleranceOnsetDatetime(value: DateTime)
+  PotatoAllergyintoleranceOnsetAge(value: ct.Potatoage)
+  PotatoAllergyintoleranceOnsetPeriod(value: ct.Potatoperiod)
+  PotatoAllergyintoleranceOnsetRange(value: ct.Potatorange)
+  PotatoAllergyintoleranceOnsetString(value: String)
 }
 
-pub type PotatoallergyintoleranceReaction {
-  PotatoallergyintoleranceReaction(
+pub type PotatoAllergyintoleranceReaction {
+  PotatoAllergyintoleranceReaction(
     description: Option(String),
     exposure_route: Option(ct.Potatocodeableconcept),
     id: Option(String),
     manifestation: List1(ct.Potatocodeableconcept),
     note: List(ct.Potatoannotation),
     onset: Option(DateTime),
-    severity: Option(valuesets.Reactioneventseverity),
+    severity: Option(valueset.ReactionEventSeverity),
     substance: Option(ct.Potatocodeableconcept),
   )
 }
 
-pub fn potatoallergyintolerance_reaction_new(
+pub fn potato_allergyintolerance_reaction_new(
   manifestation manifestation: List1(ct.Potatocodeableconcept),
-) -> PotatoallergyintoleranceReaction {
-  PotatoallergyintoleranceReaction(
+) -> PotatoAllergyintoleranceReaction {
+  PotatoAllergyintoleranceReaction(
     description: None,
     exposure_route: None,
     id: None,
@@ -370,18 +372,18 @@ pub fn potatoallergyintolerance_reaction_new(
   )
 }
 
-pub fn potatoallergyintolerance_to_json(
-  potatoallergyintolerance: Potatoallergyintolerance,
+pub fn potato_allergyintolerance_to_json(
+  potato_allergyintolerance: PotatoAllergyintolerance,
 ) -> Json {
   let fields = [
-    #("patient", ct.potatoreference_to_json(potatoallergyintolerance.patient)),
-    #("code", ct.potatocodeableconcept_to_json(potatoallergyintolerance.code)),
+    #("patient", ct.potatoreference_to_json(potato_allergyintolerance.patient)),
+    #("code", ct.potatocodeableconcept_to_json(potato_allergyintolerance.code)),
   ]
-  let fields = case potatoallergyintolerance.verification_status {
+  let fields = case potato_allergyintolerance.verification_status {
     Some(v) -> [
       #(
         "verificationStatus",
-        ct.codeableconcept_potatoallergyintolerance_verificationstatus_to_json(
+        ct.codeableconcept_potato_allergyintolerance_verificationstatus_to_json(
           v,
         ),
       ),
@@ -389,122 +391,122 @@ pub fn potatoallergyintolerance_to_json(
     ]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.type_ {
+  let fields = case potato_allergyintolerance.type_ {
     Some(v) -> [
-      #("type", valuesets.allergyintolerancetype_to_json(v)),
+      #("type", valueset.allergyintolerance_type_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.text {
+  let fields = case potato_allergyintolerance.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.recorder {
+  let fields = case potato_allergyintolerance.recorder {
     Some(v) -> [#("recorder", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.recorded_date {
+  let fields = case potato_allergyintolerance.recorded_date {
     Some(v) -> [#("recordedDate", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.reaction {
+  let fields = case potato_allergyintolerance.reaction {
     [] -> fields
     values -> [
       #(
         "reaction",
-        json.array(values, potatoallergyintolerance_reaction_to_json),
+        json.array(values, potato_allergyintolerance_reaction_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatoallergyintolerance.onset {
+  let fields = case potato_allergyintolerance.onset {
     Some(v) -> [
       #(
         "onset"
           <> case v {
-          PotatoallergyintoleranceOnsetDatetime(_) -> "DateTime"
-          PotatoallergyintoleranceOnsetAge(_) -> "Age"
-          PotatoallergyintoleranceOnsetPeriod(_) -> "Period"
-          PotatoallergyintoleranceOnsetRange(_) -> "Range"
-          PotatoallergyintoleranceOnsetString(_) -> "String"
+          PotatoAllergyintoleranceOnsetDatetime(_) -> "DateTime"
+          PotatoAllergyintoleranceOnsetAge(_) -> "Age"
+          PotatoAllergyintoleranceOnsetPeriod(_) -> "Period"
+          PotatoAllergyintoleranceOnsetRange(_) -> "Range"
+          PotatoAllergyintoleranceOnsetString(_) -> "String"
         },
-        potatoallergyintolerance_onset_to_json(v),
+        potato_allergyintolerance_onset_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.note {
+  let fields = case potato_allergyintolerance.note {
     [] -> fields
     values -> [
       #("note", json.array(values, ct.potatoannotation_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoallergyintolerance.meta {
+  let fields = case potato_allergyintolerance.meta {
     Some(v) -> [#("meta", ct.potatometa_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.last_occurrence {
+  let fields = case potato_allergyintolerance.last_occurrence {
     Some(v) -> [#("lastOccurrence", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.language {
+  let fields = case potato_allergyintolerance.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.implicit_rules {
+  let fields = case potato_allergyintolerance.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.identifier {
+  let fields = case potato_allergyintolerance.identifier {
     [] -> fields
     values -> [
       #("identifier", json.array(values, ct.potatoidentifier_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoallergyintolerance.id {
+  let fields = case potato_allergyintolerance.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.encounter {
+  let fields = case potato_allergyintolerance.encounter {
     Some(v) -> [#("encounter", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.criticality {
+  let fields = case potato_allergyintolerance.criticality {
     Some(v) -> [
-      #("criticality", valuesets.allergyintolerancecriticality_to_json(v)),
+      #("criticality", valueset.allergyintolerance_criticality_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.contained {
+  let fields = case potato_allergyintolerance.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
-  let fields = case potatoallergyintolerance.clinical_status {
+  let fields = case potato_allergyintolerance.clinical_status {
     Some(v) -> [
       #(
         "clinicalStatus",
-        ct.codeableconcept_potatoallergyintolerance_clinicalstatus_to_json(v),
+        ct.codeableconcept_potato_allergyintolerance_clinicalstatus_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoallergyintolerance.category {
+  let fields = case potato_allergyintolerance.category {
     [] -> fields
     values -> [
       #(
         "category",
-        json.array(values, valuesets.allergyintolerancecategory_to_json),
+        json.array(values, valueset.allergyintolerance_category_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatoallergyintolerance.asserter {
+  let fields = case potato_allergyintolerance.asserter {
     Some(v) -> [#("asserter", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
@@ -512,72 +514,72 @@ pub fn potatoallergyintolerance_to_json(
   json.object(fields)
 }
 
-pub fn potatoallergyintolerance_onset_to_json(
-  value: PotatoallergyintoleranceOnset,
+pub fn potato_allergyintolerance_onset_to_json(
+  value: PotatoAllergyintoleranceOnset,
 ) -> Json {
   case value {
-    PotatoallergyintoleranceOnsetDatetime(value) -> pt.datetime_to_json(value)
-    PotatoallergyintoleranceOnsetAge(value) -> ct.potatoage_to_json(value)
-    PotatoallergyintoleranceOnsetPeriod(value) -> ct.potatoperiod_to_json(value)
-    PotatoallergyintoleranceOnsetRange(value) -> ct.potatorange_to_json(value)
-    PotatoallergyintoleranceOnsetString(value) -> json.string(value)
+    PotatoAllergyintoleranceOnsetDatetime(value) -> pt.datetime_to_json(value)
+    PotatoAllergyintoleranceOnsetAge(value) -> ct.potatoage_to_json(value)
+    PotatoAllergyintoleranceOnsetPeriod(value) -> ct.potatoperiod_to_json(value)
+    PotatoAllergyintoleranceOnsetRange(value) -> ct.potatorange_to_json(value)
+    PotatoAllergyintoleranceOnsetString(value) -> json.string(value)
   }
 }
 
-pub fn potatoallergyintolerance_reaction_to_json(
-  potatoallergyintolerance_reaction: PotatoallergyintoleranceReaction,
+pub fn potato_allergyintolerance_reaction_to_json(
+  potato_allergyintolerance_reaction: PotatoAllergyintoleranceReaction,
 ) -> Json {
   let fields = [
     #(
       "manifestation",
       list1_to_json(
-        potatoallergyintolerance_reaction.manifestation,
+        potato_allergyintolerance_reaction.manifestation,
         ct.potatocodeableconcept_to_json,
       ),
     ),
   ]
-  let fields = case potatoallergyintolerance_reaction.substance {
+  let fields = case potato_allergyintolerance_reaction.substance {
     Some(v) -> [#("substance", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance_reaction.severity {
+  let fields = case potato_allergyintolerance_reaction.severity {
     Some(v) -> [
-      #("severity", valuesets.reactioneventseverity_to_json(v)),
+      #("severity", valueset.reaction_event_severity_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoallergyintolerance_reaction.onset {
+  let fields = case potato_allergyintolerance_reaction.onset {
     Some(v) -> [#("onset", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance_reaction.note {
+  let fields = case potato_allergyintolerance_reaction.note {
     [] -> fields
     values -> [
       #("note", json.array(values, ct.potatoannotation_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoallergyintolerance_reaction.id {
+  let fields = case potato_allergyintolerance_reaction.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoallergyintolerance_reaction.exposure_route {
+  let fields = case potato_allergyintolerance_reaction.exposure_route {
     Some(v) -> [
       #("exposureRoute", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoallergyintolerance_reaction.description {
+  let fields = case potato_allergyintolerance_reaction.description {
     Some(v) -> [#("description", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type Potatoappointment {
-  Potatoappointment(
+pub type PotatoAppointment {
+  PotatoAppointment(
     appointment_type: Option(ct.Potatocodeableconcept),
     based_on: List(ct.Potatoreference),
     cancelation_reason: Option(ct.Potatocodeableconcept),
@@ -592,7 +594,7 @@ pub type Potatoappointment {
     language: Option(String),
     meta: Option(ct.Potatometa),
     minutes_duration: Option(Int),
-    participant: List1(PotatoappointmentParticipant),
+    participant: List1(PotatoAppointmentParticipant),
     patient_instruction: Option(String),
     priority: Option(Int),
     reason_code: List(ct.Potatocodeableconcept),
@@ -603,17 +605,17 @@ pub type Potatoappointment {
     slot: List(ct.Potatoreference),
     specialty: List(ct.Potatocodeableconcept),
     start: Option(Instant),
-    status: valuesets.Appointmentstatus,
+    status: valueset.Appointmentstatus,
     supporting_information: List(ct.Potatoreference),
     text: Option(ct.Potatonarrative),
   )
 }
 
-pub fn potatoappointment_new(
-  participant participant: List1(PotatoappointmentParticipant),
-  status status: valuesets.Appointmentstatus,
-) -> Potatoappointment {
-  Potatoappointment(
+pub fn potato_appointment_new(
+  participant participant: List1(PotatoAppointmentParticipant),
+  status status: valueset.Appointmentstatus,
+) -> PotatoAppointment {
+  PotatoAppointment(
     appointment_type: None,
     based_on: [],
     cancelation_reason: None,
@@ -650,21 +652,21 @@ pub fn potatoappointment_new(
   )
 }
 
-pub type PotatoappointmentParticipant {
-  PotatoappointmentParticipant(
+pub type PotatoAppointmentParticipant {
+  PotatoAppointmentParticipant(
     actor: Option(ct.Potatoreference),
     id: Option(String),
     period: Option(ct.Potatoperiod),
-    required: Option(valuesets.Participantrequired),
-    status: valuesets.Participationstatus,
+    required: Option(valueset.Participantrequired),
+    status: valueset.Participationstatus,
     type_: List(ct.Potatocodeableconcept),
   )
 }
 
-pub fn potatoappointment_participant_new(
-  status status: valuesets.Participationstatus,
-) -> PotatoappointmentParticipant {
-  PotatoappointmentParticipant(
+pub fn potato_appointment_participant_new(
+  status status: valueset.Participationstatus,
+) -> PotatoAppointmentParticipant {
+  PotatoAppointmentParticipant(
     actor: None,
     id: None,
     period: None,
@@ -674,151 +676,153 @@ pub fn potatoappointment_participant_new(
   )
 }
 
-pub fn potatoappointment_to_json(potatoappointment: Potatoappointment) -> Json {
+pub fn potato_appointment_to_json(
+  potato_appointment: PotatoAppointment,
+) -> Json {
   let fields = [
-    #("status", valuesets.appointmentstatus_to_json(potatoappointment.status)),
+    #("status", valueset.appointmentstatus_to_json(potato_appointment.status)),
     #(
       "participant",
       list1_to_json(
-        potatoappointment.participant,
-        potatoappointment_participant_to_json,
+        potato_appointment.participant,
+        potato_appointment_participant_to_json,
       ),
     ),
   ]
-  let fields = case potatoappointment.text {
+  let fields = case potato_appointment.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.supporting_information {
+  let fields = case potato_appointment.supporting_information {
     [] -> fields
     values -> [
       #("supportingInformation", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.start {
+  let fields = case potato_appointment.start {
     Some(v) -> [#("start", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.specialty {
+  let fields = case potato_appointment.specialty {
     [] -> fields
     values -> [
       #("specialty", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.slot {
+  let fields = case potato_appointment.slot {
     [] -> fields
     values -> [
       #("slot", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.service_type {
+  let fields = case potato_appointment.service_type {
     [] -> fields
     values -> [
       #("serviceType", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.service_category {
+  let fields = case potato_appointment.service_category {
     [] -> fields
     values -> [
       #("serviceCategory", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.requested_period {
+  let fields = case potato_appointment.requested_period {
     [] -> fields
     values -> [
       #("requestedPeriod", json.array(values, ct.potatoperiod_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.reason_reference {
+  let fields = case potato_appointment.reason_reference {
     [] -> fields
     values -> [
       #("reasonReference", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.reason_code {
+  let fields = case potato_appointment.reason_code {
     [] -> fields
     values -> [
       #("reasonCode", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.priority {
+  let fields = case potato_appointment.priority {
     Some(v) -> [#("priority", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.patient_instruction {
+  let fields = case potato_appointment.patient_instruction {
     Some(v) -> [#("patientInstruction", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.minutes_duration {
+  let fields = case potato_appointment.minutes_duration {
     Some(v) -> [#("minutesDuration", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.meta {
+  let fields = case potato_appointment.meta {
     Some(v) -> [#("meta", ct.potatometa_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.language {
+  let fields = case potato_appointment.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.implicit_rules {
+  let fields = case potato_appointment.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.identifier {
+  let fields = case potato_appointment.identifier {
     [] -> fields
     values -> [
       #("identifier", json.array(values, ct.potatoidentifier_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.id {
+  let fields = case potato_appointment.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.end {
+  let fields = case potato_appointment.end {
     Some(v) -> [#("end", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.description {
+  let fields = case potato_appointment.description {
     Some(v) -> [#("description", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.created {
+  let fields = case potato_appointment.created {
     Some(v) -> [#("created", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.contained {
+  let fields = case potato_appointment.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
-  let fields = case potatoappointment.comment {
+  let fields = case potato_appointment.comment {
     Some(v) -> [#("comment", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment.cancelation_reason {
+  let fields = case potato_appointment.cancelation_reason {
     Some(v) -> [
       #("cancelationReason", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoappointment.based_on {
+  let fields = case potato_appointment.based_on {
     [] -> fields
     values -> [
       #("basedOn", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment.appointment_type {
+  let fields = case potato_appointment.appointment_type {
     Some(v) -> [
       #("appointmentType", ct.potatocodeableconcept_to_json(v)),
       ..fields
@@ -829,87 +833,87 @@ pub fn potatoappointment_to_json(potatoappointment: Potatoappointment) -> Json {
   json.object(fields)
 }
 
-pub fn potatoappointment_participant_to_json(
-  potatoappointment_participant: PotatoappointmentParticipant,
+pub fn potato_appointment_participant_to_json(
+  potato_appointment_participant: PotatoAppointmentParticipant,
 ) -> Json {
   let fields = [
     #(
       "status",
-      valuesets.participationstatus_to_json(
-        potatoappointment_participant.status,
+      valueset.participationstatus_to_json(
+        potato_appointment_participant.status,
       ),
     ),
   ]
-  let fields = case potatoappointment_participant.type_ {
+  let fields = case potato_appointment_participant.type_ {
     [] -> fields
     values -> [
       #("type", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoappointment_participant.required {
+  let fields = case potato_appointment_participant.required {
     Some(v) -> [
-      #("required", valuesets.participantrequired_to_json(v)),
+      #("required", valueset.participantrequired_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoappointment_participant.period {
+  let fields = case potato_appointment_participant.period {
     Some(v) -> [#("period", ct.potatoperiod_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment_participant.id {
+  let fields = case potato_appointment_participant.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoappointment_participant.actor {
+  let fields = case potato_appointment_participant.actor {
     Some(v) -> [#("actor", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type Potatocondition {
-  Potatocondition(
-    abatement: Option(PotatoconditionAbatement),
+pub type PotatoCondition {
+  PotatoCondition(
+    abatement: Option(PotatoConditionAbatement),
     asserter: Option(ct.Potatoreference),
     body_site: List(ct.Potatocodeableconcept),
     category: List(ct.Potatocodeableconcept),
     screening_assessment: List(
-      ct.CodeableconceptPotatoconditionCategoryScreeningAssessment,
+      ct.CodeableconceptPotatoConditionCategoryScreeningAssessment,
     ),
-    us_core: List1(ct.CodeableconceptPotatoconditionCategoryUsCore),
-    clinical_status: Option(ct.CodeableconceptPotatoconditionClinicalstatus),
+    us_core: List1(ct.CodeableconceptPotatoConditionCategoryUsCore),
+    clinical_status: Option(ct.CodeableconceptPotatoConditionClinicalstatus),
     code: ct.Potatocodeableconcept,
     contained: List(Resource),
     encounter: Option(ct.Potatoreference),
-    evidence: List(PotatoconditionEvidence),
+    evidence: List(PotatoConditionEvidence),
     asserted_date: Option(DateTime),
     id: Option(String),
     identifier: List(ct.Potatoidentifier),
     implicit_rules: Option(String),
     language: Option(String),
-    meta: Option(ct.MetaPotatoconditionMeta),
+    meta: Option(ct.MetaPotatoConditionMeta),
     note: List(ct.Potatoannotation),
-    onset: Option(PotatoconditionOnset),
+    onset: Option(PotatoConditionOnset),
     recorded_date: Option(DateTime),
     recorder: Option(ct.Potatoreference),
     severity: Option(ct.Potatocodeableconcept),
-    stage: List(PotatoconditionStage),
+    stage: List(PotatoConditionStage),
     subject: ct.Potatoreference,
     text: Option(ct.Potatonarrative),
     verification_status: Option(
-      ct.CodeableconceptPotatoconditionVerificationstatus,
+      ct.CodeableconceptPotatoConditionVerificationstatus,
     ),
   )
 }
 
-pub fn potatocondition_new(
-  us_core us_core: List1(ct.CodeableconceptPotatoconditionCategoryUsCore),
+pub fn potato_condition_new(
+  us_core us_core: List1(ct.CodeableconceptPotatoConditionCategoryUsCore),
   code code: ct.Potatocodeableconcept,
   subject subject: ct.Potatoreference,
-) -> Potatocondition {
-  Potatocondition(
+) -> PotatoCondition {
+  PotatoCondition(
     abatement: None,
     asserter: None,
     body_site: [],
@@ -927,8 +931,8 @@ pub fn potatocondition_new(
     implicit_rules: None,
     language: None,
     meta: Some({
-      let meta = ct.meta_potatocondition_meta_new()
-      ct.MetaPotatoconditionMeta(..meta, profile: [
+      let meta = ct.meta_potato_condition_meta_new()
+      ct.MetaPotatoConditionMeta(..meta, profile: [
         "https://potatoemr.com/fhir/StructureDefinition/PotatoCondition",
       ])
     }),
@@ -944,36 +948,36 @@ pub fn potatocondition_new(
   )
 }
 
-pub type PotatoconditionOnset {
-  PotatoconditionOnsetDatetime(value: DateTime)
-  PotatoconditionOnsetAge(value: ct.Potatoage)
-  PotatoconditionOnsetPeriod(value: ct.Potatoperiod)
-  PotatoconditionOnsetRange(value: ct.Potatorange)
-  PotatoconditionOnsetString(value: String)
+pub type PotatoConditionOnset {
+  PotatoConditionOnsetDatetime(value: DateTime)
+  PotatoConditionOnsetAge(value: ct.Potatoage)
+  PotatoConditionOnsetPeriod(value: ct.Potatoperiod)
+  PotatoConditionOnsetRange(value: ct.Potatorange)
+  PotatoConditionOnsetString(value: String)
 }
 
-pub type PotatoconditionAbatement {
-  PotatoconditionAbatementDatetime(value: DateTime)
-  PotatoconditionAbatementAge(value: ct.Potatoage)
-  PotatoconditionAbatementPeriod(value: ct.Potatoperiod)
-  PotatoconditionAbatementRange(value: ct.Potatorange)
-  PotatoconditionAbatementString(value: String)
+pub type PotatoConditionAbatement {
+  PotatoConditionAbatementDatetime(value: DateTime)
+  PotatoConditionAbatementAge(value: ct.Potatoage)
+  PotatoConditionAbatementPeriod(value: ct.Potatoperiod)
+  PotatoConditionAbatementRange(value: ct.Potatorange)
+  PotatoConditionAbatementString(value: String)
 }
 
-pub type PotatoconditionEvidence {
-  PotatoconditionEvidence(
+pub type PotatoConditionEvidence {
+  PotatoConditionEvidence(
     code: List(ct.Potatocodeableconcept),
     detail: List(ct.Potatoreference),
     id: Option(String),
   )
 }
 
-pub fn potatocondition_evidence_new() -> PotatoconditionEvidence {
-  PotatoconditionEvidence(code: [], detail: [], id: None)
+pub fn potato_condition_evidence_new() -> PotatoConditionEvidence {
+  PotatoConditionEvidence(code: [], detail: [], id: None)
 }
 
-pub type PotatoconditionStage {
-  PotatoconditionStage(
+pub type PotatoConditionStage {
+  PotatoConditionStage(
     assessment: List(ct.Potatoreference),
     id: Option(String),
     summary: Option(ct.Potatocodeableconcept),
@@ -981,98 +985,98 @@ pub type PotatoconditionStage {
   )
 }
 
-pub fn potatocondition_stage_new() -> PotatoconditionStage {
-  PotatoconditionStage(assessment: [], id: None, summary: None, type_: None)
+pub fn potato_condition_stage_new() -> PotatoConditionStage {
+  PotatoConditionStage(assessment: [], id: None, summary: None, type_: None)
 }
 
-pub fn potatocondition_to_json(potatocondition: Potatocondition) -> Json {
+pub fn potato_condition_to_json(potato_condition: PotatoCondition) -> Json {
   let fields = [
-    #("subject", ct.potatoreference_to_json(potatocondition.subject)),
-    #("code", ct.potatocodeableconcept_to_json(potatocondition.code)),
+    #("subject", ct.potatoreference_to_json(potato_condition.subject)),
+    #("code", ct.potatocodeableconcept_to_json(potato_condition.code)),
   ]
-  let fields = case potatocondition.verification_status {
+  let fields = case potato_condition.verification_status {
     Some(v) -> [
       #(
         "verificationStatus",
-        ct.codeableconcept_potatocondition_verificationstatus_to_json(v),
+        ct.codeableconcept_potato_condition_verificationstatus_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatocondition.text {
+  let fields = case potato_condition.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.stage {
+  let fields = case potato_condition.stage {
     [] -> fields
     values -> [
-      #("stage", json.array(values, potatocondition_stage_to_json)),
+      #("stage", json.array(values, potato_condition_stage_to_json)),
       ..fields
     ]
   }
-  let fields = case potatocondition.severity {
+  let fields = case potato_condition.severity {
     Some(v) -> [#("severity", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.recorder {
+  let fields = case potato_condition.recorder {
     Some(v) -> [#("recorder", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.recorded_date {
+  let fields = case potato_condition.recorded_date {
     Some(v) -> [#("recordedDate", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.onset {
+  let fields = case potato_condition.onset {
     Some(v) -> [
       #(
         "onset"
           <> case v {
-          PotatoconditionOnsetDatetime(_) -> "DateTime"
-          PotatoconditionOnsetAge(_) -> "Age"
-          PotatoconditionOnsetPeriod(_) -> "Period"
-          PotatoconditionOnsetRange(_) -> "Range"
-          PotatoconditionOnsetString(_) -> "String"
+          PotatoConditionOnsetDatetime(_) -> "DateTime"
+          PotatoConditionOnsetAge(_) -> "Age"
+          PotatoConditionOnsetPeriod(_) -> "Period"
+          PotatoConditionOnsetRange(_) -> "Range"
+          PotatoConditionOnsetString(_) -> "String"
         },
-        potatocondition_onset_to_json(v),
+        potato_condition_onset_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatocondition.note {
+  let fields = case potato_condition.note {
     [] -> fields
     values -> [
       #("note", json.array(values, ct.potatoannotation_to_json)),
       ..fields
     ]
   }
-  let fields = case potatocondition.meta {
-    Some(v) -> [#("meta", ct.meta_potatocondition_meta_to_json(v)), ..fields]
+  let fields = case potato_condition.meta {
+    Some(v) -> [#("meta", ct.meta_potato_condition_meta_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.language {
+  let fields = case potato_condition.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.implicit_rules {
+  let fields = case potato_condition.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.identifier {
+  let fields = case potato_condition.identifier {
     [] -> fields
     values -> [
       #("identifier", json.array(values, ct.potatoidentifier_to_json)),
       ..fields
     ]
   }
-  let fields = case potatocondition.id {
+  let fields = case potato_condition.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let slice_values =
     list.flatten([
-      case potatocondition.asserted_date {
+      case potato_condition.asserted_date {
         Some(value) -> [
           json.object([
             #(
@@ -1092,26 +1096,26 @@ pub fn potatocondition_to_json(potatocondition: Potatocondition) -> Json {
     [] -> fields
     values -> [#("extension", json.preprocessed_array(values)), ..fields]
   }
-  let fields = case potatocondition.evidence {
+  let fields = case potato_condition.evidence {
     [] -> fields
     values -> [
-      #("evidence", json.array(values, potatocondition_evidence_to_json)),
+      #("evidence", json.array(values, potato_condition_evidence_to_json)),
       ..fields
     ]
   }
-  let fields = case potatocondition.encounter {
+  let fields = case potato_condition.encounter {
     Some(v) -> [#("encounter", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.contained {
+  let fields = case potato_condition.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
-  let fields = case potatocondition.clinical_status {
+  let fields = case potato_condition.clinical_status {
     Some(v) -> [
       #(
         "clinicalStatus",
-        ct.codeableconcept_potatocondition_clinicalstatus_to_json(v),
+        ct.codeableconcept_potato_condition_clinicalstatus_to_json(v),
       ),
       ..fields
     ]
@@ -1120,19 +1124,19 @@ pub fn potatocondition_to_json(potatocondition: Potatocondition) -> Json {
   let slice_values =
     list.flatten([
       [
-        ct.codeableconcept_potatocondition_category_us_core_to_json(
-          potatocondition.us_core.first,
+        ct.codeableconcept_potato_condition_category_us_core_to_json(
+          potato_condition.us_core.first,
         ),
-        ..list.map(potatocondition.us_core.rest, fn(value) {
-          ct.codeableconcept_potatocondition_category_us_core_to_json(value)
+        ..list.map(potato_condition.us_core.rest, fn(value) {
+          ct.codeableconcept_potato_condition_category_us_core_to_json(value)
         })
       ],
-      list.map(potatocondition.screening_assessment, fn(value) {
-        ct.codeableconcept_potatocondition_category_screening_assessment_to_json(
+      list.map(potato_condition.screening_assessment, fn(value) {
+        ct.codeableconcept_potato_condition_category_screening_assessment_to_json(
           value,
         )
       }),
-      list.map(potatocondition.category, fn(value) {
+      list.map(potato_condition.category, fn(value) {
         ct.potatocodeableconcept_to_json(value)
       }),
     ])
@@ -1140,29 +1144,29 @@ pub fn potatocondition_to_json(potatocondition: Potatocondition) -> Json {
     [] -> fields
     values -> [#("category", json.preprocessed_array(values)), ..fields]
   }
-  let fields = case potatocondition.body_site {
+  let fields = case potato_condition.body_site {
     [] -> fields
     values -> [
       #("bodySite", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatocondition.asserter {
+  let fields = case potato_condition.asserter {
     Some(v) -> [#("asserter", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition.abatement {
+  let fields = case potato_condition.abatement {
     Some(v) -> [
       #(
         "abatement"
           <> case v {
-          PotatoconditionAbatementDatetime(_) -> "DateTime"
-          PotatoconditionAbatementAge(_) -> "Age"
-          PotatoconditionAbatementPeriod(_) -> "Period"
-          PotatoconditionAbatementRange(_) -> "Range"
-          PotatoconditionAbatementString(_) -> "String"
+          PotatoConditionAbatementDatetime(_) -> "DateTime"
+          PotatoConditionAbatementAge(_) -> "Age"
+          PotatoConditionAbatementPeriod(_) -> "Period"
+          PotatoConditionAbatementRange(_) -> "Range"
+          PotatoConditionAbatementString(_) -> "String"
         },
-        potatocondition_abatement_to_json(v),
+        potato_condition_abatement_to_json(v),
       ),
       ..fields
     ]
@@ -1172,44 +1176,44 @@ pub fn potatocondition_to_json(potatocondition: Potatocondition) -> Json {
   json.object(fields)
 }
 
-pub fn potatocondition_abatement_to_json(
-  value: PotatoconditionAbatement,
+pub fn potato_condition_abatement_to_json(
+  value: PotatoConditionAbatement,
 ) -> Json {
   case value {
-    PotatoconditionAbatementDatetime(value) -> pt.datetime_to_json(value)
-    PotatoconditionAbatementAge(value) -> ct.potatoage_to_json(value)
-    PotatoconditionAbatementPeriod(value) -> ct.potatoperiod_to_json(value)
-    PotatoconditionAbatementRange(value) -> ct.potatorange_to_json(value)
-    PotatoconditionAbatementString(value) -> json.string(value)
+    PotatoConditionAbatementDatetime(value) -> pt.datetime_to_json(value)
+    PotatoConditionAbatementAge(value) -> ct.potatoage_to_json(value)
+    PotatoConditionAbatementPeriod(value) -> ct.potatoperiod_to_json(value)
+    PotatoConditionAbatementRange(value) -> ct.potatorange_to_json(value)
+    PotatoConditionAbatementString(value) -> json.string(value)
   }
 }
 
-pub fn potatocondition_onset_to_json(value: PotatoconditionOnset) -> Json {
+pub fn potato_condition_onset_to_json(value: PotatoConditionOnset) -> Json {
   case value {
-    PotatoconditionOnsetDatetime(value) -> pt.datetime_to_json(value)
-    PotatoconditionOnsetAge(value) -> ct.potatoage_to_json(value)
-    PotatoconditionOnsetPeriod(value) -> ct.potatoperiod_to_json(value)
-    PotatoconditionOnsetRange(value) -> ct.potatorange_to_json(value)
-    PotatoconditionOnsetString(value) -> json.string(value)
+    PotatoConditionOnsetDatetime(value) -> pt.datetime_to_json(value)
+    PotatoConditionOnsetAge(value) -> ct.potatoage_to_json(value)
+    PotatoConditionOnsetPeriod(value) -> ct.potatoperiod_to_json(value)
+    PotatoConditionOnsetRange(value) -> ct.potatorange_to_json(value)
+    PotatoConditionOnsetString(value) -> json.string(value)
   }
 }
 
-pub fn potatocondition_evidence_to_json(
-  potatocondition_evidence: PotatoconditionEvidence,
+pub fn potato_condition_evidence_to_json(
+  potato_condition_evidence: PotatoConditionEvidence,
 ) -> Json {
   let fields = []
-  let fields = case potatocondition_evidence.id {
+  let fields = case potato_condition_evidence.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition_evidence.detail {
+  let fields = case potato_condition_evidence.detail {
     [] -> fields
     values -> [
       #("detail", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatocondition_evidence.code {
+  let fields = case potato_condition_evidence.code {
     [] -> fields
     values -> [
       #("code", json.array(values, ct.potatocodeableconcept_to_json)),
@@ -1219,23 +1223,23 @@ pub fn potatocondition_evidence_to_json(
   json.object(fields)
 }
 
-pub fn potatocondition_stage_to_json(
-  potatocondition_stage: PotatoconditionStage,
+pub fn potato_condition_stage_to_json(
+  potato_condition_stage: PotatoConditionStage,
 ) -> Json {
   let fields = []
-  let fields = case potatocondition_stage.type_ {
+  let fields = case potato_condition_stage.type_ {
     Some(v) -> [#("type", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition_stage.summary {
+  let fields = case potato_condition_stage.summary {
     Some(v) -> [#("summary", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition_stage.id {
+  let fields = case potato_condition_stage.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatocondition_stage.assessment {
+  let fields = case potato_condition_stage.assessment {
     [] -> fields
     values -> [
       #("assessment", json.array(values, ct.potatoreference_to_json)),
@@ -1245,41 +1249,41 @@ pub fn potatocondition_stage_to_json(
   json.object(fields)
 }
 
-pub type Potatodocumentreference {
-  Potatodocumentreference(
+pub type PotatoDocumentreference {
+  PotatoDocumentreference(
     authenticator: Option(ct.Potatoreference),
     author: List(ct.Potatoreference),
-    category: List1(PotatodocumentreferenceCategory),
+    category: List1(PotatoDocumentreferenceCategory),
     contained: List(Resource),
-    content: List1(PotatodocumentreferenceContent),
-    context: Option(PotatodocumentreferenceContext),
+    content: List1(PotatoDocumentreferenceContent),
+    context: Option(PotatoDocumentreferenceContext),
     custodian: Option(ct.Potatoreference),
     date: Option(Instant),
     description: Option(String),
-    doc_status: Option(valuesets.Compositionstatus),
+    doc_status: Option(valueset.CompositionStatus),
     id: Option(String),
     identifier: List(ct.Potatoidentifier),
     implicit_rules: Option(String),
     language: Option(String),
     master_identifier: Option(ct.Potatoidentifier),
     meta: Option(ct.Potatometa),
-    relates_to: List(PotatodocumentreferenceRelatesto),
+    relates_to: List(PotatoDocumentreferenceRelatesto),
     security_label: List(ct.Potatocodeableconcept),
-    status: valuesets.Documentreferencestatus,
+    status: valueset.DocumentreferenceStatus,
     subject: ct.Potatoreference,
     text: Option(ct.Potatonarrative),
     type_: ct.Potatocodeableconcept,
   )
 }
 
-pub fn potatodocumentreference_new(
-  category category: List1(PotatodocumentreferenceCategory),
-  content content: List1(PotatodocumentreferenceContent),
-  status status: valuesets.Documentreferencestatus,
+pub fn potato_documentreference_new(
+  category category: List1(PotatoDocumentreferenceCategory),
+  content content: List1(PotatoDocumentreferenceContent),
+  status status: valueset.DocumentreferenceStatus,
   subject subject: ct.Potatoreference,
   type_ type_: ct.Potatocodeableconcept,
-) -> Potatodocumentreference {
-  Potatodocumentreference(
+) -> PotatoDocumentreference {
+  PotatoDocumentreference(
     authenticator: None,
     author: [],
     category:,
@@ -1310,29 +1314,29 @@ pub fn potatodocumentreference_new(
   )
 }
 
-pub type PotatodocumentreferenceCategory {
-  PotatodocumentreferenceCategoryUscore(
-    value: ct.CodeableconceptPotatodocumentreferenceCategoryUscore,
+pub type PotatoDocumentreferenceCategory {
+  PotatoDocumentreferenceCategoryUscore(
+    value: ct.CodeableconceptPotatoDocumentreferenceCategoryUscore,
   )
-  PotatodocumentreferenceCategoryOpen(value: ct.Potatocodeableconcept)
+  PotatoDocumentreferenceCategoryOpen(value: ct.Potatocodeableconcept)
 }
 
-pub type PotatodocumentreferenceContent {
-  PotatodocumentreferenceContent(
+pub type PotatoDocumentreferenceContent {
+  PotatoDocumentreferenceContent(
     attachment: ct.AttachmentOmitExtension,
     format: Option(ct.Potatocoding),
     id: Option(String),
   )
 }
 
-pub fn potatodocumentreference_content_new(
+pub fn potato_documentreference_content_new(
   attachment attachment: ct.AttachmentOmitExtension,
-) -> PotatodocumentreferenceContent {
-  PotatodocumentreferenceContent(attachment:, format: None, id: None)
+) -> PotatoDocumentreferenceContent {
+  PotatoDocumentreferenceContent(attachment:, format: None, id: None)
 }
 
-pub type PotatodocumentreferenceContext {
-  PotatodocumentreferenceContext(
+pub type PotatoDocumentreferenceContext {
+  PotatoDocumentreferenceContext(
     encounter: Option(ct.Potatoreference),
     event: List(ct.Potatocodeableconcept),
     facility_type: Option(ct.Potatocodeableconcept),
@@ -1344,8 +1348,8 @@ pub type PotatodocumentreferenceContext {
   )
 }
 
-pub fn potatodocumentreference_context_new() -> PotatodocumentreferenceContext {
-  PotatodocumentreferenceContext(
+pub fn potato_documentreference_context_new() -> PotatoDocumentreferenceContext {
+  PotatoDocumentreferenceContext(
     encounter: None,
     event: [],
     facility_type: None,
@@ -1357,132 +1361,132 @@ pub fn potatodocumentreference_context_new() -> PotatodocumentreferenceContext {
   )
 }
 
-pub type PotatodocumentreferenceRelatesto {
-  PotatodocumentreferenceRelatesto(
-    code: valuesets.Documentrelationshiptype,
+pub type PotatoDocumentreferenceRelatesto {
+  PotatoDocumentreferenceRelatesto(
+    code: valueset.DocumentRelationshipType,
     id: Option(String),
     target: ct.Potatoreference,
   )
 }
 
-pub fn potatodocumentreference_relatesto_new(
-  code code: valuesets.Documentrelationshiptype,
+pub fn potato_documentreference_relatesto_new(
+  code code: valueset.DocumentRelationshipType,
   target target: ct.Potatoreference,
-) -> PotatodocumentreferenceRelatesto {
-  PotatodocumentreferenceRelatesto(code:, id: None, target:)
+) -> PotatoDocumentreferenceRelatesto {
+  PotatoDocumentreferenceRelatesto(code:, id: None, target:)
 }
 
-pub fn potatodocumentreference_to_json(
-  potatodocumentreference: Potatodocumentreference,
+pub fn potato_documentreference_to_json(
+  potato_documentreference: PotatoDocumentreference,
 ) -> Json {
   let fields = [
-    #("type", ct.potatocodeableconcept_to_json(potatodocumentreference.type_)),
-    #("subject", ct.potatoreference_to_json(potatodocumentreference.subject)),
+    #("type", ct.potatocodeableconcept_to_json(potato_documentreference.type_)),
+    #("subject", ct.potatoreference_to_json(potato_documentreference.subject)),
     #(
       "status",
-      valuesets.documentreferencestatus_to_json(potatodocumentreference.status),
+      valueset.documentreference_status_to_json(potato_documentreference.status),
     ),
     #(
       "content",
       list1_to_json(
-        potatodocumentreference.content,
-        potatodocumentreference_content_to_json,
+        potato_documentreference.content,
+        potato_documentreference_content_to_json,
       ),
     ),
     #(
       "category",
       list1_to_json(
-        potatodocumentreference.category,
-        potatodocumentreference_category_to_json,
+        potato_documentreference.category,
+        potato_documentreference_category_to_json,
       ),
     ),
   ]
-  let fields = case potatodocumentreference.text {
+  let fields = case potato_documentreference.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.security_label {
+  let fields = case potato_documentreference.security_label {
     [] -> fields
     values -> [
       #("securityLabel", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatodocumentreference.relates_to {
+  let fields = case potato_documentreference.relates_to {
     [] -> fields
     values -> [
       #(
         "relatesTo",
-        json.array(values, potatodocumentreference_relatesto_to_json),
+        json.array(values, potato_documentreference_relatesto_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatodocumentreference.meta {
+  let fields = case potato_documentreference.meta {
     Some(v) -> [#("meta", ct.potatometa_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.master_identifier {
+  let fields = case potato_documentreference.master_identifier {
     Some(v) -> [#("masterIdentifier", ct.potatoidentifier_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.language {
+  let fields = case potato_documentreference.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.implicit_rules {
+  let fields = case potato_documentreference.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.identifier {
+  let fields = case potato_documentreference.identifier {
     [] -> fields
     values -> [
       #("identifier", json.array(values, ct.potatoidentifier_to_json)),
       ..fields
     ]
   }
-  let fields = case potatodocumentreference.id {
+  let fields = case potato_documentreference.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.doc_status {
+  let fields = case potato_documentreference.doc_status {
     Some(v) -> [
-      #("docStatus", valuesets.compositionstatus_to_json(v)),
+      #("docStatus", valueset.composition_status_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatodocumentreference.description {
+  let fields = case potato_documentreference.description {
     Some(v) -> [#("description", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.date {
+  let fields = case potato_documentreference.date {
     Some(v) -> [#("date", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.custodian {
+  let fields = case potato_documentreference.custodian {
     Some(v) -> [#("custodian", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference.context {
+  let fields = case potato_documentreference.context {
     Some(v) -> [
-      #("context", potatodocumentreference_context_to_json(v)),
+      #("context", potato_documentreference_context_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatodocumentreference.contained {
+  let fields = case potato_documentreference.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
-  let fields = case potatodocumentreference.author {
+  let fields = case potato_documentreference.author {
     [] -> fields
     values -> [
       #("author", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatodocumentreference.authenticator {
+  let fields = case potato_documentreference.authenticator {
     Some(v) -> [#("authenticator", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
@@ -1490,84 +1494,84 @@ pub fn potatodocumentreference_to_json(
   json.object(fields)
 }
 
-pub fn potatodocumentreference_category_to_json(
-  value: PotatodocumentreferenceCategory,
+pub fn potato_documentreference_category_to_json(
+  value: PotatoDocumentreferenceCategory,
 ) -> Json {
   case value {
-    PotatodocumentreferenceCategoryUscore(value) ->
-      ct.codeableconcept_potatodocumentreference_category_uscore_to_json(value)
-    PotatodocumentreferenceCategoryOpen(value) ->
+    PotatoDocumentreferenceCategoryUscore(value) ->
+      ct.codeableconcept_potato_documentreference_category_uscore_to_json(value)
+    PotatoDocumentreferenceCategoryOpen(value) ->
       ct.potatocodeableconcept_to_json(value)
   }
 }
 
-pub fn potatodocumentreference_content_to_json(
-  potatodocumentreference_content: PotatodocumentreferenceContent,
+pub fn potato_documentreference_content_to_json(
+  potato_documentreference_content: PotatoDocumentreferenceContent,
 ) -> Json {
   let fields = [
     #(
       "attachment",
       ct.attachment_omit_extension_to_json(
-        potatodocumentreference_content.attachment,
+        potato_documentreference_content.attachment,
       ),
     ),
   ]
-  let fields = case potatodocumentreference_content.id {
+  let fields = case potato_documentreference_content.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference_content.format {
+  let fields = case potato_documentreference_content.format {
     Some(v) -> [#("format", ct.potatocoding_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatodocumentreference_context_to_json(
-  potatodocumentreference_context: PotatodocumentreferenceContext,
+pub fn potato_documentreference_context_to_json(
+  potato_documentreference_context: PotatoDocumentreferenceContext,
 ) -> Json {
   let fields = []
-  let fields = case potatodocumentreference_context.source_patient_info {
+  let fields = case potato_documentreference_context.source_patient_info {
     Some(v) -> [#("sourcePatientInfo", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference_context.related {
+  let fields = case potato_documentreference_context.related {
     [] -> fields
     values -> [
       #("related", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatodocumentreference_context.practice_setting {
+  let fields = case potato_documentreference_context.practice_setting {
     Some(v) -> [
       #("practiceSetting", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatodocumentreference_context.period {
+  let fields = case potato_documentreference_context.period {
     Some(v) -> [#("period", ct.potatoperiod_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference_context.id {
+  let fields = case potato_documentreference_context.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatodocumentreference_context.facility_type {
+  let fields = case potato_documentreference_context.facility_type {
     Some(v) -> [
       #("facilityType", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatodocumentreference_context.event {
+  let fields = case potato_documentreference_context.event {
     [] -> fields
     values -> [
       #("event", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatodocumentreference_context.encounter {
+  let fields = case potato_documentreference_context.encounter {
     Some(v) -> [
       #("encounter", json.array([v], ct.potatoreference_to_json)),
       ..fields
@@ -1577,69 +1581,69 @@ pub fn potatodocumentreference_context_to_json(
   json.object(fields)
 }
 
-pub fn potatodocumentreference_relatesto_to_json(
-  potatodocumentreference_relatesto: PotatodocumentreferenceRelatesto,
+pub fn potato_documentreference_relatesto_to_json(
+  potato_documentreference_relatesto: PotatoDocumentreferenceRelatesto,
 ) -> Json {
   let fields = [
     #(
       "target",
-      ct.potatoreference_to_json(potatodocumentreference_relatesto.target),
+      ct.potatoreference_to_json(potato_documentreference_relatesto.target),
     ),
     #(
       "code",
-      valuesets.documentrelationshiptype_to_json(
-        potatodocumentreference_relatesto.code,
+      valueset.document_relationship_type_to_json(
+        potato_documentreference_relatesto.code,
       ),
     ),
   ]
-  let fields = case potatodocumentreference_relatesto.id {
+  let fields = case potato_documentreference_relatesto.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type Potatoencounter {
-  Potatoencounter(
+pub type PotatoEncounter {
+  PotatoEncounter(
     account: List(ct.Potatoreference),
     appointment: List(ct.Potatoreference),
     based_on: List(ct.Potatoreference),
     class: ct.Potatocoding,
-    class_history: List(PotatoencounterClasshistory),
+    class_history: List(PotatoEncounterClasshistory),
     contained: List(Resource),
-    diagnosis: List(PotatoencounterDiagnosis),
+    diagnosis: List(PotatoEncounterDiagnosis),
     episode_of_care: List(ct.Potatoreference),
-    hospitalization: Option(PotatoencounterHospitalization),
+    hospitalization: Option(PotatoEncounterHospitalization),
     id: Option(String),
-    identifier: List(ct.IdentifierPotatoencounterIdentifier),
+    identifier: List(ct.IdentifierPotatoEncounterIdentifier),
     implicit_rules: Option(String),
     language: Option(String),
     length: Option(ct.Potatoduration),
-    location: List(PotatoencounterLocation),
-    meta: Option(ct.MetaPotatoencounterMeta),
+    location: List(PotatoEncounterLocation),
+    meta: Option(ct.MetaPotatoEncounterMeta),
     part_of: Option(ct.Potatoreference),
-    participant: List(PotatoencounterParticipant),
+    participant: List(PotatoEncounterParticipant),
     period: Option(ct.Potatoperiod),
     priority: Option(ct.Potatocodeableconcept),
     reason_code: List(ct.Potatocodeableconcept),
     reason_reference: List(ct.Potatoreference),
     service_provider: Option(ct.Potatoreference),
     service_type: Option(ct.Potatocodeableconcept),
-    status: valuesets.Encounterstatus,
-    status_history: List(PotatoencounterStatushistory),
+    status: valueset.EncounterStatus,
+    status_history: List(PotatoEncounterStatushistory),
     subject: ct.Potatoreference,
     text: Option(ct.Potatonarrative),
     type_: List1(ct.Potatocodeableconcept),
   )
 }
 
-pub fn potatoencounter_new(
+pub fn potato_encounter_new(
   class class: ct.Potatocoding,
-  status status: valuesets.Encounterstatus,
+  status status: valueset.EncounterStatus,
   subject subject: ct.Potatoreference,
   type_ type_: List1(ct.Potatocodeableconcept),
-) -> Potatoencounter {
-  Potatoencounter(
+) -> PotatoEncounter {
+  PotatoEncounter(
     account: [],
     appointment: [],
     based_on: [],
@@ -1656,8 +1660,8 @@ pub fn potatoencounter_new(
     length: None,
     location: [],
     meta: Some({
-      let meta = ct.meta_potatoencounter_meta_new()
-      ct.MetaPotatoencounterMeta(..meta, profile: [
+      let meta = ct.meta_potato_encounter_meta_new()
+      ct.MetaPotatoEncounterMeta(..meta, profile: [
         "https://potatoemr.com/fhir/StructureDefinition/PotatoEncounter",
       ])
     }),
@@ -1677,23 +1681,23 @@ pub fn potatoencounter_new(
   )
 }
 
-pub type PotatoencounterClasshistory {
-  PotatoencounterClasshistory(
+pub type PotatoEncounterClasshistory {
+  PotatoEncounterClasshistory(
     class: ct.Potatocoding,
     id: Option(String),
     period: ct.Potatoperiod,
   )
 }
 
-pub fn potatoencounter_classhistory_new(
+pub fn potato_encounter_classhistory_new(
   class class: ct.Potatocoding,
   period period: ct.Potatoperiod,
-) -> PotatoencounterClasshistory {
-  PotatoencounterClasshistory(class:, id: None, period:)
+) -> PotatoEncounterClasshistory {
+  PotatoEncounterClasshistory(class:, id: None, period:)
 }
 
-pub type PotatoencounterDiagnosis {
-  PotatoencounterDiagnosis(
+pub type PotatoEncounterDiagnosis {
+  PotatoEncounterDiagnosis(
     condition: ct.Potatoreference,
     id: Option(String),
     rank: Option(Int),
@@ -1701,14 +1705,14 @@ pub type PotatoencounterDiagnosis {
   )
 }
 
-pub fn potatoencounter_diagnosis_new(
+pub fn potato_encounter_diagnosis_new(
   condition condition: ct.Potatoreference,
-) -> PotatoencounterDiagnosis {
-  PotatoencounterDiagnosis(condition:, id: None, rank: None, use_: None)
+) -> PotatoEncounterDiagnosis {
+  PotatoEncounterDiagnosis(condition:, id: None, rank: None, use_: None)
 }
 
-pub type PotatoencounterHospitalization {
-  PotatoencounterHospitalization(
+pub type PotatoEncounterHospitalization {
+  PotatoEncounterHospitalization(
     admit_source: Option(ct.Potatocodeableconcept),
     destination: Option(ct.Potatoreference),
     diet_preference: List(ct.Potatocodeableconcept),
@@ -1722,8 +1726,8 @@ pub type PotatoencounterHospitalization {
   )
 }
 
-pub fn potatoencounter_hospitalization_new() -> PotatoencounterHospitalization {
-  PotatoencounterHospitalization(
+pub fn potato_encounter_hospitalization_new() -> PotatoEncounterHospitalization {
+  PotatoEncounterHospitalization(
     admit_source: None,
     destination: None,
     diet_preference: [],
@@ -1737,20 +1741,20 @@ pub fn potatoencounter_hospitalization_new() -> PotatoencounterHospitalization {
   )
 }
 
-pub type PotatoencounterLocation {
-  PotatoencounterLocation(
+pub type PotatoEncounterLocation {
+  PotatoEncounterLocation(
     id: Option(String),
     location: ct.Potatoreference,
     period: Option(ct.Potatoperiod),
     physical_type: Option(ct.Potatocodeableconcept),
-    status: Option(valuesets.Encounterlocationstatus),
+    status: Option(valueset.EncounterLocationStatus),
   )
 }
 
-pub fn potatoencounter_location_new(
+pub fn potato_encounter_location_new(
   location location: ct.Potatoreference,
-) -> PotatoencounterLocation {
-  PotatoencounterLocation(
+) -> PotatoEncounterLocation {
+  PotatoEncounterLocation(
     id: None,
     location:,
     period: None,
@@ -1759,8 +1763,8 @@ pub fn potatoencounter_location_new(
   )
 }
 
-pub type PotatoencounterParticipant {
-  PotatoencounterParticipant(
+pub type PotatoEncounterParticipant {
+  PotatoEncounterParticipant(
     id: Option(String),
     individual: Option(ct.Potatoreference),
     period: Option(ct.Potatoperiod),
@@ -1768,8 +1772,8 @@ pub type PotatoencounterParticipant {
   )
 }
 
-pub fn potatoencounter_participant_new() -> PotatoencounterParticipant {
-  PotatoencounterParticipant(
+pub fn potato_encounter_participant_new() -> PotatoEncounterParticipant {
+  PotatoEncounterParticipant(
     id: None,
     individual: None,
     period: None,
@@ -1777,173 +1781,173 @@ pub fn potatoencounter_participant_new() -> PotatoencounterParticipant {
   )
 }
 
-pub type PotatoencounterStatushistory {
-  PotatoencounterStatushistory(
+pub type PotatoEncounterStatushistory {
+  PotatoEncounterStatushistory(
     id: Option(String),
     period: ct.Potatoperiod,
-    status: valuesets.Encounterstatus,
+    status: valueset.EncounterStatus,
   )
 }
 
-pub fn potatoencounter_statushistory_new(
+pub fn potato_encounter_statushistory_new(
   period period: ct.Potatoperiod,
-  status status: valuesets.Encounterstatus,
-) -> PotatoencounterStatushistory {
-  PotatoencounterStatushistory(id: None, period:, status:)
+  status status: valueset.EncounterStatus,
+) -> PotatoEncounterStatushistory {
+  PotatoEncounterStatushistory(id: None, period:, status:)
 }
 
-pub fn potatoencounter_to_json(potatoencounter: Potatoencounter) -> Json {
+pub fn potato_encounter_to_json(potato_encounter: PotatoEncounter) -> Json {
   let fields = [
     #(
       "type",
-      list1_to_json(potatoencounter.type_, ct.potatocodeableconcept_to_json),
+      list1_to_json(potato_encounter.type_, ct.potatocodeableconcept_to_json),
     ),
-    #("subject", ct.potatoreference_to_json(potatoencounter.subject)),
-    #("status", valuesets.encounterstatus_to_json(potatoencounter.status)),
-    #("class", ct.potatocoding_to_json(potatoencounter.class)),
+    #("subject", ct.potatoreference_to_json(potato_encounter.subject)),
+    #("status", valueset.encounter_status_to_json(potato_encounter.status)),
+    #("class", ct.potatocoding_to_json(potato_encounter.class)),
   ]
-  let fields = case potatoencounter.text {
+  let fields = case potato_encounter.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.status_history {
+  let fields = case potato_encounter.status_history {
     [] -> fields
     values -> [
       #(
         "statusHistory",
-        json.array(values, potatoencounter_statushistory_to_json),
+        json.array(values, potato_encounter_statushistory_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatoencounter.service_type {
+  let fields = case potato_encounter.service_type {
     Some(v) -> [#("serviceType", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.service_provider {
+  let fields = case potato_encounter.service_provider {
     Some(v) -> [#("serviceProvider", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.reason_reference {
+  let fields = case potato_encounter.reason_reference {
     [] -> fields
     values -> [
       #("reasonReference", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter.reason_code {
+  let fields = case potato_encounter.reason_code {
     [] -> fields
     values -> [
       #("reasonCode", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter.priority {
+  let fields = case potato_encounter.priority {
     Some(v) -> [#("priority", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.period {
+  let fields = case potato_encounter.period {
     Some(v) -> [#("period", ct.potatoperiod_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.participant {
+  let fields = case potato_encounter.participant {
     [] -> fields
     values -> [
-      #("participant", json.array(values, potatoencounter_participant_to_json)),
+      #("participant", json.array(values, potato_encounter_participant_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter.part_of {
+  let fields = case potato_encounter.part_of {
     Some(v) -> [#("partOf", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.meta {
-    Some(v) -> [#("meta", ct.meta_potatoencounter_meta_to_json(v)), ..fields]
+  let fields = case potato_encounter.meta {
+    Some(v) -> [#("meta", ct.meta_potato_encounter_meta_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.location {
+  let fields = case potato_encounter.location {
     [] -> fields
     values -> [
-      #("location", json.array(values, potatoencounter_location_to_json)),
+      #("location", json.array(values, potato_encounter_location_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter.length {
+  let fields = case potato_encounter.length {
     Some(v) -> [#("length", ct.potatoduration_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.language {
+  let fields = case potato_encounter.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.implicit_rules {
+  let fields = case potato_encounter.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.identifier {
+  let fields = case potato_encounter.identifier {
     [] -> fields
     values -> [
       #(
         "identifier",
-        json.array(values, ct.identifier_potatoencounter_identifier_to_json),
+        json.array(values, ct.identifier_potato_encounter_identifier_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatoencounter.id {
+  let fields = case potato_encounter.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter.hospitalization {
+  let fields = case potato_encounter.hospitalization {
     Some(v) -> [
-      #("hospitalization", potatoencounter_hospitalization_to_json(v)),
+      #("hospitalization", potato_encounter_hospitalization_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoencounter.episode_of_care {
+  let fields = case potato_encounter.episode_of_care {
     [] -> fields
     values -> [
       #("episodeOfCare", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter.diagnosis {
+  let fields = case potato_encounter.diagnosis {
     [] -> fields
     values -> [
-      #("diagnosis", json.array(values, potatoencounter_diagnosis_to_json)),
+      #("diagnosis", json.array(values, potato_encounter_diagnosis_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter.contained {
+  let fields = case potato_encounter.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
-  let fields = case potatoencounter.class_history {
+  let fields = case potato_encounter.class_history {
     [] -> fields
     values -> [
       #(
         "classHistory",
-        json.array(values, potatoencounter_classhistory_to_json),
+        json.array(values, potato_encounter_classhistory_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatoencounter.based_on {
+  let fields = case potato_encounter.based_on {
     [] -> fields
     values -> [
       #("basedOn", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter.appointment {
+  let fields = case potato_encounter.appointment {
     [] -> fields
     values -> [
       #("appointment", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter.account {
+  let fields = case potato_encounter.account {
     [] -> fields
     values -> [
       #("account", json.array(values, ct.potatoreference_to_json)),
@@ -1954,56 +1958,56 @@ pub fn potatoencounter_to_json(potatoencounter: Potatoencounter) -> Json {
   json.object(fields)
 }
 
-pub fn potatoencounter_classhistory_to_json(
-  potatoencounter_classhistory: PotatoencounterClasshistory,
+pub fn potato_encounter_classhistory_to_json(
+  potato_encounter_classhistory: PotatoEncounterClasshistory,
 ) -> Json {
   let fields = [
-    #("period", ct.potatoperiod_to_json(potatoencounter_classhistory.period)),
-    #("class", ct.potatocoding_to_json(potatoencounter_classhistory.class)),
+    #("period", ct.potatoperiod_to_json(potato_encounter_classhistory.period)),
+    #("class", ct.potatocoding_to_json(potato_encounter_classhistory.class)),
   ]
-  let fields = case potatoencounter_classhistory.id {
+  let fields = case potato_encounter_classhistory.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoencounter_diagnosis_to_json(
-  potatoencounter_diagnosis: PotatoencounterDiagnosis,
+pub fn potato_encounter_diagnosis_to_json(
+  potato_encounter_diagnosis: PotatoEncounterDiagnosis,
 ) -> Json {
   let fields = [
     #(
       "condition",
-      ct.potatoreference_to_json(potatoencounter_diagnosis.condition),
+      ct.potatoreference_to_json(potato_encounter_diagnosis.condition),
     ),
   ]
-  let fields = case potatoencounter_diagnosis.use_ {
+  let fields = case potato_encounter_diagnosis.use_ {
     Some(v) -> [#("use", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_diagnosis.rank {
+  let fields = case potato_encounter_diagnosis.rank {
     Some(v) -> [#("rank", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_diagnosis.id {
+  let fields = case potato_encounter_diagnosis.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoencounter_hospitalization_to_json(
-  potatoencounter_hospitalization: PotatoencounterHospitalization,
+pub fn potato_encounter_hospitalization_to_json(
+  potato_encounter_hospitalization: PotatoEncounterHospitalization,
 ) -> Json {
   let fields = []
-  let fields = case potatoencounter_hospitalization.special_courtesy {
+  let fields = case potato_encounter_hospitalization.special_courtesy {
     [] -> fields
     values -> [
       #("specialCourtesy", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter_hospitalization.special_arrangement {
+  let fields = case potato_encounter_hospitalization.special_arrangement {
     [] -> fields
     values -> [
       #(
@@ -2013,129 +2017,132 @@ pub fn potatoencounter_hospitalization_to_json(
       ..fields
     ]
   }
-  let fields = case potatoencounter_hospitalization.re_admission {
+  let fields = case potato_encounter_hospitalization.re_admission {
     Some(v) -> [#("reAdmission", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_hospitalization.pre_admission_identifier {
+  let fields = case potato_encounter_hospitalization.pre_admission_identifier {
     Some(v) -> [
       #("preAdmissionIdentifier", ct.potatoidentifier_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoencounter_hospitalization.origin {
+  let fields = case potato_encounter_hospitalization.origin {
     Some(v) -> [#("origin", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_hospitalization.id {
+  let fields = case potato_encounter_hospitalization.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_hospitalization.discharge_disposition {
+  let fields = case potato_encounter_hospitalization.discharge_disposition {
     Some(v) -> [
       #("dischargeDisposition", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoencounter_hospitalization.diet_preference {
+  let fields = case potato_encounter_hospitalization.diet_preference {
     [] -> fields
     values -> [
       #("dietPreference", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter_hospitalization.destination {
+  let fields = case potato_encounter_hospitalization.destination {
     Some(v) -> [#("destination", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_hospitalization.admit_source {
+  let fields = case potato_encounter_hospitalization.admit_source {
     Some(v) -> [#("admitSource", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoencounter_location_to_json(
-  potatoencounter_location: PotatoencounterLocation,
+pub fn potato_encounter_location_to_json(
+  potato_encounter_location: PotatoEncounterLocation,
 ) -> Json {
   let fields = [
-    #("location", ct.potatoreference_to_json(potatoencounter_location.location)),
+    #(
+      "location",
+      ct.potatoreference_to_json(potato_encounter_location.location),
+    ),
   ]
-  let fields = case potatoencounter_location.status {
+  let fields = case potato_encounter_location.status {
     Some(v) -> [
-      #("status", valuesets.encounterlocationstatus_to_json(v)),
+      #("status", valueset.encounter_location_status_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoencounter_location.physical_type {
+  let fields = case potato_encounter_location.physical_type {
     Some(v) -> [
       #("physicalType", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoencounter_location.period {
+  let fields = case potato_encounter_location.period {
     Some(v) -> [#("period", ct.potatoperiod_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_location.id {
+  let fields = case potato_encounter_location.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoencounter_participant_to_json(
-  potatoencounter_participant: PotatoencounterParticipant,
+pub fn potato_encounter_participant_to_json(
+  potato_encounter_participant: PotatoEncounterParticipant,
 ) -> Json {
   let fields = []
-  let fields = case potatoencounter_participant.type_ {
+  let fields = case potato_encounter_participant.type_ {
     [] -> fields
     values -> [
       #("type", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoencounter_participant.period {
+  let fields = case potato_encounter_participant.period {
     Some(v) -> [#("period", ct.potatoperiod_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_participant.individual {
+  let fields = case potato_encounter_participant.individual {
     Some(v) -> [#("individual", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoencounter_participant.id {
+  let fields = case potato_encounter_participant.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoencounter_statushistory_to_json(
-  potatoencounter_statushistory: PotatoencounterStatushistory,
+pub fn potato_encounter_statushistory_to_json(
+  potato_encounter_statushistory: PotatoEncounterStatushistory,
 ) -> Json {
   let fields = [
     #(
       "status",
-      valuesets.encounterstatus_to_json(potatoencounter_statushistory.status),
+      valueset.encounter_status_to_json(potato_encounter_statushistory.status),
     ),
-    #("period", ct.potatoperiod_to_json(potatoencounter_statushistory.period)),
+    #("period", ct.potatoperiod_to_json(potato_encounter_statushistory.period)),
   ]
-  let fields = case potatoencounter_statushistory.id {
+  let fields = case potato_encounter_statushistory.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type Potatoimmunization {
-  Potatoimmunization(
+pub type PotatoImmunization {
+  PotatoImmunization(
     contained: List(Resource),
     dose_quantity: Option(ct.Potatosimplequantity),
-    education: List(PotatoimmunizationEducation),
+    education: List(PotatoImmunizationEducation),
     encounter: Option(ct.Potatoreference),
     expiration_date: Option(Date),
     funding_source: Option(ct.Potatocodeableconcept),
@@ -2149,20 +2156,20 @@ pub type Potatoimmunization {
     manufacturer: Option(ct.Potatoreference),
     meta: Option(ct.Potatometa),
     note: List(ct.Potatoannotation),
-    occurrence: PotatoimmunizationOccurrence,
+    occurrence: PotatoImmunizationOccurrence,
     patient: ct.Potatoreference,
-    performer: List(PotatoimmunizationPerformer),
+    performer: List(PotatoImmunizationPerformer),
     primary_source: Option(Bool),
     program_eligibility: List(ct.Potatocodeableconcept),
-    protocol_applied: List(PotatoimmunizationProtocolapplied),
-    reaction: List(PotatoimmunizationReaction),
+    protocol_applied: List(PotatoImmunizationProtocolapplied),
+    reaction: List(PotatoImmunizationReaction),
     reason_code: List(ct.Potatocodeableconcept),
     reason_reference: List(ct.Potatoreference),
     recorded: Option(DateTime),
     report_origin: Option(ct.Potatocodeableconcept),
     route: Option(ct.Potatocodeableconcept),
     site: Option(ct.Potatocodeableconcept),
-    status: valuesets.Immunizationstatus,
+    status: valueset.ImmunizationStatus,
     status_reason: Option(ct.Potatocodeableconcept),
     subpotent_reason: List(ct.Potatocodeableconcept),
     text: Option(ct.Potatonarrative),
@@ -2170,13 +2177,13 @@ pub type Potatoimmunization {
   )
 }
 
-pub fn potatoimmunization_new(
-  occurrence occurrence: PotatoimmunizationOccurrence,
+pub fn potato_immunization_new(
+  occurrence occurrence: PotatoImmunizationOccurrence,
   patient patient: ct.Potatoreference,
-  status status: valuesets.Immunizationstatus,
+  status status: valueset.ImmunizationStatus,
   vaccine_code vaccine_code: ct.Potatocodeableconcept,
-) -> Potatoimmunization {
-  Potatoimmunization(
+) -> PotatoImmunization {
+  PotatoImmunization(
     contained: [],
     dose_quantity: None,
     education: [],
@@ -2219,13 +2226,13 @@ pub fn potatoimmunization_new(
   )
 }
 
-pub type PotatoimmunizationOccurrence {
-  PotatoimmunizationOccurrenceDatetime(value: DateTime)
-  PotatoimmunizationOccurrenceString(value: String)
+pub type PotatoImmunizationOccurrence {
+  PotatoImmunizationOccurrenceDatetime(value: DateTime)
+  PotatoImmunizationOccurrenceString(value: String)
 }
 
-pub type PotatoimmunizationEducation {
-  PotatoimmunizationEducation(
+pub type PotatoImmunizationEducation {
+  PotatoImmunizationEducation(
     document_type: Option(String),
     id: Option(String),
     presentation_date: Option(DateTime),
@@ -2234,8 +2241,8 @@ pub type PotatoimmunizationEducation {
   )
 }
 
-pub fn potatoimmunization_education_new() -> PotatoimmunizationEducation {
-  PotatoimmunizationEducation(
+pub fn potato_immunization_education_new() -> PotatoImmunizationEducation {
+  PotatoImmunizationEducation(
     document_type: None,
     id: None,
     presentation_date: None,
@@ -2244,35 +2251,35 @@ pub fn potatoimmunization_education_new() -> PotatoimmunizationEducation {
   )
 }
 
-pub type PotatoimmunizationPerformer {
-  PotatoimmunizationPerformer(
+pub type PotatoImmunizationPerformer {
+  PotatoImmunizationPerformer(
     actor: ct.Potatoreference,
     function: Option(ct.Potatocodeableconcept),
     id: Option(String),
   )
 }
 
-pub fn potatoimmunization_performer_new(
+pub fn potato_immunization_performer_new(
   actor actor: ct.Potatoreference,
-) -> PotatoimmunizationPerformer {
-  PotatoimmunizationPerformer(actor:, function: None, id: None)
+) -> PotatoImmunizationPerformer {
+  PotatoImmunizationPerformer(actor:, function: None, id: None)
 }
 
-pub type PotatoimmunizationProtocolapplied {
-  PotatoimmunizationProtocolapplied(
+pub type PotatoImmunizationProtocolapplied {
+  PotatoImmunizationProtocolapplied(
     authority: Option(ct.Potatoreference),
-    dose_number: PotatoimmunizationProtocolappliedDosenumber,
+    dose_number: PotatoImmunizationProtocolappliedDosenumber,
     id: Option(String),
     series: Option(String),
-    series_doses: Option(PotatoimmunizationProtocolappliedSeriesdoses),
+    series_doses: Option(PotatoImmunizationProtocolappliedSeriesdoses),
     target_disease: List(ct.Potatocodeableconcept),
   )
 }
 
-pub fn potatoimmunization_protocolapplied_new(
-  dose_number dose_number: PotatoimmunizationProtocolappliedDosenumber,
-) -> PotatoimmunizationProtocolapplied {
-  PotatoimmunizationProtocolapplied(
+pub fn potato_immunization_protocolapplied_new(
+  dose_number dose_number: PotatoImmunizationProtocolappliedDosenumber,
+) -> PotatoImmunizationProtocolapplied {
+  PotatoImmunizationProtocolapplied(
     authority: None,
     dose_number:,
     id: None,
@@ -2282,18 +2289,18 @@ pub fn potatoimmunization_protocolapplied_new(
   )
 }
 
-pub type PotatoimmunizationProtocolappliedSeriesdoses {
-  PotatoimmunizationProtocolappliedSeriesdosesPositiveint(value: Int)
-  PotatoimmunizationProtocolappliedSeriesdosesString(value: String)
+pub type PotatoImmunizationProtocolappliedSeriesdoses {
+  PotatoImmunizationProtocolappliedSeriesdosesPositiveint(value: Int)
+  PotatoImmunizationProtocolappliedSeriesdosesString(value: String)
 }
 
-pub type PotatoimmunizationProtocolappliedDosenumber {
-  PotatoimmunizationProtocolappliedDosenumberPositiveint(value: Int)
-  PotatoimmunizationProtocolappliedDosenumberString(value: String)
+pub type PotatoImmunizationProtocolappliedDosenumber {
+  PotatoImmunizationProtocolappliedDosenumberPositiveint(value: Int)
+  PotatoImmunizationProtocolappliedDosenumberString(value: String)
 }
 
-pub type PotatoimmunizationReaction {
-  PotatoimmunizationReaction(
+pub type PotatoImmunizationReaction {
+  PotatoImmunizationReaction(
     date: Option(DateTime),
     detail: Option(ct.Potatoreference),
     id: Option(String),
@@ -2301,98 +2308,101 @@ pub type PotatoimmunizationReaction {
   )
 }
 
-pub fn potatoimmunization_reaction_new() -> PotatoimmunizationReaction {
-  PotatoimmunizationReaction(date: None, detail: None, id: None, reported: None)
+pub fn potato_immunization_reaction_new() -> PotatoImmunizationReaction {
+  PotatoImmunizationReaction(date: None, detail: None, id: None, reported: None)
 }
 
-pub fn potatoimmunization_to_json(
-  potatoimmunization: Potatoimmunization,
+pub fn potato_immunization_to_json(
+  potato_immunization: PotatoImmunization,
 ) -> Json {
   let fields = [
     #(
       "vaccineCode",
-      ct.potatocodeableconcept_to_json(potatoimmunization.vaccine_code),
+      ct.potatocodeableconcept_to_json(potato_immunization.vaccine_code),
     ),
-    #("status", valuesets.immunizationstatus_to_json(potatoimmunization.status)),
-    #("patient", ct.potatoreference_to_json(potatoimmunization.patient)),
+    #(
+      "status",
+      valueset.immunization_status_to_json(potato_immunization.status),
+    ),
+    #("patient", ct.potatoreference_to_json(potato_immunization.patient)),
     #(
       "occurrence"
-        <> case potatoimmunization.occurrence {
-        PotatoimmunizationOccurrenceDatetime(_) -> "DateTime"
-        PotatoimmunizationOccurrenceString(_) -> "String"
+        <> case potato_immunization.occurrence {
+        PotatoImmunizationOccurrenceDatetime(_) -> "DateTime"
+        PotatoImmunizationOccurrenceString(_) -> "String"
       },
-      potatoimmunization_occurrence_to_json(potatoimmunization.occurrence),
+      potato_immunization_occurrence_to_json(potato_immunization.occurrence),
     ),
   ]
-  let fields = case potatoimmunization.text {
+  let fields = case potato_immunization.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.subpotent_reason {
+  let fields = case potato_immunization.subpotent_reason {
     [] -> fields
     values -> [
       #("subpotentReason", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.status_reason {
+  let fields = case potato_immunization.status_reason {
     Some(v) -> [
       #("statusReason", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoimmunization.site {
+  let fields = case potato_immunization.site {
     Some(v) -> [#("site", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.route {
+  let fields = case potato_immunization.route {
     Some(v) -> [#("route", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.report_origin {
+  let fields = case potato_immunization.report_origin {
     Some(v) -> [
       #("reportOrigin", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoimmunization.recorded {
+  let fields = case potato_immunization.recorded {
     Some(v) -> [#("recorded", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.reason_reference {
+  let fields = case potato_immunization.reason_reference {
     [] -> fields
     values -> [
       #("reasonReference", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.reason_code {
+  let fields = case potato_immunization.reason_code {
     [] -> fields
     values -> [
       #("reasonCode", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.reaction {
+  let fields = case potato_immunization.reaction {
     [] -> fields
     values -> [
-      #("reaction", json.array(values, potatoimmunization_reaction_to_json)),
+      #("reaction", json.array(values, potato_immunization_reaction_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.protocol_applied {
+  let fields = case potato_immunization.protocol_applied {
     [] -> fields
     values -> [
       #(
         "protocolApplied",
-        json.array(values, potatoimmunization_protocolapplied_to_json),
+        json.array(values, potato_immunization_protocolapplied_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.program_eligibility {
+  let fields = case potato_immunization.program_eligibility {
     [] -> fields
     values -> [
       #(
@@ -2402,260 +2412,260 @@ pub fn potatoimmunization_to_json(
       ..fields
     ]
   }
-  let fields = case potatoimmunization.primary_source {
+  let fields = case potato_immunization.primary_source {
     Some(v) -> [#("primarySource", json.bool(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.performer {
+  let fields = case potato_immunization.performer {
     [] -> fields
     values -> [
-      #("performer", json.array(values, potatoimmunization_performer_to_json)),
+      #("performer", json.array(values, potato_immunization_performer_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.note {
+  let fields = case potato_immunization.note {
     [] -> fields
     values -> [
       #("note", json.array(values, ct.potatoannotation_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.meta {
+  let fields = case potato_immunization.meta {
     Some(v) -> [#("meta", ct.potatometa_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.manufacturer {
+  let fields = case potato_immunization.manufacturer {
     Some(v) -> [#("manufacturer", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.lot_number {
+  let fields = case potato_immunization.lot_number {
     Some(v) -> [#("lotNumber", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.location {
+  let fields = case potato_immunization.location {
     Some(v) -> [#("location", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.language {
+  let fields = case potato_immunization.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.is_subpotent {
+  let fields = case potato_immunization.is_subpotent {
     Some(v) -> [#("isSubpotent", json.bool(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.implicit_rules {
+  let fields = case potato_immunization.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.identifier {
+  let fields = case potato_immunization.identifier {
     [] -> fields
     values -> [
       #("identifier", json.array(values, ct.potatoidentifier_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.id {
+  let fields = case potato_immunization.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.funding_source {
+  let fields = case potato_immunization.funding_source {
     Some(v) -> [
       #("fundingSource", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoimmunization.expiration_date {
+  let fields = case potato_immunization.expiration_date {
     Some(v) -> [#("expirationDate", pt.date_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.encounter {
+  let fields = case potato_immunization.encounter {
     Some(v) -> [#("encounter", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.education {
+  let fields = case potato_immunization.education {
     [] -> fields
     values -> [
-      #("education", json.array(values, potatoimmunization_education_to_json)),
+      #("education", json.array(values, potato_immunization_education_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization.dose_quantity {
+  let fields = case potato_immunization.dose_quantity {
     Some(v) -> [#("doseQuantity", ct.potatosimplequantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization.contained {
+  let fields = case potato_immunization.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
   let fields = [#("resourceType", json.string("Immunization")), ..fields]
   json.object(fields)
 }
 
-pub fn potatoimmunization_occurrence_to_json(
-  value: PotatoimmunizationOccurrence,
+pub fn potato_immunization_occurrence_to_json(
+  value: PotatoImmunizationOccurrence,
 ) -> Json {
   case value {
-    PotatoimmunizationOccurrenceDatetime(value) -> pt.datetime_to_json(value)
-    PotatoimmunizationOccurrenceString(value) -> json.string(value)
+    PotatoImmunizationOccurrenceDatetime(value) -> pt.datetime_to_json(value)
+    PotatoImmunizationOccurrenceString(value) -> json.string(value)
   }
 }
 
-pub fn potatoimmunization_education_to_json(
-  potatoimmunization_education: PotatoimmunizationEducation,
+pub fn potato_immunization_education_to_json(
+  potato_immunization_education: PotatoImmunizationEducation,
 ) -> Json {
   let fields = []
-  let fields = case potatoimmunization_education.reference {
+  let fields = case potato_immunization_education.reference {
     Some(v) -> [#("reference", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_education.publication_date {
+  let fields = case potato_immunization_education.publication_date {
     Some(v) -> [#("publicationDate", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_education.presentation_date {
+  let fields = case potato_immunization_education.presentation_date {
     Some(v) -> [#("presentationDate", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_education.id {
+  let fields = case potato_immunization_education.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_education.document_type {
+  let fields = case potato_immunization_education.document_type {
     Some(v) -> [#("documentType", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoimmunization_performer_to_json(
-  potatoimmunization_performer: PotatoimmunizationPerformer,
+pub fn potato_immunization_performer_to_json(
+  potato_immunization_performer: PotatoImmunizationPerformer,
 ) -> Json {
   let fields = [
-    #("actor", ct.potatoreference_to_json(potatoimmunization_performer.actor)),
+    #("actor", ct.potatoreference_to_json(potato_immunization_performer.actor)),
   ]
-  let fields = case potatoimmunization_performer.id {
+  let fields = case potato_immunization_performer.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_performer.function {
+  let fields = case potato_immunization_performer.function {
     Some(v) -> [#("function", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoimmunization_protocolapplied_to_json(
-  potatoimmunization_protocolapplied: PotatoimmunizationProtocolapplied,
+pub fn potato_immunization_protocolapplied_to_json(
+  potato_immunization_protocolapplied: PotatoImmunizationProtocolapplied,
 ) -> Json {
   let fields = [
     #(
       "doseNumber"
-        <> case potatoimmunization_protocolapplied.dose_number {
-        PotatoimmunizationProtocolappliedDosenumberPositiveint(_) ->
+        <> case potato_immunization_protocolapplied.dose_number {
+        PotatoImmunizationProtocolappliedDosenumberPositiveint(_) ->
           "PositiveInt"
-        PotatoimmunizationProtocolappliedDosenumberString(_) -> "String"
+        PotatoImmunizationProtocolappliedDosenumberString(_) -> "String"
       },
-      potatoimmunization_protocolapplied_dosenumber_to_json(
-        potatoimmunization_protocolapplied.dose_number,
+      potato_immunization_protocolapplied_dosenumber_to_json(
+        potato_immunization_protocolapplied.dose_number,
       ),
     ),
   ]
-  let fields = case potatoimmunization_protocolapplied.target_disease {
+  let fields = case potato_immunization_protocolapplied.target_disease {
     [] -> fields
     values -> [
       #("targetDisease", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatoimmunization_protocolapplied.series_doses {
+  let fields = case potato_immunization_protocolapplied.series_doses {
     Some(v) -> [
       #(
         "seriesDoses"
           <> case v {
-          PotatoimmunizationProtocolappliedSeriesdosesPositiveint(_) ->
+          PotatoImmunizationProtocolappliedSeriesdosesPositiveint(_) ->
             "PositiveInt"
-          PotatoimmunizationProtocolappliedSeriesdosesString(_) -> "String"
+          PotatoImmunizationProtocolappliedSeriesdosesString(_) -> "String"
         },
-        potatoimmunization_protocolapplied_seriesdoses_to_json(v),
+        potato_immunization_protocolapplied_seriesdoses_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatoimmunization_protocolapplied.series {
+  let fields = case potato_immunization_protocolapplied.series {
     Some(v) -> [#("series", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_protocolapplied.id {
+  let fields = case potato_immunization_protocolapplied.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_protocolapplied.authority {
+  let fields = case potato_immunization_protocolapplied.authority {
     Some(v) -> [#("authority", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoimmunization_protocolapplied_dosenumber_to_json(
-  value: PotatoimmunizationProtocolappliedDosenumber,
+pub fn potato_immunization_protocolapplied_dosenumber_to_json(
+  value: PotatoImmunizationProtocolappliedDosenumber,
 ) -> Json {
   case value {
-    PotatoimmunizationProtocolappliedDosenumberPositiveint(value) ->
+    PotatoImmunizationProtocolappliedDosenumberPositiveint(value) ->
       json.int(value)
-    PotatoimmunizationProtocolappliedDosenumberString(value) ->
+    PotatoImmunizationProtocolappliedDosenumberString(value) ->
       json.string(value)
   }
 }
 
-pub fn potatoimmunization_protocolapplied_seriesdoses_to_json(
-  value: PotatoimmunizationProtocolappliedSeriesdoses,
+pub fn potato_immunization_protocolapplied_seriesdoses_to_json(
+  value: PotatoImmunizationProtocolappliedSeriesdoses,
 ) -> Json {
   case value {
-    PotatoimmunizationProtocolappliedSeriesdosesPositiveint(value) ->
+    PotatoImmunizationProtocolappliedSeriesdosesPositiveint(value) ->
       json.int(value)
-    PotatoimmunizationProtocolappliedSeriesdosesString(value) ->
+    PotatoImmunizationProtocolappliedSeriesdosesString(value) ->
       json.string(value)
   }
 }
 
-pub fn potatoimmunization_reaction_to_json(
-  potatoimmunization_reaction: PotatoimmunizationReaction,
+pub fn potato_immunization_reaction_to_json(
+  potato_immunization_reaction: PotatoImmunizationReaction,
 ) -> Json {
   let fields = []
-  let fields = case potatoimmunization_reaction.reported {
+  let fields = case potato_immunization_reaction.reported {
     Some(v) -> [#("reported", json.bool(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_reaction.id {
+  let fields = case potato_immunization_reaction.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_reaction.detail {
+  let fields = case potato_immunization_reaction.detail {
     Some(v) -> [#("detail", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatoimmunization_reaction.date {
+  let fields = case potato_immunization_reaction.date {
     Some(v) -> [#("date", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type Potatomedicationrequest {
-  Potatomedicationrequest(
+pub type PotatoMedicationrequest {
+  PotatoMedicationrequest(
     authored_on: Option(DateTime),
     based_on: List(ct.Potatoreference),
     category: List(ct.Potatocodeableconcept),
-    us_core: List(ct.CodeableconceptPotatomedicationrequestCategoryUsCore),
+    us_core: List(ct.CodeableconceptPotatoMedicationrequestCategoryUsCore),
     contained: List(Resource),
     course_of_therapy_type: Option(ct.Potatocodeableconcept),
     detected_issue: List(ct.Potatoreference),
-    dispense_request: Option(PotatomedicationrequestDispenserequest),
+    dispense_request: Option(PotatoMedicationrequestDispenserequest),
     do_not_perform: Option(Bool),
-    dosage_instruction: List(ct.DosagePotatomedicationrequestDosageinstruction),
+    dosage_instruction: List(ct.DosagePotatoMedicationrequestDosageinstruction),
     encounter: Option(ct.Potatoreference),
     event_history: List(ct.Potatoreference),
     medication_adherence: List(ct.Potatomedicationadherence),
@@ -2666,36 +2676,36 @@ pub type Potatomedicationrequest {
     instantiates_canonical: List(String),
     instantiates_uri: List(String),
     insurance: List(ct.Potatoreference),
-    intent: valuesets.Medicationrequestintent,
+    intent: valueset.MedicationrequestIntent,
     language: Option(String),
-    medication: PotatomedicationrequestMedication,
+    medication: PotatoMedicationrequestMedication,
     meta: Option(ct.Potatometa),
     note: List(ct.Potatoannotation),
     performer: Option(ct.Potatoreference),
     performer_type: Option(ct.Potatocodeableconcept),
     prior_prescription: Option(ct.Potatoreference),
-    priority: Option(valuesets.Requestpriority),
+    priority: Option(valueset.RequestPriority),
     reason_code: List(ct.Potatocodeableconcept),
     reason_reference: List(ct.Potatoreference),
     recorder: Option(ct.Potatoreference),
-    reported: Option(PotatomedicationrequestReported),
+    reported: Option(PotatoMedicationrequestReported),
     requester: Option(ct.Potatoreference),
-    status: valuesets.Medicationrequeststatus,
+    status: valueset.MedicationrequestStatus,
     status_reason: Option(ct.Potatocodeableconcept),
     subject: ct.Potatoreference,
-    substitution: Option(PotatomedicationrequestSubstitution),
+    substitution: Option(PotatoMedicationrequestSubstitution),
     supporting_information: List(ct.Potatoreference),
     text: Option(ct.Potatonarrative),
   )
 }
 
-pub fn potatomedicationrequest_new(
-  intent intent: valuesets.Medicationrequestintent,
-  medication medication: PotatomedicationrequestMedication,
-  status status: valuesets.Medicationrequeststatus,
+pub fn potato_medicationrequest_new(
+  intent intent: valueset.MedicationrequestIntent,
+  medication medication: PotatoMedicationrequestMedication,
+  status status: valueset.MedicationrequestStatus,
   subject subject: ct.Potatoreference,
-) -> Potatomedicationrequest {
-  Potatomedicationrequest(
+) -> PotatoMedicationrequest {
+  PotatoMedicationrequest(
     authored_on: None,
     based_on: [],
     category: [],
@@ -2744,24 +2754,24 @@ pub fn potatomedicationrequest_new(
   )
 }
 
-pub type PotatomedicationrequestReported {
-  PotatomedicationrequestReportedBoolean(value: Bool)
-  PotatomedicationrequestReportedReference(value: ct.Potatoreference)
+pub type PotatoMedicationrequestReported {
+  PotatoMedicationrequestReportedBoolean(value: Bool)
+  PotatoMedicationrequestReportedReference(value: ct.Potatoreference)
 }
 
-pub type PotatomedicationrequestMedication {
-  PotatomedicationrequestMedicationCodeableconcept(
+pub type PotatoMedicationrequestMedication {
+  PotatoMedicationrequestMedicationCodeableconcept(
     value: ct.Potatocodeableconcept,
   )
-  PotatomedicationrequestMedicationReference(value: ct.Potatoreference)
+  PotatoMedicationrequestMedicationReference(value: ct.Potatoreference)
 }
 
-pub type PotatomedicationrequestDispenserequest {
-  PotatomedicationrequestDispenserequest(
+pub type PotatoMedicationrequestDispenserequest {
+  PotatoMedicationrequestDispenserequest(
     dispense_interval: Option(ct.Potatoduration),
     expected_supply_duration: Option(ct.Potatoduration),
     id: Option(String),
-    initial_fill: Option(PotatomedicationrequestDispenserequestInitialfill),
+    initial_fill: Option(PotatoMedicationrequestDispenserequestInitialfill),
     number_of_repeats_allowed: Option(Int),
     performer: Option(ct.Potatoreference),
     quantity: Option(ct.Potatosimplequantity),
@@ -2769,8 +2779,8 @@ pub type PotatomedicationrequestDispenserequest {
   )
 }
 
-pub fn potatomedicationrequest_dispenserequest_new() -> PotatomedicationrequestDispenserequest {
-  PotatomedicationrequestDispenserequest(
+pub fn potato_medicationrequest_dispenserequest_new() -> PotatoMedicationrequestDispenserequest {
+  PotatoMedicationrequestDispenserequest(
     dispense_interval: None,
     expected_supply_duration: None,
     id: None,
@@ -2782,202 +2792,202 @@ pub fn potatomedicationrequest_dispenserequest_new() -> PotatomedicationrequestD
   )
 }
 
-pub type PotatomedicationrequestDispenserequestInitialfill {
-  PotatomedicationrequestDispenserequestInitialfill(
+pub type PotatoMedicationrequestDispenserequestInitialfill {
+  PotatoMedicationrequestDispenserequestInitialfill(
     duration: Option(ct.Potatoduration),
     id: Option(String),
     quantity: Option(ct.Potatosimplequantity),
   )
 }
 
-pub fn potatomedicationrequest_dispenserequest_initialfill_new() -> PotatomedicationrequestDispenserequestInitialfill {
-  PotatomedicationrequestDispenserequestInitialfill(
+pub fn potato_medicationrequest_dispenserequest_initialfill_new() -> PotatoMedicationrequestDispenserequestInitialfill {
+  PotatoMedicationrequestDispenserequestInitialfill(
     duration: None,
     id: None,
     quantity: None,
   )
 }
 
-pub type PotatomedicationrequestSubstitution {
-  PotatomedicationrequestSubstitution(
-    allowed: PotatomedicationrequestSubstitutionAllowed,
+pub type PotatoMedicationrequestSubstitution {
+  PotatoMedicationrequestSubstitution(
+    allowed: PotatoMedicationrequestSubstitutionAllowed,
     id: Option(String),
     reason: Option(ct.Potatocodeableconcept),
   )
 }
 
-pub fn potatomedicationrequest_substitution_new(
-  allowed allowed: PotatomedicationrequestSubstitutionAllowed,
-) -> PotatomedicationrequestSubstitution {
-  PotatomedicationrequestSubstitution(allowed:, id: None, reason: None)
+pub fn potato_medicationrequest_substitution_new(
+  allowed allowed: PotatoMedicationrequestSubstitutionAllowed,
+) -> PotatoMedicationrequestSubstitution {
+  PotatoMedicationrequestSubstitution(allowed:, id: None, reason: None)
 }
 
-pub type PotatomedicationrequestSubstitutionAllowed {
-  PotatomedicationrequestSubstitutionAllowedBoolean(value: Bool)
-  PotatomedicationrequestSubstitutionAllowedCodeableconcept(
+pub type PotatoMedicationrequestSubstitutionAllowed {
+  PotatoMedicationrequestSubstitutionAllowedBoolean(value: Bool)
+  PotatoMedicationrequestSubstitutionAllowedCodeableconcept(
     value: ct.Potatocodeableconcept,
   )
 }
 
-pub fn potatomedicationrequest_to_json(
-  potatomedicationrequest: Potatomedicationrequest,
+pub fn potato_medicationrequest_to_json(
+  potato_medicationrequest: PotatoMedicationrequest,
 ) -> Json {
   let fields = [
-    #("subject", ct.potatoreference_to_json(potatomedicationrequest.subject)),
+    #("subject", ct.potatoreference_to_json(potato_medicationrequest.subject)),
     #(
       "status",
-      valuesets.medicationrequeststatus_to_json(potatomedicationrequest.status),
+      valueset.medicationrequest_status_to_json(potato_medicationrequest.status),
     ),
     #(
       "medication"
-        <> case potatomedicationrequest.medication {
-        PotatomedicationrequestMedicationCodeableconcept(_) -> "CodeableConcept"
-        PotatomedicationrequestMedicationReference(_) -> "Reference"
+        <> case potato_medicationrequest.medication {
+        PotatoMedicationrequestMedicationCodeableconcept(_) -> "CodeableConcept"
+        PotatoMedicationrequestMedicationReference(_) -> "Reference"
       },
-      potatomedicationrequest_medication_to_json(
-        potatomedicationrequest.medication,
+      potato_medicationrequest_medication_to_json(
+        potato_medicationrequest.medication,
       ),
     ),
     #(
       "intent",
-      valuesets.medicationrequestintent_to_json(potatomedicationrequest.intent),
+      valueset.medicationrequest_intent_to_json(potato_medicationrequest.intent),
     ),
   ]
-  let fields = case potatomedicationrequest.text {
+  let fields = case potato_medicationrequest.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.supporting_information {
+  let fields = case potato_medicationrequest.supporting_information {
     [] -> fields
     values -> [
       #("supportingInformation", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.substitution {
+  let fields = case potato_medicationrequest.substitution {
     Some(v) -> [
-      #("substitution", potatomedicationrequest_substitution_to_json(v)),
+      #("substitution", potato_medicationrequest_substitution_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatomedicationrequest.status_reason {
+  let fields = case potato_medicationrequest.status_reason {
     Some(v) -> [
       #("statusReason", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatomedicationrequest.requester {
+  let fields = case potato_medicationrequest.requester {
     Some(v) -> [#("requester", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.reported {
+  let fields = case potato_medicationrequest.reported {
     Some(v) -> [
       #(
         "reported"
           <> case v {
-          PotatomedicationrequestReportedBoolean(_) -> "Boolean"
-          PotatomedicationrequestReportedReference(_) -> "Reference"
+          PotatoMedicationrequestReportedBoolean(_) -> "Boolean"
+          PotatoMedicationrequestReportedReference(_) -> "Reference"
         },
-        potatomedicationrequest_reported_to_json(v),
+        potato_medicationrequest_reported_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatomedicationrequest.recorder {
+  let fields = case potato_medicationrequest.recorder {
     Some(v) -> [#("recorder", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.reason_reference {
+  let fields = case potato_medicationrequest.reason_reference {
     [] -> fields
     values -> [
       #("reasonReference", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.reason_code {
+  let fields = case potato_medicationrequest.reason_code {
     [] -> fields
     values -> [
       #("reasonCode", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.priority {
-    Some(v) -> [#("priority", valuesets.requestpriority_to_json(v)), ..fields]
+  let fields = case potato_medicationrequest.priority {
+    Some(v) -> [#("priority", valueset.request_priority_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.prior_prescription {
+  let fields = case potato_medicationrequest.prior_prescription {
     Some(v) -> [#("priorPrescription", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.performer_type {
+  let fields = case potato_medicationrequest.performer_type {
     Some(v) -> [
       #("performerType", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatomedicationrequest.performer {
+  let fields = case potato_medicationrequest.performer {
     Some(v) -> [#("performer", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.note {
+  let fields = case potato_medicationrequest.note {
     [] -> fields
     values -> [
       #("note", json.array(values, ct.potatoannotation_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.meta {
+  let fields = case potato_medicationrequest.meta {
     Some(v) -> [#("meta", ct.potatometa_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.language {
+  let fields = case potato_medicationrequest.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.insurance {
+  let fields = case potato_medicationrequest.insurance {
     [] -> fields
     values -> [
       #("insurance", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.instantiates_uri {
+  let fields = case potato_medicationrequest.instantiates_uri {
     [] -> fields
     values -> [#("instantiatesUri", json.array(values, json.string)), ..fields]
   }
-  let fields = case potatomedicationrequest.instantiates_canonical {
+  let fields = case potato_medicationrequest.instantiates_canonical {
     [] -> fields
     values -> [
       #("instantiatesCanonical", json.array(values, json.string)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.implicit_rules {
+  let fields = case potato_medicationrequest.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.identifier {
+  let fields = case potato_medicationrequest.identifier {
     [] -> fields
     values -> [
       #("identifier", json.array(values, ct.potatoidentifier_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.id {
+  let fields = case potato_medicationrequest.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.group_identifier {
+  let fields = case potato_medicationrequest.group_identifier {
     Some(v) -> [#("groupIdentifier", ct.potatoidentifier_to_json(v)), ..fields]
     None -> fields
   }
   let slice_values =
     list.flatten([
-      list.map(potatomedicationrequest.medication_adherence, fn(value) {
+      list.map(potato_medicationrequest.medication_adherence, fn(value) {
         ct.potatomedicationadherence_to_json(
           value,
           "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medication-adherence",
@@ -2989,67 +2999,67 @@ pub fn potatomedicationrequest_to_json(
     [] -> fields
     values -> [#("extension", json.preprocessed_array(values)), ..fields]
   }
-  let fields = case potatomedicationrequest.event_history {
+  let fields = case potato_medicationrequest.event_history {
     [] -> fields
     values -> [
       #("eventHistory", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.encounter {
+  let fields = case potato_medicationrequest.encounter {
     Some(v) -> [#("encounter", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.dosage_instruction {
+  let fields = case potato_medicationrequest.dosage_instruction {
     [] -> fields
     values -> [
       #(
         "dosageInstruction",
         json.array(
           values,
-          ct.dosage_potatomedicationrequest_dosageinstruction_to_json,
+          ct.dosage_potato_medicationrequest_dosageinstruction_to_json,
         ),
       ),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.do_not_perform {
+  let fields = case potato_medicationrequest.do_not_perform {
     Some(v) -> [#("doNotPerform", json.bool(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest.dispense_request {
+  let fields = case potato_medicationrequest.dispense_request {
     Some(v) -> [
-      #("dispenseRequest", potatomedicationrequest_dispenserequest_to_json(v)),
+      #("dispenseRequest", potato_medicationrequest_dispenserequest_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatomedicationrequest.detected_issue {
+  let fields = case potato_medicationrequest.detected_issue {
     [] -> fields
     values -> [
       #("detectedIssue", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.course_of_therapy_type {
+  let fields = case potato_medicationrequest.course_of_therapy_type {
     Some(v) -> [
       #("courseOfTherapyType", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatomedicationrequest.contained {
+  let fields = case potato_medicationrequest.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
   let slice_values =
     list.flatten([
-      list.map(potatomedicationrequest.us_core, fn(value) {
-        ct.codeableconcept_potatomedicationrequest_category_us_core_to_json(
+      list.map(potato_medicationrequest.us_core, fn(value) {
+        ct.codeableconcept_potato_medicationrequest_category_us_core_to_json(
           value,
         )
       }),
-      list.map(potatomedicationrequest.category, fn(value) {
+      list.map(potato_medicationrequest.category, fn(value) {
         ct.potatocodeableconcept_to_json(value)
       }),
     ])
@@ -3057,14 +3067,14 @@ pub fn potatomedicationrequest_to_json(
     [] -> fields
     values -> [#("category", json.preprocessed_array(values)), ..fields]
   }
-  let fields = case potatomedicationrequest.based_on {
+  let fields = case potato_medicationrequest.based_on {
     [] -> fields
     values -> [
       #("basedOn", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationrequest.authored_on {
+  let fields = case potato_medicationrequest.authored_on {
     Some(v) -> [#("authoredOn", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
@@ -3072,65 +3082,65 @@ pub fn potatomedicationrequest_to_json(
   json.object(fields)
 }
 
-pub fn potatomedicationrequest_medication_to_json(
-  value: PotatomedicationrequestMedication,
+pub fn potato_medicationrequest_medication_to_json(
+  value: PotatoMedicationrequestMedication,
 ) -> Json {
   case value {
-    PotatomedicationrequestMedicationCodeableconcept(value) ->
+    PotatoMedicationrequestMedicationCodeableconcept(value) ->
       ct.potatocodeableconcept_to_json(value)
-    PotatomedicationrequestMedicationReference(value) ->
+    PotatoMedicationrequestMedicationReference(value) ->
       ct.potatoreference_to_json(value)
   }
 }
 
-pub fn potatomedicationrequest_reported_to_json(
-  value: PotatomedicationrequestReported,
+pub fn potato_medicationrequest_reported_to_json(
+  value: PotatoMedicationrequestReported,
 ) -> Json {
   case value {
-    PotatomedicationrequestReportedBoolean(value) -> json.bool(value)
-    PotatomedicationrequestReportedReference(value) ->
+    PotatoMedicationrequestReportedBoolean(value) -> json.bool(value)
+    PotatoMedicationrequestReportedReference(value) ->
       ct.potatoreference_to_json(value)
   }
 }
 
-pub fn potatomedicationrequest_dispenserequest_to_json(
-  potatomedicationrequest_dispenserequest: PotatomedicationrequestDispenserequest,
+pub fn potato_medicationrequest_dispenserequest_to_json(
+  potato_medicationrequest_dispenserequest: PotatoMedicationrequestDispenserequest,
 ) -> Json {
   let fields = []
-  let fields = case potatomedicationrequest_dispenserequest.validity_period {
+  let fields = case potato_medicationrequest_dispenserequest.validity_period {
     Some(v) -> [#("validityPeriod", ct.potatoperiod_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest_dispenserequest.quantity {
+  let fields = case potato_medicationrequest_dispenserequest.quantity {
     Some(v) -> [#("quantity", ct.potatosimplequantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest_dispenserequest.performer {
+  let fields = case potato_medicationrequest_dispenserequest.performer {
     Some(v) -> [#("performer", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case
-    potatomedicationrequest_dispenserequest.number_of_repeats_allowed
+    potato_medicationrequest_dispenserequest.number_of_repeats_allowed
   {
     Some(v) -> [#("numberOfRepeatsAllowed", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest_dispenserequest.initial_fill {
+  let fields = case potato_medicationrequest_dispenserequest.initial_fill {
     Some(v) -> [
       #(
         "initialFill",
-        potatomedicationrequest_dispenserequest_initialfill_to_json(v),
+        potato_medicationrequest_dispenserequest_initialfill_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatomedicationrequest_dispenserequest.id {
+  let fields = case potato_medicationrequest_dispenserequest.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    potatomedicationrequest_dispenserequest.expected_supply_duration
+    potato_medicationrequest_dispenserequest.expected_supply_duration
   {
     Some(v) -> [
       #("expectedSupplyDuration", ct.potatoduration_to_json(v)),
@@ -3138,29 +3148,29 @@ pub fn potatomedicationrequest_dispenserequest_to_json(
     ]
     None -> fields
   }
-  let fields = case potatomedicationrequest_dispenserequest.dispense_interval {
+  let fields = case potato_medicationrequest_dispenserequest.dispense_interval {
     Some(v) -> [#("dispenseInterval", ct.potatoduration_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatomedicationrequest_dispenserequest_initialfill_to_json(
-  potatomedicationrequest_dispenserequest_initialfill: PotatomedicationrequestDispenserequestInitialfill,
+pub fn potato_medicationrequest_dispenserequest_initialfill_to_json(
+  potato_medicationrequest_dispenserequest_initialfill: PotatoMedicationrequestDispenserequestInitialfill,
 ) -> Json {
   let fields = []
   let fields = case
-    potatomedicationrequest_dispenserequest_initialfill.quantity
+    potato_medicationrequest_dispenserequest_initialfill.quantity
   {
     Some(v) -> [#("quantity", ct.potatosimplequantity_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest_dispenserequest_initialfill.id {
+  let fields = case potato_medicationrequest_dispenserequest_initialfill.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    potatomedicationrequest_dispenserequest_initialfill.duration
+    potato_medicationrequest_dispenserequest_initialfill.duration
   {
     Some(v) -> [#("duration", ct.potatoduration_to_json(v)), ..fields]
     None -> fields
@@ -3168,45 +3178,45 @@ pub fn potatomedicationrequest_dispenserequest_initialfill_to_json(
   json.object(fields)
 }
 
-pub fn potatomedicationrequest_substitution_to_json(
-  potatomedicationrequest_substitution: PotatomedicationrequestSubstitution,
+pub fn potato_medicationrequest_substitution_to_json(
+  potato_medicationrequest_substitution: PotatoMedicationrequestSubstitution,
 ) -> Json {
   let fields = [
     #(
       "allowed"
-        <> case potatomedicationrequest_substitution.allowed {
-        PotatomedicationrequestSubstitutionAllowedBoolean(_) -> "Boolean"
-        PotatomedicationrequestSubstitutionAllowedCodeableconcept(_) ->
+        <> case potato_medicationrequest_substitution.allowed {
+        PotatoMedicationrequestSubstitutionAllowedBoolean(_) -> "Boolean"
+        PotatoMedicationrequestSubstitutionAllowedCodeableconcept(_) ->
           "CodeableConcept"
       },
-      potatomedicationrequest_substitution_allowed_to_json(
-        potatomedicationrequest_substitution.allowed,
+      potato_medicationrequest_substitution_allowed_to_json(
+        potato_medicationrequest_substitution.allowed,
       ),
     ),
   ]
-  let fields = case potatomedicationrequest_substitution.reason {
+  let fields = case potato_medicationrequest_substitution.reason {
     Some(v) -> [#("reason", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationrequest_substitution.id {
+  let fields = case potato_medicationrequest_substitution.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatomedicationrequest_substitution_allowed_to_json(
-  value: PotatomedicationrequestSubstitutionAllowed,
+pub fn potato_medicationrequest_substitution_allowed_to_json(
+  value: PotatoMedicationrequestSubstitutionAllowed,
 ) -> Json {
   case value {
-    PotatomedicationrequestSubstitutionAllowedBoolean(value) -> json.bool(value)
-    PotatomedicationrequestSubstitutionAllowedCodeableconcept(value) ->
+    PotatoMedicationrequestSubstitutionAllowedBoolean(value) -> json.bool(value)
+    PotatoMedicationrequestSubstitutionAllowedCodeableconcept(value) ->
       ct.potatocodeableconcept_to_json(value)
   }
 }
 
-pub type Potatomedicationstatement {
-  Potatomedicationstatement(
+pub type PotatoMedicationstatement {
+  PotatoMedicationstatement(
     based_on: List(ct.Potatoreference),
     category: Option(ct.Potatocodeableconcept),
     contained: List(Resource),
@@ -3214,31 +3224,31 @@ pub type Potatomedicationstatement {
     date_asserted: Option(DateTime),
     derived_from: List(ct.Potatoreference),
     dosage: List(ct.Potatodosage),
-    effective: Option(PotatomedicationstatementEffective),
+    effective: Option(PotatoMedicationstatementEffective),
     id: Option(String),
     identifier: List(ct.Potatoidentifier),
     implicit_rules: Option(String),
     information_source: Option(ct.Potatoreference),
     language: Option(String),
-    medication: PotatomedicationstatementMedication,
+    medication: PotatoMedicationstatementMedication,
     meta: Option(ct.Potatometa),
     note: List(ct.Potatoannotation),
     part_of: List(ct.Potatoreference),
     reason_code: List(ct.Potatocodeableconcept),
     reason_reference: List(ct.Potatoreference),
-    status: valuesets.Medicationstatementstatus,
+    status: valueset.MedicationstatementStatus,
     status_reason: List(ct.Potatocodeableconcept),
     subject: ct.Potatoreference,
     text: Option(ct.Potatonarrative),
   )
 }
 
-pub fn potatomedicationstatement_new(
-  medication medication: PotatomedicationstatementMedication,
-  status status: valuesets.Medicationstatementstatus,
+pub fn potato_medicationstatement_new(
+  medication medication: PotatoMedicationstatementMedication,
+  status status: valueset.MedicationstatementStatus,
   subject subject: ct.Potatoreference,
-) -> Potatomedicationstatement {
-  Potatomedicationstatement(
+) -> PotatoMedicationstatement {
+  PotatoMedicationstatement(
     based_on: [],
     category: None,
     contained: [],
@@ -3270,152 +3280,152 @@ pub fn potatomedicationstatement_new(
   )
 }
 
-pub type PotatomedicationstatementMedication {
-  PotatomedicationstatementMedicationCodeableconcept(
+pub type PotatoMedicationstatementMedication {
+  PotatoMedicationstatementMedicationCodeableconcept(
     value: ct.Potatocodeableconcept,
   )
-  PotatomedicationstatementMedicationReference(value: ct.Potatoreference)
+  PotatoMedicationstatementMedicationReference(value: ct.Potatoreference)
 }
 
-pub type PotatomedicationstatementEffective {
-  PotatomedicationstatementEffectiveDatetime(value: DateTime)
-  PotatomedicationstatementEffectivePeriod(value: ct.Potatoperiod)
+pub type PotatoMedicationstatementEffective {
+  PotatoMedicationstatementEffectiveDatetime(value: DateTime)
+  PotatoMedicationstatementEffectivePeriod(value: ct.Potatoperiod)
 }
 
-pub fn potatomedicationstatement_to_json(
-  potatomedicationstatement: Potatomedicationstatement,
+pub fn potato_medicationstatement_to_json(
+  potato_medicationstatement: PotatoMedicationstatement,
 ) -> Json {
   let fields = [
-    #("subject", ct.potatoreference_to_json(potatomedicationstatement.subject)),
+    #("subject", ct.potatoreference_to_json(potato_medicationstatement.subject)),
     #(
       "status",
-      valuesets.medicationstatementstatus_to_json(
-        potatomedicationstatement.status,
+      valueset.medicationstatement_status_to_json(
+        potato_medicationstatement.status,
       ),
     ),
     #(
       "medication"
-        <> case potatomedicationstatement.medication {
-        PotatomedicationstatementMedicationCodeableconcept(_) ->
+        <> case potato_medicationstatement.medication {
+        PotatoMedicationstatementMedicationCodeableconcept(_) ->
           "CodeableConcept"
-        PotatomedicationstatementMedicationReference(_) -> "Reference"
+        PotatoMedicationstatementMedicationReference(_) -> "Reference"
       },
-      potatomedicationstatement_medication_to_json(
-        potatomedicationstatement.medication,
+      potato_medicationstatement_medication_to_json(
+        potato_medicationstatement.medication,
       ),
     ),
   ]
-  let fields = case potatomedicationstatement.text {
+  let fields = case potato_medicationstatement.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.status_reason {
+  let fields = case potato_medicationstatement.status_reason {
     [] -> fields
     values -> [
       #("statusReason", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationstatement.reason_reference {
+  let fields = case potato_medicationstatement.reason_reference {
     [] -> fields
     values -> [
       #("reasonReference", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationstatement.reason_code {
+  let fields = case potato_medicationstatement.reason_code {
     [] -> fields
     values -> [
       #("reasonCode", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationstatement.part_of {
+  let fields = case potato_medicationstatement.part_of {
     [] -> fields
     values -> [
       #("partOf", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationstatement.note {
+  let fields = case potato_medicationstatement.note {
     [] -> fields
     values -> [
       #("note", json.array(values, ct.potatoannotation_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationstatement.meta {
+  let fields = case potato_medicationstatement.meta {
     Some(v) -> [#("meta", ct.potatometa_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.language {
+  let fields = case potato_medicationstatement.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.information_source {
+  let fields = case potato_medicationstatement.information_source {
     Some(v) -> [#("informationSource", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.implicit_rules {
+  let fields = case potato_medicationstatement.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.identifier {
+  let fields = case potato_medicationstatement.identifier {
     [] -> fields
     values -> [
       #("identifier", json.array(values, ct.potatoidentifier_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationstatement.id {
+  let fields = case potato_medicationstatement.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.effective {
+  let fields = case potato_medicationstatement.effective {
     Some(v) -> [
       #(
         "effective"
           <> case v {
-          PotatomedicationstatementEffectiveDatetime(_) -> "DateTime"
-          PotatomedicationstatementEffectivePeriod(_) -> "Period"
+          PotatoMedicationstatementEffectiveDatetime(_) -> "DateTime"
+          PotatoMedicationstatementEffectivePeriod(_) -> "Period"
         },
-        potatomedicationstatement_effective_to_json(v),
+        potato_medicationstatement_effective_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatomedicationstatement.dosage {
+  let fields = case potato_medicationstatement.dosage {
     [] -> fields
     values -> [
       #("dosage", json.array(values, ct.potatodosage_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationstatement.derived_from {
+  let fields = case potato_medicationstatement.derived_from {
     [] -> fields
     values -> [
       #("derivedFrom", json.array(values, ct.potatoreference_to_json)),
       ..fields
     ]
   }
-  let fields = case potatomedicationstatement.date_asserted {
+  let fields = case potato_medicationstatement.date_asserted {
     Some(v) -> [#("dateAsserted", pt.datetime_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.context {
+  let fields = case potato_medicationstatement.context {
     Some(v) -> [#("context", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.contained {
+  let fields = case potato_medicationstatement.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
-  let fields = case potatomedicationstatement.category {
+  let fields = case potato_medicationstatement.category {
     Some(v) -> [#("category", ct.potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatomedicationstatement.based_on {
+  let fields = case potato_medicationstatement.based_on {
     [] -> fields
     values -> [
       #("basedOn", json.array(values, ct.potatoreference_to_json)),
@@ -3426,67 +3436,67 @@ pub fn potatomedicationstatement_to_json(
   json.object(fields)
 }
 
-pub fn potatomedicationstatement_effective_to_json(
-  value: PotatomedicationstatementEffective,
+pub fn potato_medicationstatement_effective_to_json(
+  value: PotatoMedicationstatementEffective,
 ) -> Json {
   case value {
-    PotatomedicationstatementEffectiveDatetime(value) ->
+    PotatoMedicationstatementEffectiveDatetime(value) ->
       pt.datetime_to_json(value)
-    PotatomedicationstatementEffectivePeriod(value) ->
+    PotatoMedicationstatementEffectivePeriod(value) ->
       ct.potatoperiod_to_json(value)
   }
 }
 
-pub fn potatomedicationstatement_medication_to_json(
-  value: PotatomedicationstatementMedication,
+pub fn potato_medicationstatement_medication_to_json(
+  value: PotatoMedicationstatementMedication,
 ) -> Json {
   case value {
-    PotatomedicationstatementMedicationCodeableconcept(value) ->
+    PotatoMedicationstatementMedicationCodeableconcept(value) ->
       ct.potatocodeableconcept_to_json(value)
-    PotatomedicationstatementMedicationReference(value) ->
+    PotatoMedicationstatementMedicationReference(value) ->
       ct.potatoreference_to_json(value)
   }
 }
 
-pub type Potatopatient {
-  Potatopatient(
+pub type PotatoPatient {
+  PotatoPatient(
     active: Option(Bool),
-    address: List(ct.AddressPotatopatientAddress),
+    address: List(ct.AddressPotatoPatientAddress),
     birth_date: Option(Date),
-    communication: List(PotatopatientCommunication),
-    contact: List(PotatopatientContact),
+    communication: List(PotatoPatientCommunication),
+    contact: List(PotatoPatientContact),
     contained: List(Resource),
-    deceased: Option(PotatopatientDeceased),
-    birthsex: Option(valuesets.Two16840111376214102124),
+    deceased: Option(PotatoPatientDeceased),
+    birthsex: Option(valueset.Two16840111376214102124),
     ethnicity: Option(ct.Potatoethnicity),
     gender_identity: List(ct.Potatocodeableconcept),
     race: Option(ct.Potatorace),
     sex: Option(String),
     tribal_affiliation: List(ct.Potatotribalaffiliation),
-    gender: valuesets.Administrativegender,
+    gender: valueset.AdministrativeGender,
     general_practitioner: List(ct.Potatoreference),
     id: Option(String),
-    identifier: List1(ct.IdentifierPotatopatientIdentifier),
+    identifier: List1(ct.IdentifierPotatoPatientIdentifier),
     implicit_rules: Option(String),
     language: Option(String),
-    link: List(PotatopatientLink),
+    link: List(PotatoPatientLink),
     managing_organization: Option(ct.Potatoreference),
     marital_status: Option(ct.Potatocodeableconcept),
     meta: Option(ct.Potatometa),
-    multiple_birth: Option(PotatopatientMultiplebirth),
-    name: List1(ct.HumannamePotatopatientName),
+    multiple_birth: Option(PotatoPatientMultiplebirth),
+    name: List1(ct.HumannamePotatoPatientName),
     photo: List(ct.Potatoattachment),
-    telecom: List(ct.ContactpointPotatopatientTelecom),
+    telecom: List(ct.ContactpointPotatoPatientTelecom),
     text: Option(ct.Potatonarrative),
   )
 }
 
-pub fn potatopatient_new(
-  gender gender: valuesets.Administrativegender,
-  identifier identifier: List1(ct.IdentifierPotatopatientIdentifier),
-  name name: List1(ct.HumannamePotatopatientName),
-) -> Potatopatient {
-  Potatopatient(
+pub fn potato_patient_new(
+  gender gender: valueset.AdministrativeGender,
+  identifier identifier: List1(ct.IdentifierPotatoPatientIdentifier),
+  name name: List1(ct.HumannamePotatoPatientName),
+) -> PotatoPatient {
+  PotatoPatient(
     active: None,
     address: [],
     birth_date: None,
@@ -3523,34 +3533,34 @@ pub fn potatopatient_new(
   )
 }
 
-pub type PotatopatientMultiplebirth {
-  PotatopatientMultiplebirthBoolean(value: Bool)
-  PotatopatientMultiplebirthInteger(value: Int)
+pub type PotatoPatientMultiplebirth {
+  PotatoPatientMultiplebirthBoolean(value: Bool)
+  PotatoPatientMultiplebirthInteger(value: Int)
 }
 
-pub type PotatopatientDeceased {
-  PotatopatientDeceasedBoolean(value: Bool)
-  PotatopatientDeceasedDatetime(value: DateTime)
+pub type PotatoPatientDeceased {
+  PotatoPatientDeceasedBoolean(value: Bool)
+  PotatoPatientDeceasedDatetime(value: DateTime)
 }
 
-pub type PotatopatientCommunication {
-  PotatopatientCommunication(
+pub type PotatoPatientCommunication {
+  PotatoPatientCommunication(
     id: Option(String),
     language: ct.Potatocodeableconcept,
     preferred: Option(Bool),
   )
 }
 
-pub fn potatopatient_communication_new(
+pub fn potato_patient_communication_new(
   language language: ct.Potatocodeableconcept,
-) -> PotatopatientCommunication {
-  PotatopatientCommunication(id: None, language:, preferred: None)
+) -> PotatoPatientCommunication {
+  PotatoPatientCommunication(id: None, language:, preferred: None)
 }
 
-pub type PotatopatientContact {
-  PotatopatientContact(
+pub type PotatoPatientContact {
+  PotatoPatientContact(
     address: Option(ct.Potatoaddress),
-    gender: Option(valuesets.Administrativegender),
+    gender: Option(valueset.AdministrativeGender),
     id: Option(String),
     name: Option(ct.Potatohumanname),
     organization: Option(ct.Potatoreference),
@@ -3560,8 +3570,8 @@ pub type PotatopatientContact {
   )
 }
 
-pub fn potatopatient_contact_new() -> PotatopatientContact {
-  PotatopatientContact(
+pub fn potato_patient_contact_new() -> PotatoPatientContact {
+  PotatoPatientContact(
     address: None,
     gender: None,
     id: None,
@@ -3573,109 +3583,112 @@ pub fn potatopatient_contact_new() -> PotatopatientContact {
   )
 }
 
-pub type PotatopatientLink {
-  PotatopatientLink(
+pub type PotatoPatientLink {
+  PotatoPatientLink(
     id: Option(String),
     other: ct.Potatoreference,
-    type_: valuesets.Linktype,
+    type_: valueset.LinkType,
   )
 }
 
-pub fn potatopatient_link_new(
+pub fn potato_patient_link_new(
   other other: ct.Potatoreference,
-  type_ type_: valuesets.Linktype,
-) -> PotatopatientLink {
-  PotatopatientLink(id: None, other:, type_:)
+  type_ type_: valueset.LinkType,
+) -> PotatoPatientLink {
+  PotatoPatientLink(id: None, other:, type_:)
 }
 
-pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
+pub fn potato_patient_to_json(potato_patient: PotatoPatient) -> Json {
   let fields = [
     #(
       "name",
-      list1_to_json(potatopatient.name, ct.humanname_potatopatient_name_to_json),
+      list1_to_json(
+        potato_patient.name,
+        ct.humanname_potato_patient_name_to_json,
+      ),
     ),
     #(
       "identifier",
       list1_to_json(
-        potatopatient.identifier,
-        ct.identifier_potatopatient_identifier_to_json,
+        potato_patient.identifier,
+        ct.identifier_potato_patient_identifier_to_json,
       ),
     ),
-    #("gender", valuesets.administrativegender_to_json(potatopatient.gender)),
+    #("gender", valueset.administrative_gender_to_json(potato_patient.gender)),
   ]
-  let fields = case potatopatient.text {
+  let fields = case potato_patient.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient.telecom {
+  let fields = case potato_patient.telecom {
     [] -> fields
     values -> [
       #(
         "telecom",
-        json.array(values, ct.contactpoint_potatopatient_telecom_to_json),
+        json.array(values, ct.contactpoint_potato_patient_telecom_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatopatient.photo {
+  let fields = case potato_patient.photo {
     [] -> fields
     values -> [
       #("photo", json.array(values, ct.potatoattachment_to_json)),
       ..fields
     ]
   }
-  let fields = case potatopatient.multiple_birth {
+  let fields = case potato_patient.multiple_birth {
     Some(v) -> [
       #(
         "multipleBirth"
           <> case v {
-          PotatopatientMultiplebirthBoolean(_) -> "Boolean"
-          PotatopatientMultiplebirthInteger(_) -> "Integer"
+          PotatoPatientMultiplebirthBoolean(_) -> "Boolean"
+          PotatoPatientMultiplebirthInteger(_) -> "Integer"
         },
-        potatopatient_multiplebirth_to_json(v),
+        potato_patient_multiplebirth_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatopatient.meta {
+  let fields = case potato_patient.meta {
     Some(v) -> [#("meta", ct.potatometa_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient.marital_status {
+  let fields = case potato_patient.marital_status {
     Some(v) -> [
       #("maritalStatus", ct.potatocodeableconcept_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatopatient.managing_organization {
+  let fields = case potato_patient.managing_organization {
     Some(v) -> [
       #("managingOrganization", ct.potatoreference_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatopatient.link {
+  let fields = case potato_patient.link {
     [] -> fields
     values -> [
-      #("link", json.array(values, potatopatient_link_to_json)),
+      #("link", json.array(values, potato_patient_link_to_json)),
       ..fields
     ]
   }
-  let fields = case potatopatient.language {
+  let fields = case potato_patient.language {
     Some(v) -> [#("language", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient.implicit_rules {
+  let fields = case potato_patient.implicit_rules {
     Some(v) -> [#("implicitRules", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient.id {
+  let fields = case potato_patient.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient.general_practitioner {
+  let fields = case potato_patient.general_practitioner {
     [] -> fields
     values -> [
       #("generalPractitioner", json.array(values, ct.potatoreference_to_json)),
@@ -3684,13 +3697,13 @@ pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
   }
   let slice_values =
     list.flatten([
-      list.map(potatopatient.tribal_affiliation, fn(value) {
+      list.map(potato_patient.tribal_affiliation, fn(value) {
         ct.potatotribalaffiliation_to_json(
           value,
           "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation",
         )
       }),
-      case potatopatient.sex {
+      case potato_patient.sex {
         Some(value) -> [
           json.object([
             #(
@@ -3704,7 +3717,7 @@ pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
         ]
         None -> []
       },
-      case potatopatient.race {
+      case potato_patient.race {
         Some(value) -> [
           ct.potatorace_to_json(
             value,
@@ -3713,7 +3726,7 @@ pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
         ]
         None -> []
       },
-      list.map(potatopatient.gender_identity, fn(value) {
+      list.map(potato_patient.gender_identity, fn(value) {
         json.object([
           #(
             "url",
@@ -3724,7 +3737,7 @@ pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
           #("valueCodeableConcept", ct.potatocodeableconcept_to_json(value)),
         ])
       }),
-      case potatopatient.ethnicity {
+      case potato_patient.ethnicity {
         Some(value) -> [
           ct.potatoethnicity_to_json(
             value,
@@ -3733,7 +3746,7 @@ pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
         ]
         None -> []
       },
-      case potatopatient.birthsex {
+      case potato_patient.birthsex {
         Some(value) -> [
           json.object([
             #(
@@ -3742,7 +3755,7 @@ pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
                 "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
               ),
             ),
-            #("valueCode", valuesets.two16840111376214102124_to_json(value)),
+            #("valueCode", valueset.two16840111376214102124_to_json(value)),
           ]),
         ]
         None -> []
@@ -3753,53 +3766,56 @@ pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
     [] -> fields
     values -> [#("extension", json.preprocessed_array(values)), ..fields]
   }
-  let fields = case potatopatient.deceased {
+  let fields = case potato_patient.deceased {
     Some(v) -> [
       #(
         "deceased"
           <> case v {
-          PotatopatientDeceasedBoolean(_) -> "Boolean"
-          PotatopatientDeceasedDatetime(_) -> "DateTime"
+          PotatoPatientDeceasedBoolean(_) -> "Boolean"
+          PotatoPatientDeceasedDatetime(_) -> "DateTime"
         },
-        potatopatient_deceased_to_json(v),
+        potato_patient_deceased_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatopatient.contained {
+  let fields = case potato_patient.contained {
     [] -> fields
-    values -> [#("contained", json.array(values, resource_to_json)), ..fields]
+    values -> [#("contained", json.array(values, to_json)), ..fields]
   }
-  let fields = case potatopatient.contact {
+  let fields = case potato_patient.contact {
     [] -> fields
     values -> [
-      #("contact", json.array(values, potatopatient_contact_to_json)),
+      #("contact", json.array(values, potato_patient_contact_to_json)),
       ..fields
     ]
   }
-  let fields = case potatopatient.communication {
+  let fields = case potato_patient.communication {
     [] -> fields
     values -> [
       #(
         "communication",
-        json.array(values, potatopatient_communication_to_json),
+        json.array(values, potato_patient_communication_to_json),
       ),
       ..fields
     ]
   }
-  let fields = case potatopatient.birth_date {
+  let fields = case potato_patient.birth_date {
     Some(v) -> [#("birthDate", pt.date_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient.address {
+  let fields = case potato_patient.address {
     [] -> fields
     values -> [
-      #("address", json.array(values, ct.address_potatopatient_address_to_json)),
+      #(
+        "address",
+        json.array(values, ct.address_potato_patient_address_to_json),
+      ),
       ..fields
     ]
   }
-  let fields = case potatopatient.active {
+  let fields = case potato_patient.active {
     Some(v) -> [#("active", json.bool(v)), ..fields]
     None -> fields
   }
@@ -3807,106 +3823,106 @@ pub fn potatopatient_to_json(potatopatient: Potatopatient) -> Json {
   json.object(fields)
 }
 
-pub fn potatopatient_deceased_to_json(value: PotatopatientDeceased) -> Json {
+pub fn potato_patient_deceased_to_json(value: PotatoPatientDeceased) -> Json {
   case value {
-    PotatopatientDeceasedBoolean(value) -> json.bool(value)
-    PotatopatientDeceasedDatetime(value) -> pt.datetime_to_json(value)
+    PotatoPatientDeceasedBoolean(value) -> json.bool(value)
+    PotatoPatientDeceasedDatetime(value) -> pt.datetime_to_json(value)
   }
 }
 
-pub fn potatopatient_multiplebirth_to_json(
-  value: PotatopatientMultiplebirth,
+pub fn potato_patient_multiplebirth_to_json(
+  value: PotatoPatientMultiplebirth,
 ) -> Json {
   case value {
-    PotatopatientMultiplebirthBoolean(value) -> json.bool(value)
-    PotatopatientMultiplebirthInteger(value) -> json.int(value)
+    PotatoPatientMultiplebirthBoolean(value) -> json.bool(value)
+    PotatoPatientMultiplebirthInteger(value) -> json.int(value)
   }
 }
 
-pub fn potatopatient_communication_to_json(
-  potatopatient_communication: PotatopatientCommunication,
+pub fn potato_patient_communication_to_json(
+  potato_patient_communication: PotatoPatientCommunication,
 ) -> Json {
   let fields = [
     #(
       "language",
-      ct.potatocodeableconcept_to_json(potatopatient_communication.language),
+      ct.potatocodeableconcept_to_json(potato_patient_communication.language),
     ),
   ]
-  let fields = case potatopatient_communication.preferred {
+  let fields = case potato_patient_communication.preferred {
     Some(v) -> [#("preferred", json.bool(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient_communication.id {
+  let fields = case potato_patient_communication.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatopatient_contact_to_json(
-  potatopatient_contact: PotatopatientContact,
+pub fn potato_patient_contact_to_json(
+  potato_patient_contact: PotatoPatientContact,
 ) -> Json {
   let fields = []
-  let fields = case potatopatient_contact.telecom {
+  let fields = case potato_patient_contact.telecom {
     [] -> fields
     values -> [
       #("telecom", json.array(values, ct.potatocontactpoint_to_json)),
       ..fields
     ]
   }
-  let fields = case potatopatient_contact.relationship {
+  let fields = case potato_patient_contact.relationship {
     [] -> fields
     values -> [
       #("relationship", json.array(values, ct.potatocodeableconcept_to_json)),
       ..fields
     ]
   }
-  let fields = case potatopatient_contact.period {
+  let fields = case potato_patient_contact.period {
     Some(v) -> [#("period", ct.potatoperiod_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient_contact.organization {
+  let fields = case potato_patient_contact.organization {
     Some(v) -> [#("organization", ct.potatoreference_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient_contact.name {
+  let fields = case potato_patient_contact.name {
     Some(v) -> [#("name", ct.potatohumanname_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient_contact.id {
+  let fields = case potato_patient_contact.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case potatopatient_contact.gender {
+  let fields = case potato_patient_contact.gender {
     Some(v) -> [
-      #("gender", valuesets.administrativegender_to_json(v)),
+      #("gender", valueset.administrative_gender_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case potatopatient_contact.address {
+  let fields = case potato_patient_contact.address {
     Some(v) -> [#("address", ct.potatoaddress_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatopatient_link_to_json(
-  potatopatient_link: PotatopatientLink,
+pub fn potato_patient_link_to_json(
+  potato_patient_link: PotatoPatientLink,
 ) -> Json {
   let fields = [
-    #("type", valuesets.linktype_to_json(potatopatient_link.type_)),
-    #("other", ct.potatoreference_to_json(potatopatient_link.other)),
+    #("type", valueset.link_type_to_json(potato_patient_link.type_)),
+    #("other", ct.potatoreference_to_json(potato_patient_link.other)),
   ]
-  let fields = case potatopatient_link.id {
+  let fields = case potato_patient_link.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoallergyintolerance_reaction_decoder() -> Decoder(
-  PotatoallergyintoleranceReaction,
+pub fn potato_allergyintolerance_reaction_decoder() -> Decoder(
+  PotatoAllergyintoleranceReaction,
 ) {
   use <- decode.recursive
   use substance <- decode.optional_field(
@@ -3917,7 +3933,7 @@ pub fn potatoallergyintolerance_reaction_decoder() -> Decoder(
   use severity <- decode.optional_field(
     "severity",
     None,
-    decode.optional(valuesets.reactioneventseverity_decoder()),
+    decode.optional(valueset.reaction_event_severity_decoder()),
   )
   use onset <- decode.optional_field(
     "onset",
@@ -3941,7 +3957,7 @@ pub fn potatoallergyintolerance_reaction_decoder() -> Decoder(
   )
   use description <- decode_optional_string("description")
   let placeholder =
-    PotatoallergyintoleranceReaction(
+    PotatoAllergyintoleranceReaction(
       substance:,
       severity:,
       onset:,
@@ -3954,48 +3970,48 @@ pub fn potatoallergyintolerance_reaction_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn potatoallergyintolerance_onset_decoder() -> Decoder(
-  PotatoallergyintoleranceOnset,
+pub fn potato_allergyintolerance_onset_decoder() -> Decoder(
+  PotatoAllergyintoleranceOnset,
 ) {
   decode.one_of(
     {
       use value <- decode.field("onsetDateTime", pt.datetime_decoder())
-      decode.success(PotatoallergyintoleranceOnsetDatetime(value))
+      decode.success(PotatoAllergyintoleranceOnsetDatetime(value))
     },
     [
       {
         use value <- decode.field("onsetAge", ct.potatoage_decoder())
-        decode.success(PotatoallergyintoleranceOnsetAge(value))
+        decode.success(PotatoAllergyintoleranceOnsetAge(value))
       },
       {
         use value <- decode.field("onsetPeriod", ct.potatoperiod_decoder())
-        decode.success(PotatoallergyintoleranceOnsetPeriod(value))
+        decode.success(PotatoAllergyintoleranceOnsetPeriod(value))
       },
       {
         use value <- decode.field("onsetRange", ct.potatorange_decoder())
-        decode.success(PotatoallergyintoleranceOnsetRange(value))
+        decode.success(PotatoAllergyintoleranceOnsetRange(value))
       },
       {
         use value <- decode.field("onsetString", decode.string)
-        decode.success(PotatoallergyintoleranceOnsetString(value))
+        decode.success(PotatoAllergyintoleranceOnsetString(value))
       },
     ],
   )
 }
 
-pub fn potatoallergyintolerance_decoder() -> Decoder(Potatoallergyintolerance) {
+pub fn potato_allergyintolerance_decoder() -> Decoder(PotatoAllergyintolerance) {
   use <- decode.recursive
   use verification_status <- decode.optional_field(
     "verificationStatus",
     None,
     decode.optional(
-      ct.codeableconcept_potatoallergyintolerance_verificationstatus_decoder(),
+      ct.codeableconcept_potato_allergyintolerance_verificationstatus_decoder(),
     ),
   )
   use type_ <- decode.optional_field(
     "type",
     None,
-    decode.optional(valuesets.allergyintolerancetype_decoder()),
+    decode.optional(valueset.allergyintolerance_type_decoder()),
   )
   use text <- decode.optional_field(
     "text",
@@ -4015,11 +4031,11 @@ pub fn potatoallergyintolerance_decoder() -> Decoder(Potatoallergyintolerance) {
   use reaction <- decode.optional_field(
     "reaction",
     [],
-    decode.list(potatoallergyintolerance_reaction_decoder()),
+    decode.list(potato_allergyintolerance_reaction_decoder()),
   )
   use patient <- decode.field("patient", ct.potatoreference_decoder())
   use onset <- decode.then(
-    none_if_omitted(potatoallergyintolerance_onset_decoder()),
+    none_if_omitted(potato_allergyintolerance_onset_decoder()),
   )
   use note <- decode.optional_field(
     "note",
@@ -4052,7 +4068,7 @@ pub fn potatoallergyintolerance_decoder() -> Decoder(Potatoallergyintolerance) {
   use criticality <- decode.optional_field(
     "criticality",
     None,
-    decode.optional(valuesets.allergyintolerancecriticality_decoder()),
+    decode.optional(valueset.allergyintolerance_criticality_decoder()),
   )
   use contained <- decode.optional_field(
     "contained",
@@ -4064,13 +4080,13 @@ pub fn potatoallergyintolerance_decoder() -> Decoder(Potatoallergyintolerance) {
     "clinicalStatus",
     None,
     decode.optional(
-      ct.codeableconcept_potatoallergyintolerance_clinicalstatus_decoder(),
+      ct.codeableconcept_potato_allergyintolerance_clinicalstatus_decoder(),
     ),
   )
   use category <- decode.optional_field(
     "category",
     [],
-    decode.list(valuesets.allergyintolerancecategory_decoder()),
+    decode.list(valueset.allergyintolerance_category_decoder()),
   )
   use asserter <- decode.optional_field(
     "asserter",
@@ -4078,7 +4094,7 @@ pub fn potatoallergyintolerance_decoder() -> Decoder(Potatoallergyintolerance) {
     decode.optional(ct.potatoreference_decoder()),
   )
   let placeholder =
-    Potatoallergyintolerance(
+    PotatoAllergyintolerance(
       verification_status:,
       type_:,
       text:,
@@ -4120,8 +4136,8 @@ pub fn potatoallergyintolerance_decoder() -> Decoder(Potatoallergyintolerance) {
   decode.success(placeholder)
 }
 
-pub fn potatoappointment_participant_decoder() -> Decoder(
-  PotatoappointmentParticipant,
+pub fn potato_appointment_participant_decoder() -> Decoder(
+  PotatoAppointmentParticipant,
 ) {
   use <- decode.recursive
   use type_ <- decode.optional_field(
@@ -4129,11 +4145,11 @@ pub fn potatoappointment_participant_decoder() -> Decoder(
     [],
     decode.list(ct.potatocodeableconcept_decoder()),
   )
-  use status <- decode.field("status", valuesets.participationstatus_decoder())
+  use status <- decode.field("status", valueset.participationstatus_decoder())
   use required <- decode.optional_field(
     "required",
     None,
-    decode.optional(valuesets.participantrequired_decoder()),
+    decode.optional(valueset.participantrequired_decoder()),
   )
   use period <- decode.optional_field(
     "period",
@@ -4147,7 +4163,7 @@ pub fn potatoappointment_participant_decoder() -> Decoder(
     decode.optional(ct.potatoreference_decoder()),
   )
   let placeholder =
-    PotatoappointmentParticipant(
+    PotatoAppointmentParticipant(
       type_:,
       status:,
       required:,
@@ -4158,7 +4174,7 @@ pub fn potatoappointment_participant_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn potatoappointment_decoder() -> Decoder(Potatoappointment) {
+pub fn potato_appointment_decoder() -> Decoder(PotatoAppointment) {
   use <- decode.recursive
   use text <- decode.optional_field(
     "text",
@@ -4170,7 +4186,7 @@ pub fn potatoappointment_decoder() -> Decoder(Potatoappointment) {
     [],
     decode.list(ct.potatoreference_decoder()),
   )
-  use status <- decode.field("status", valuesets.appointmentstatus_decoder())
+  use status <- decode.field("status", valueset.appointmentstatus_decoder())
   use start <- decode.optional_field(
     "start",
     None,
@@ -4219,7 +4235,7 @@ pub fn potatoappointment_decoder() -> Decoder(Potatoappointment) {
   use patient_instruction <- decode_optional_string("patientInstruction")
   use participant <- list1_decoder(
     "participant",
-    potatoappointment_participant_decoder(),
+    potato_appointment_participant_decoder(),
   )
   use minutes_duration <- decode.optional_field(
     "minutesDuration",
@@ -4272,7 +4288,7 @@ pub fn potatoappointment_decoder() -> Decoder(Potatoappointment) {
     decode.optional(ct.potatocodeableconcept_decoder()),
   )
   let placeholder =
-    Potatoappointment(
+    PotatoAppointment(
       text:,
       supporting_information:,
       status:,
@@ -4320,50 +4336,50 @@ pub fn potatoappointment_decoder() -> Decoder(Potatoappointment) {
   decode.success(placeholder)
 }
 
-type PotatoconditionExtensionSliceAccumulator {
-  PotatoconditionExtensionSliceAccumulator(asserted_date: Option(DateTime))
+type PotatoConditionExtensionSliceAccumulator {
+  PotatoConditionExtensionSliceAccumulator(asserted_date: Option(DateTime))
 }
 
-pub type PotatoconditionParsedExtensionSlice {
-  PotatoconditionParsedExtensionSliceAsserteddate(DateTime)
-  PotatoconditionParsedExtensionSliceIgnored
+pub type PotatoConditionParsedExtensionSlice {
+  PotatoConditionParsedExtensionSliceAsserteddate(DateTime)
+  PotatoConditionParsedExtensionSliceIgnored
 }
 
-type PotatoconditionExtensionSlices {
-  PotatoconditionExtensionSlices(asserted_date: Option(DateTime))
+type PotatoConditionExtensionSlices {
+  PotatoConditionExtensionSlices(asserted_date: Option(DateTime))
 }
 
-type PotatoconditionCategorySliceAccumulator {
-  PotatoconditionCategorySliceAccumulator(
-    us_core: List(ct.CodeableconceptPotatoconditionCategoryUsCore),
+type PotatoConditionCategorySliceAccumulator {
+  PotatoConditionCategorySliceAccumulator(
+    us_core: List(ct.CodeableconceptPotatoConditionCategoryUsCore),
     screening_assessment: List(
-      ct.CodeableconceptPotatoconditionCategoryScreeningAssessment,
+      ct.CodeableconceptPotatoConditionCategoryScreeningAssessment,
     ),
     open: List(ct.Potatocodeableconcept),
   )
 }
 
-type PotatoconditionParsedCategorySlice {
-  PotatoconditionParsedCategorySliceUsCore(
-    ct.CodeableconceptPotatoconditionCategoryUsCore,
+type PotatoConditionParsedCategorySlice {
+  PotatoConditionParsedCategorySliceUsCore(
+    ct.CodeableconceptPotatoConditionCategoryUsCore,
   )
-  PotatoconditionParsedCategorySliceScreeningAssessment(
-    ct.CodeableconceptPotatoconditionCategoryScreeningAssessment,
+  PotatoConditionParsedCategorySliceScreeningAssessment(
+    ct.CodeableconceptPotatoConditionCategoryScreeningAssessment,
   )
-  PotatoconditionParsedCategorySliceOpen(ct.Potatocodeableconcept)
+  PotatoConditionParsedCategorySliceOpen(ct.Potatocodeableconcept)
 }
 
-type PotatoconditionCategorySlices {
-  PotatoconditionCategorySlices(
-    us_core: List1(ct.CodeableconceptPotatoconditionCategoryUsCore),
+type PotatoConditionCategorySlices {
+  PotatoConditionCategorySlices(
+    us_core: List1(ct.CodeableconceptPotatoConditionCategoryUsCore),
     screening_assessment: List(
-      ct.CodeableconceptPotatoconditionCategoryScreeningAssessment,
+      ct.CodeableconceptPotatoConditionCategoryScreeningAssessment,
     ),
     open: List(ct.Potatocodeableconcept),
   )
 }
 
-pub fn potatocondition_stage_decoder() -> Decoder(PotatoconditionStage) {
+pub fn potato_condition_stage_decoder() -> Decoder(PotatoConditionStage) {
   use <- decode.recursive
   use type_ <- decode.optional_field(
     "type",
@@ -4381,11 +4397,11 @@ pub fn potatocondition_stage_decoder() -> Decoder(PotatoconditionStage) {
     [],
     decode.list(ct.potatoreference_decoder()),
   )
-  let placeholder = PotatoconditionStage(type_:, summary:, id:, assessment:)
+  let placeholder = PotatoConditionStage(type_:, summary:, id:, assessment:)
   decode.success(placeholder)
 }
 
-pub fn potatocondition_evidence_decoder() -> Decoder(PotatoconditionEvidence) {
+pub fn potato_condition_evidence_decoder() -> Decoder(PotatoConditionEvidence) {
   use <- decode.recursive
   use id <- decode_optional_string("id")
   use detail <- decode.optional_field(
@@ -4398,39 +4414,39 @@ pub fn potatocondition_evidence_decoder() -> Decoder(PotatoconditionEvidence) {
     [],
     decode.list(ct.potatocodeableconcept_decoder()),
   )
-  let placeholder = PotatoconditionEvidence(id:, detail:, code:)
+  let placeholder = PotatoConditionEvidence(id:, detail:, code:)
   decode.success(placeholder)
 }
 
-pub fn potatocondition_onset_decoder() -> Decoder(PotatoconditionOnset) {
+pub fn potato_condition_onset_decoder() -> Decoder(PotatoConditionOnset) {
   decode.one_of(
     {
       use value <- decode.field("onsetDateTime", pt.datetime_decoder())
-      decode.success(PotatoconditionOnsetDatetime(value))
+      decode.success(PotatoConditionOnsetDatetime(value))
     },
     [
       {
         use value <- decode.field("onsetAge", ct.potatoage_decoder())
-        decode.success(PotatoconditionOnsetAge(value))
+        decode.success(PotatoConditionOnsetAge(value))
       },
       {
         use value <- decode.field("onsetPeriod", ct.potatoperiod_decoder())
-        decode.success(PotatoconditionOnsetPeriod(value))
+        decode.success(PotatoConditionOnsetPeriod(value))
       },
       {
         use value <- decode.field("onsetRange", ct.potatorange_decoder())
-        decode.success(PotatoconditionOnsetRange(value))
+        decode.success(PotatoConditionOnsetRange(value))
       },
       {
         use value <- decode.field("onsetString", decode.string)
-        decode.success(PotatoconditionOnsetString(value))
+        decode.success(PotatoConditionOnsetString(value))
       },
     ],
   )
 }
 
-pub fn potatocondition_extension_slice_decoder() -> Decoder(
-  Result(PotatoconditionParsedExtensionSlice, String),
+pub fn potato_condition_extension_slice_decoder() -> Decoder(
+  Result(PotatoConditionParsedExtensionSlice, String),
 ) {
   use url <- decode.field("url", decode.string)
   use _id <- decode.optional_field("id", None, decode.optional(decode.string))
@@ -4441,49 +4457,49 @@ pub fn potatocondition_extension_slice_decoder() -> Decoder(
         |> decode.map(Ok)
         |> decode.map(fn(parsed) {
           result.map(parsed, fn(value) {
-            PotatoconditionParsedExtensionSliceAsserteddate(value)
+            PotatoConditionParsedExtensionSliceAsserteddate(value)
           })
         })
-      _ -> decode.success(Ok(PotatoconditionParsedExtensionSliceIgnored))
+      _ -> decode.success(Ok(PotatoConditionParsedExtensionSliceIgnored))
     },
     decode.success,
   )
 }
 
-pub fn potatocondition_abatement_decoder() -> Decoder(PotatoconditionAbatement) {
+pub fn potato_condition_abatement_decoder() -> Decoder(PotatoConditionAbatement) {
   decode.one_of(
     {
       use value <- decode.field("abatementDateTime", pt.datetime_decoder())
-      decode.success(PotatoconditionAbatementDatetime(value))
+      decode.success(PotatoConditionAbatementDatetime(value))
     },
     [
       {
         use value <- decode.field("abatementAge", ct.potatoage_decoder())
-        decode.success(PotatoconditionAbatementAge(value))
+        decode.success(PotatoConditionAbatementAge(value))
       },
       {
         use value <- decode.field("abatementPeriod", ct.potatoperiod_decoder())
-        decode.success(PotatoconditionAbatementPeriod(value))
+        decode.success(PotatoConditionAbatementPeriod(value))
       },
       {
         use value <- decode.field("abatementRange", ct.potatorange_decoder())
-        decode.success(PotatoconditionAbatementRange(value))
+        decode.success(PotatoConditionAbatementRange(value))
       },
       {
         use value <- decode.field("abatementString", decode.string)
-        decode.success(PotatoconditionAbatementString(value))
+        decode.success(PotatoConditionAbatementString(value))
       },
     ],
   )
 }
 
-pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
+pub fn potato_condition_decoder() -> Decoder(PotatoCondition) {
   use <- decode.recursive
   use verification_status <- decode.optional_field(
     "verificationStatus",
     None,
     decode.optional(
-      ct.codeableconcept_potatocondition_verificationstatus_decoder(),
+      ct.codeableconcept_potato_condition_verificationstatus_decoder(),
     ),
   )
   use text <- decode.optional_field(
@@ -4495,7 +4511,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
   use stage <- decode.optional_field(
     "stage",
     [],
-    decode.list(potatocondition_stage_decoder()),
+    decode.list(potato_condition_stage_decoder()),
   )
   use severity <- decode.optional_field(
     "severity",
@@ -4512,7 +4528,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
     None,
     decode.optional(pt.datetime_decoder()),
   )
-  use onset <- decode.then(none_if_omitted(potatocondition_onset_decoder()))
+  use onset <- decode.then(none_if_omitted(potato_condition_onset_decoder()))
   use note <- decode.optional_field(
     "note",
     [],
@@ -4521,7 +4537,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
   use meta <- decode.optional_field(
     "meta",
     None,
-    decode.optional(ct.meta_potatocondition_meta_decoder()),
+    decode.optional(ct.meta_potato_condition_meta_decoder()),
   )
   use language <- decode_optional_string("language")
   use implicit_rules <- decode_optional_string("implicitRules")
@@ -4534,12 +4550,12 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
   use extension_base_values <- decode.optional_field(
     "extension",
     [],
-    decode.list(potatocondition_extension_slice_decoder()),
+    decode.list(potato_condition_extension_slice_decoder()),
   )
   let extension_accumulator =
     list.index_fold(
       extension_base_values,
-      Ok(PotatoconditionExtensionSliceAccumulator(None)),
+      Ok(PotatoConditionExtensionSliceAccumulator(None)),
       fn(accumulator_result, parsed, index) {
         case accumulator_result {
           Error(errors) -> Error(errors)
@@ -4555,13 +4571,13 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
                 ])
               Ok(slice) ->
                 case slice {
-                  PotatoconditionParsedExtensionSliceAsserteddate(value) ->
+                  PotatoConditionParsedExtensionSliceAsserteddate(value) ->
                     Ok(
-                      PotatoconditionExtensionSliceAccumulator(
+                      PotatoConditionExtensionSliceAccumulator(
                         asserted_date: Some(value),
                       ),
                     )
-                  PotatoconditionParsedExtensionSliceIgnored -> Ok(accumulator)
+                  PotatoConditionParsedExtensionSliceIgnored -> Ok(accumulator)
                 }
             }
         }
@@ -4569,7 +4585,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
     )
   let extension_slices = case extension_accumulator {
     Ok(accumulator) ->
-      Ok(PotatoconditionExtensionSlices(
+      Ok(PotatoConditionExtensionSlices(
         asserted_date: accumulator.asserted_date,
       ))
     Error(errors) -> Error(errors)
@@ -4577,7 +4593,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
   use evidence <- decode.optional_field(
     "evidence",
     [],
-    decode.list(potatocondition_evidence_decoder()),
+    decode.list(potato_condition_evidence_decoder()),
   )
   use encounter <- decode.optional_field(
     "encounter",
@@ -4593,7 +4609,9 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
   use clinical_status <- decode.optional_field(
     "clinicalStatus",
     None,
-    decode.optional(ct.codeableconcept_potatocondition_clinicalstatus_decoder()),
+    decode.optional(
+      ct.codeableconcept_potato_condition_clinicalstatus_decoder(),
+    ),
   )
   use category_base_values <- decode.optional_field(
     "category",
@@ -4610,7 +4628,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
                   case
                     decode.run(
                       value,
-                      ct.codeableconcept_potatocondition_category_us_core_decoder(),
+                      ct.codeableconcept_potato_condition_category_us_core_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -4628,8 +4646,8 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
         }
       {
         ct.DiscriminatorMatches ->
-          ct.codeableconcept_potatocondition_category_us_core_decoder()
-          |> decode.map(PotatoconditionParsedCategorySliceUsCore)
+          ct.codeableconcept_potato_condition_category_us_core_decoder()
+          |> decode.map(PotatoConditionParsedCategorySliceUsCore)
         ct.DiscriminatorDifferent ->
           case
             case
@@ -4641,7 +4659,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
                       case
                         decode.run(
                           value,
-                          ct.codeableconcept_potatocondition_category_screening_assessment_decoder(),
+                          ct.codeableconcept_potato_condition_category_screening_assessment_decoder(),
                         )
                       {
                         Ok(_) -> True
@@ -4659,13 +4677,13 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
             }
           {
             ct.DiscriminatorMatches ->
-              ct.codeableconcept_potatocondition_category_screening_assessment_decoder()
+              ct.codeableconcept_potato_condition_category_screening_assessment_decoder()
               |> decode.map(
-                PotatoconditionParsedCategorySliceScreeningAssessment,
+                PotatoConditionParsedCategorySliceScreeningAssessment,
               )
             ct.DiscriminatorDifferent ->
               ct.potatocodeableconcept_decoder()
-              |> decode.map(PotatoconditionParsedCategorySliceOpen)
+              |> decode.map(PotatoConditionParsedCategorySliceOpen)
           }
       }
     }),
@@ -4673,21 +4691,21 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
   let category_accumulator =
     list.index_fold(
       category_base_values,
-      PotatoconditionCategorySliceAccumulator([], [], []),
+      PotatoConditionCategorySliceAccumulator([], [], []),
       fn(accumulator, parsed, _index) {
         case parsed {
-          PotatoconditionParsedCategorySliceUsCore(value) ->
-            PotatoconditionCategorySliceAccumulator(..accumulator, us_core: [
+          PotatoConditionParsedCategorySliceUsCore(value) ->
+            PotatoConditionCategorySliceAccumulator(..accumulator, us_core: [
               value,
               ..accumulator.us_core
             ])
-          PotatoconditionParsedCategorySliceScreeningAssessment(value) ->
-            PotatoconditionCategorySliceAccumulator(
+          PotatoConditionParsedCategorySliceScreeningAssessment(value) ->
+            PotatoConditionCategorySliceAccumulator(
               ..accumulator,
               screening_assessment: [value, ..accumulator.screening_assessment],
             )
-          PotatoconditionParsedCategorySliceOpen(value) ->
-            PotatoconditionCategorySliceAccumulator(..accumulator, open: [
+          PotatoConditionParsedCategorySliceOpen(value) ->
+            PotatoConditionCategorySliceAccumulator(..accumulator, open: [
               value,
               ..accumulator.open
             ])
@@ -4712,7 +4730,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
     let open = Ok(list.reverse(accumulator.open))
     case us_core, screening_assessment, open {
       Ok(us_core), Ok(screening_assessment), Ok(open) ->
-        Ok(PotatoconditionCategorySlices(us_core:, screening_assessment:, open:))
+        Ok(PotatoConditionCategorySlices(us_core:, screening_assessment:, open:))
       _, _, _ ->
         Error(
           list.flatten([
@@ -4734,17 +4752,17 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
     decode.optional(ct.potatoreference_decoder()),
   )
   use abatement <- decode.then(
-    none_if_omitted(potatocondition_abatement_decoder()),
+    none_if_omitted(potato_condition_abatement_decoder()),
   )
   let category_slices_decoder = case category_slices {
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        PotatoconditionCategorySlices(
+        PotatoConditionCategorySlices(
           us_core: ct.List1(
-            first: ct.codeableconcept_potatocondition_category_us_core_new(
+            first: ct.codeableconcept_potato_condition_category_us_core_new(
               required: ct.List1(
-                first: ct.codeableconcept_potatocondition_category_us_core_coding_required_new(),
+                first: ct.codeableconcept_potato_condition_category_us_core_coding_required_new(),
                 rest: [],
               ),
             ),
@@ -4753,7 +4771,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
           screening_assessment: [],
           open: [],
         ),
-        "Potatocondition slices",
+        "PotatoCondition slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
@@ -4761,8 +4779,8 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        PotatoconditionExtensionSlices(None),
-        "Potatocondition slices",
+        PotatoConditionExtensionSlices(None),
+        "PotatoCondition slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
@@ -4783,7 +4801,7 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
   )
   use category_slices <- decode.then(category_slices_decoder)
   use extension_slices <- decode.then(extension_slices_decoder)
-  decode.success(Potatocondition(
+  decode.success(PotatoCondition(
     verification_status:,
     text:,
     subject:,
@@ -4813,25 +4831,28 @@ pub fn potatocondition_decoder() -> Decoder(Potatocondition) {
   ))
 }
 
-type PotatodocumentreferenceCategorySliceAccumulator {
-  PotatodocumentreferenceCategorySliceAccumulator(
-    values: List(PotatodocumentreferenceCategory),
+type PotatoDocumentreferenceCategorySliceAccumulator {
+  PotatoDocumentreferenceCategorySliceAccumulator(
+    values: List(PotatoDocumentreferenceCategory),
   )
 }
 
-pub fn potatodocumentreference_relatesto_decoder() -> Decoder(
-  PotatodocumentreferenceRelatesto,
+pub fn potato_documentreference_relatesto_decoder() -> Decoder(
+  PotatoDocumentreferenceRelatesto,
 ) {
   use <- decode.recursive
   use target <- decode.field("target", ct.potatoreference_decoder())
   use id <- decode_optional_string("id")
-  use code <- decode.field("code", valuesets.documentrelationshiptype_decoder())
-  let placeholder = PotatodocumentreferenceRelatesto(target:, id:, code:)
+  use code <- decode.field(
+    "code",
+    valueset.document_relationship_type_decoder(),
+  )
+  let placeholder = PotatoDocumentreferenceRelatesto(target:, id:, code:)
   decode.success(placeholder)
 }
 
-pub fn potatodocumentreference_context_decoder() -> Decoder(
-  PotatodocumentreferenceContext,
+pub fn potato_documentreference_context_decoder() -> Decoder(
+  PotatoDocumentreferenceContext,
 ) {
   use <- decode.recursive
   use source_patient_info <- decode.optional_field(
@@ -4870,7 +4891,7 @@ pub fn potatodocumentreference_context_decoder() -> Decoder(
     ct.potatoreference_decoder(),
   )
   let placeholder =
-    PotatodocumentreferenceContext(
+    PotatoDocumentreferenceContext(
       source_patient_info:,
       related:,
       practice_setting:,
@@ -4883,8 +4904,8 @@ pub fn potatodocumentreference_context_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn potatodocumentreference_content_decoder() -> Decoder(
-  PotatodocumentreferenceContent,
+pub fn potato_documentreference_content_decoder() -> Decoder(
+  PotatoDocumentreferenceContent,
 ) {
   use <- decode.recursive
   use id <- decode_optional_string("id")
@@ -4897,11 +4918,11 @@ pub fn potatodocumentreference_content_decoder() -> Decoder(
     "attachment",
     ct.attachment_omit_extension_decoder(),
   )
-  let placeholder = PotatodocumentreferenceContent(id:, format:, attachment:)
+  let placeholder = PotatoDocumentreferenceContent(id:, format:, attachment:)
   decode.success(placeholder)
 }
 
-pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
+pub fn potato_documentreference_decoder() -> Decoder(PotatoDocumentreference) {
   use <- decode.recursive
   use type_ <- decode.field("type", ct.potatocodeableconcept_decoder())
   use text <- decode.optional_field(
@@ -4912,7 +4933,7 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
   use subject <- decode.field("subject", ct.potatoreference_decoder())
   use status <- decode.field(
     "status",
-    valuesets.documentreferencestatus_decoder(),
+    valueset.documentreference_status_decoder(),
   )
   use security_label <- decode.optional_field(
     "securityLabel",
@@ -4922,7 +4943,7 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
   use relates_to <- decode.optional_field(
     "relatesTo",
     [],
-    decode.list(potatodocumentreference_relatesto_decoder()),
+    decode.list(potato_documentreference_relatesto_decoder()),
   )
   use meta <- decode.optional_field(
     "meta",
@@ -4945,7 +4966,7 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
   use doc_status <- decode.optional_field(
     "docStatus",
     None,
-    decode.optional(valuesets.compositionstatus_decoder()),
+    decode.optional(valueset.composition_status_decoder()),
   )
   use description <- decode_optional_string("description")
   use date <- decode.optional_field(
@@ -4961,11 +4982,11 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
   use context <- decode.optional_field(
     "context",
     None,
-    decode.optional(potatodocumentreference_context_decoder()),
+    decode.optional(potato_documentreference_context_decoder()),
   )
   use content <- list1_decoder(
     "content",
-    potatodocumentreference_content_decoder(),
+    potato_documentreference_content_decoder(),
   )
   use contained <- decode.optional_field(
     "contained",
@@ -4987,7 +5008,7 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
                   case
                     decode.run(
                       value,
-                      ct.codeableconcept_potatodocumentreference_category_uscore_decoder(),
+                      ct.codeableconcept_potato_documentreference_category_uscore_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -5005,22 +5026,22 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
         }
       {
         ct.DiscriminatorMatches ->
-          ct.codeableconcept_potatodocumentreference_category_uscore_decoder()
-          |> decode.map(PotatodocumentreferenceCategoryUscore)
+          ct.codeableconcept_potato_documentreference_category_uscore_decoder()
+          |> decode.map(PotatoDocumentreferenceCategoryUscore)
         ct.DiscriminatorDifferent ->
           ct.potatocodeableconcept_decoder()
-          |> decode.map(PotatodocumentreferenceCategoryOpen)
+          |> decode.map(PotatoDocumentreferenceCategoryOpen)
       }
     }),
   )
   let category_accumulator =
     list.index_fold(
       category_base_values,
-      PotatodocumentreferenceCategorySliceAccumulator([]),
+      PotatoDocumentreferenceCategorySliceAccumulator([]),
       fn(accumulator, parsed, _index) {
         case parsed {
           value ->
-            PotatodocumentreferenceCategorySliceAccumulator([
+            PotatoDocumentreferenceCategorySliceAccumulator([
               value,
               ..accumulator.values
             ])
@@ -5028,7 +5049,7 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
       },
     )
   let category_slices = case category_accumulator {
-    PotatodocumentreferenceCategorySliceAccumulator(values:) ->
+    PotatoDocumentreferenceCategorySliceAccumulator(values:) ->
       case list.reverse(values) {
         [first, ..rest] -> Ok(ct.List1(first:, rest:))
         [] ->
@@ -5057,12 +5078,12 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
     Error(errors) ->
       decode.failure(
         ct.List1(
-          first: PotatodocumentreferenceCategoryOpen(
+          first: PotatoDocumentreferenceCategoryOpen(
             ct.potatocodeableconcept_new(),
           ),
           rest: [],
         ),
-        "Potatodocumentreference slices",
+        "PotatoDocumentreference slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
@@ -5082,7 +5103,7 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
     }),
   )
   use category_slices <- decode.then(category_slices_decoder)
-  decode.success(Potatodocumentreference(
+  decode.success(PotatoDocumentreference(
     type_:,
     text:,
     subject:,
@@ -5108,19 +5129,19 @@ pub fn potatodocumentreference_decoder() -> Decoder(Potatodocumentreference) {
   ))
 }
 
-pub fn potatoencounter_statushistory_decoder() -> Decoder(
-  PotatoencounterStatushistory,
+pub fn potato_encounter_statushistory_decoder() -> Decoder(
+  PotatoEncounterStatushistory,
 ) {
   use <- decode.recursive
-  use status <- decode.field("status", valuesets.encounterstatus_decoder())
+  use status <- decode.field("status", valueset.encounter_status_decoder())
   use period <- decode.field("period", ct.potatoperiod_decoder())
   use id <- decode_optional_string("id")
-  let placeholder = PotatoencounterStatushistory(status:, period:, id:)
+  let placeholder = PotatoEncounterStatushistory(status:, period:, id:)
   decode.success(placeholder)
 }
 
-pub fn potatoencounter_participant_decoder() -> Decoder(
-  PotatoencounterParticipant,
+pub fn potato_encounter_participant_decoder() -> Decoder(
+  PotatoEncounterParticipant,
 ) {
   use <- decode.recursive
   use type_ <- decode.optional_field(
@@ -5140,16 +5161,16 @@ pub fn potatoencounter_participant_decoder() -> Decoder(
   )
   use id <- decode_optional_string("id")
   let placeholder =
-    PotatoencounterParticipant(type_:, period:, individual:, id:)
+    PotatoEncounterParticipant(type_:, period:, individual:, id:)
   decode.success(placeholder)
 }
 
-pub fn potatoencounter_location_decoder() -> Decoder(PotatoencounterLocation) {
+pub fn potato_encounter_location_decoder() -> Decoder(PotatoEncounterLocation) {
   use <- decode.recursive
   use status <- decode.optional_field(
     "status",
     None,
-    decode.optional(valuesets.encounterlocationstatus_decoder()),
+    decode.optional(valueset.encounter_location_status_decoder()),
   )
   use physical_type <- decode.optional_field(
     "physicalType",
@@ -5164,12 +5185,12 @@ pub fn potatoencounter_location_decoder() -> Decoder(PotatoencounterLocation) {
   use location <- decode.field("location", ct.potatoreference_decoder())
   use id <- decode_optional_string("id")
   let placeholder =
-    PotatoencounterLocation(status:, physical_type:, period:, location:, id:)
+    PotatoEncounterLocation(status:, physical_type:, period:, location:, id:)
   decode.success(placeholder)
 }
 
-pub fn potatoencounter_hospitalization_decoder() -> Decoder(
-  PotatoencounterHospitalization,
+pub fn potato_encounter_hospitalization_decoder() -> Decoder(
+  PotatoEncounterHospitalization,
 ) {
   use <- decode.recursive
   use special_courtesy <- decode.optional_field(
@@ -5219,7 +5240,7 @@ pub fn potatoencounter_hospitalization_decoder() -> Decoder(
     decode.optional(ct.potatocodeableconcept_decoder()),
   )
   let placeholder =
-    PotatoencounterHospitalization(
+    PotatoEncounterHospitalization(
       special_courtesy:,
       special_arrangement:,
       re_admission:,
@@ -5234,7 +5255,7 @@ pub fn potatoencounter_hospitalization_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn potatoencounter_diagnosis_decoder() -> Decoder(PotatoencounterDiagnosis) {
+pub fn potato_encounter_diagnosis_decoder() -> Decoder(PotatoEncounterDiagnosis) {
   use <- decode.recursive
   use use_ <- decode.optional_field(
     "use",
@@ -5244,22 +5265,22 @@ pub fn potatoencounter_diagnosis_decoder() -> Decoder(PotatoencounterDiagnosis) 
   use rank <- decode.optional_field("rank", None, decode.optional(decode.int))
   use id <- decode_optional_string("id")
   use condition <- decode.field("condition", ct.potatoreference_decoder())
-  let placeholder = PotatoencounterDiagnosis(use_:, rank:, id:, condition:)
+  let placeholder = PotatoEncounterDiagnosis(use_:, rank:, id:, condition:)
   decode.success(placeholder)
 }
 
-pub fn potatoencounter_classhistory_decoder() -> Decoder(
-  PotatoencounterClasshistory,
+pub fn potato_encounter_classhistory_decoder() -> Decoder(
+  PotatoEncounterClasshistory,
 ) {
   use <- decode.recursive
   use period <- decode.field("period", ct.potatoperiod_decoder())
   use id <- decode_optional_string("id")
   use class <- decode.field("class", ct.potatocoding_decoder())
-  let placeholder = PotatoencounterClasshistory(period:, id:, class:)
+  let placeholder = PotatoEncounterClasshistory(period:, id:, class:)
   decode.success(placeholder)
 }
 
-pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
+pub fn potato_encounter_decoder() -> Decoder(PotatoEncounter) {
   use <- decode.recursive
   use type_ <- list1_decoder("type", ct.potatocodeableconcept_decoder())
   use text <- decode.optional_field(
@@ -5271,9 +5292,9 @@ pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
   use status_history <- decode.optional_field(
     "statusHistory",
     [],
-    decode.list(potatoencounter_statushistory_decoder()),
+    decode.list(potato_encounter_statushistory_decoder()),
   )
-  use status <- decode.field("status", valuesets.encounterstatus_decoder())
+  use status <- decode.field("status", valueset.encounter_status_decoder())
   use service_type <- decode.optional_field(
     "serviceType",
     None,
@@ -5307,7 +5328,7 @@ pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
   use participant <- decode.optional_field(
     "participant",
     [],
-    decode.list(potatoencounter_participant_decoder()),
+    decode.list(potato_encounter_participant_decoder()),
   )
   use part_of <- decode.optional_field(
     "partOf",
@@ -5317,12 +5338,12 @@ pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
   use meta <- decode.optional_field(
     "meta",
     None,
-    decode.optional(ct.meta_potatoencounter_meta_decoder()),
+    decode.optional(ct.meta_potato_encounter_meta_decoder()),
   )
   use location <- decode.optional_field(
     "location",
     [],
-    decode.list(potatoencounter_location_decoder()),
+    decode.list(potato_encounter_location_decoder()),
   )
   use length <- decode.optional_field(
     "length",
@@ -5334,13 +5355,13 @@ pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
   use identifier <- decode.optional_field(
     "identifier",
     [],
-    decode.list(ct.identifier_potatoencounter_identifier_decoder()),
+    decode.list(ct.identifier_potato_encounter_identifier_decoder()),
   )
   use id <- decode_optional_string("id")
   use hospitalization <- decode.optional_field(
     "hospitalization",
     None,
-    decode.optional(potatoencounter_hospitalization_decoder()),
+    decode.optional(potato_encounter_hospitalization_decoder()),
   )
   use episode_of_care <- decode.optional_field(
     "episodeOfCare",
@@ -5350,7 +5371,7 @@ pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
   use diagnosis <- decode.optional_field(
     "diagnosis",
     [],
-    decode.list(potatoencounter_diagnosis_decoder()),
+    decode.list(potato_encounter_diagnosis_decoder()),
   )
   use contained <- decode.optional_field(
     "contained",
@@ -5360,7 +5381,7 @@ pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
   use class_history <- decode.optional_field(
     "classHistory",
     [],
-    decode.list(potatoencounter_classhistory_decoder()),
+    decode.list(potato_encounter_classhistory_decoder()),
   )
   use class <- decode.field("class", ct.potatocoding_decoder())
   use based_on <- decode.optional_field(
@@ -5379,7 +5400,7 @@ pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
     decode.list(ct.potatoreference_decoder()),
   )
   let placeholder =
-    Potatoencounter(
+    PotatoEncounter(
       type_:,
       text:,
       subject:,
@@ -5428,8 +5449,8 @@ pub fn potatoencounter_decoder() -> Decoder(Potatoencounter) {
   decode.success(placeholder)
 }
 
-pub fn potatoimmunization_reaction_decoder() -> Decoder(
-  PotatoimmunizationReaction,
+pub fn potato_immunization_reaction_decoder() -> Decoder(
+  PotatoImmunizationReaction,
 ) {
   use <- decode.recursive
   use reported <- decode_optional_bool("reported")
@@ -5444,50 +5465,50 @@ pub fn potatoimmunization_reaction_decoder() -> Decoder(
     None,
     decode.optional(pt.datetime_decoder()),
   )
-  let placeholder = PotatoimmunizationReaction(reported:, id:, detail:, date:)
+  let placeholder = PotatoImmunizationReaction(reported:, id:, detail:, date:)
   decode.success(placeholder)
 }
 
-pub fn potatoimmunization_protocolapplied_seriesdoses_decoder() -> Decoder(
-  PotatoimmunizationProtocolappliedSeriesdoses,
+pub fn potato_immunization_protocolapplied_seriesdoses_decoder() -> Decoder(
+  PotatoImmunizationProtocolappliedSeriesdoses,
 ) {
   decode.one_of(
     {
       use value <- decode.field("seriesDosesPositiveInt", decode.int)
-      decode.success(PotatoimmunizationProtocolappliedSeriesdosesPositiveint(
+      decode.success(PotatoImmunizationProtocolappliedSeriesdosesPositiveint(
         value,
       ))
     },
     [
       {
         use value <- decode.field("seriesDosesString", decode.string)
-        decode.success(PotatoimmunizationProtocolappliedSeriesdosesString(value))
+        decode.success(PotatoImmunizationProtocolappliedSeriesdosesString(value))
       },
     ],
   )
 }
 
-pub fn potatoimmunization_protocolapplied_dosenumber_decoder() -> Decoder(
-  PotatoimmunizationProtocolappliedDosenumber,
+pub fn potato_immunization_protocolapplied_dosenumber_decoder() -> Decoder(
+  PotatoImmunizationProtocolappliedDosenumber,
 ) {
   decode.one_of(
     {
       use value <- decode.field("doseNumberPositiveInt", decode.int)
-      decode.success(PotatoimmunizationProtocolappliedDosenumberPositiveint(
+      decode.success(PotatoImmunizationProtocolappliedDosenumberPositiveint(
         value,
       ))
     },
     [
       {
         use value <- decode.field("doseNumberString", decode.string)
-        decode.success(PotatoimmunizationProtocolappliedDosenumberString(value))
+        decode.success(PotatoImmunizationProtocolappliedDosenumberString(value))
       },
     ],
   )
 }
 
-pub fn potatoimmunization_protocolapplied_decoder() -> Decoder(
-  PotatoimmunizationProtocolapplied,
+pub fn potato_immunization_protocolapplied_decoder() -> Decoder(
+  PotatoImmunizationProtocolapplied,
 ) {
   use <- decode.recursive
   use target_disease <- decode.optional_field(
@@ -5496,12 +5517,12 @@ pub fn potatoimmunization_protocolapplied_decoder() -> Decoder(
     decode.list(ct.potatocodeableconcept_decoder()),
   )
   use series_doses <- decode.then(
-    none_if_omitted(potatoimmunization_protocolapplied_seriesdoses_decoder()),
+    none_if_omitted(potato_immunization_protocolapplied_seriesdoses_decoder()),
   )
   use series <- decode_optional_string("series")
   use id <- decode_optional_string("id")
   use dose_number <- decode.then(
-    potatoimmunization_protocolapplied_dosenumber_decoder(),
+    potato_immunization_protocolapplied_dosenumber_decoder(),
   )
   use authority <- decode.optional_field(
     "authority",
@@ -5509,7 +5530,7 @@ pub fn potatoimmunization_protocolapplied_decoder() -> Decoder(
     decode.optional(ct.potatoreference_decoder()),
   )
   let placeholder =
-    PotatoimmunizationProtocolapplied(
+    PotatoImmunizationProtocolapplied(
       target_disease:,
       series_doses:,
       series:,
@@ -5520,8 +5541,8 @@ pub fn potatoimmunization_protocolapplied_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn potatoimmunization_performer_decoder() -> Decoder(
-  PotatoimmunizationPerformer,
+pub fn potato_immunization_performer_decoder() -> Decoder(
+  PotatoImmunizationPerformer,
 ) {
   use <- decode.recursive
   use id <- decode_optional_string("id")
@@ -5531,12 +5552,12 @@ pub fn potatoimmunization_performer_decoder() -> Decoder(
     decode.optional(ct.potatocodeableconcept_decoder()),
   )
   use actor <- decode.field("actor", ct.potatoreference_decoder())
-  let placeholder = PotatoimmunizationPerformer(id:, function:, actor:)
+  let placeholder = PotatoImmunizationPerformer(id:, function:, actor:)
   decode.success(placeholder)
 }
 
-pub fn potatoimmunization_education_decoder() -> Decoder(
-  PotatoimmunizationEducation,
+pub fn potato_immunization_education_decoder() -> Decoder(
+  PotatoImmunizationEducation,
 ) {
   use <- decode.recursive
   use reference <- decode_optional_string("reference")
@@ -5553,7 +5574,7 @@ pub fn potatoimmunization_education_decoder() -> Decoder(
   use id <- decode_optional_string("id")
   use document_type <- decode_optional_string("documentType")
   let placeholder =
-    PotatoimmunizationEducation(
+    PotatoImmunizationEducation(
       reference:,
       publication_date:,
       presentation_date:,
@@ -5563,24 +5584,24 @@ pub fn potatoimmunization_education_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn potatoimmunization_occurrence_decoder() -> Decoder(
-  PotatoimmunizationOccurrence,
+pub fn potato_immunization_occurrence_decoder() -> Decoder(
+  PotatoImmunizationOccurrence,
 ) {
   decode.one_of(
     {
       use value <- decode.field("occurrenceDateTime", pt.datetime_decoder())
-      decode.success(PotatoimmunizationOccurrenceDatetime(value))
+      decode.success(PotatoImmunizationOccurrenceDatetime(value))
     },
     [
       {
         use value <- decode.field("occurrenceString", decode.string)
-        decode.success(PotatoimmunizationOccurrenceString(value))
+        decode.success(PotatoImmunizationOccurrenceString(value))
       },
     ],
   )
 }
 
-pub fn potatoimmunization_decoder() -> Decoder(Potatoimmunization) {
+pub fn potato_immunization_decoder() -> Decoder(PotatoImmunization) {
   use <- decode.recursive
   use vaccine_code <- decode.field(
     "vaccineCode",
@@ -5601,7 +5622,7 @@ pub fn potatoimmunization_decoder() -> Decoder(Potatoimmunization) {
     None,
     decode.optional(ct.potatocodeableconcept_decoder()),
   )
-  use status <- decode.field("status", valuesets.immunizationstatus_decoder())
+  use status <- decode.field("status", valueset.immunization_status_decoder())
   use site <- decode.optional_field(
     "site",
     None,
@@ -5635,12 +5656,12 @@ pub fn potatoimmunization_decoder() -> Decoder(Potatoimmunization) {
   use reaction <- decode.optional_field(
     "reaction",
     [],
-    decode.list(potatoimmunization_reaction_decoder()),
+    decode.list(potato_immunization_reaction_decoder()),
   )
   use protocol_applied <- decode.optional_field(
     "protocolApplied",
     [],
-    decode.list(potatoimmunization_protocolapplied_decoder()),
+    decode.list(potato_immunization_protocolapplied_decoder()),
   )
   use program_eligibility <- decode.optional_field(
     "programEligibility",
@@ -5651,10 +5672,10 @@ pub fn potatoimmunization_decoder() -> Decoder(Potatoimmunization) {
   use performer <- decode.optional_field(
     "performer",
     [],
-    decode.list(potatoimmunization_performer_decoder()),
+    decode.list(potato_immunization_performer_decoder()),
   )
   use patient <- decode.field("patient", ct.potatoreference_decoder())
-  use occurrence <- decode.then(potatoimmunization_occurrence_decoder())
+  use occurrence <- decode.then(potato_immunization_occurrence_decoder())
   use note <- decode.optional_field(
     "note",
     [],
@@ -5703,7 +5724,7 @@ pub fn potatoimmunization_decoder() -> Decoder(Potatoimmunization) {
   use education <- decode.optional_field(
     "education",
     [],
-    decode.list(potatoimmunization_education_decoder()),
+    decode.list(potato_immunization_education_decoder()),
   )
   use dose_quantity <- decode.optional_field(
     "doseQuantity",
@@ -5716,7 +5737,7 @@ pub fn potatoimmunization_decoder() -> Decoder(Potatoimmunization) {
     decode.list(resource_decoder()),
   )
   let placeholder =
-    Potatoimmunization(
+    PotatoImmunization(
       vaccine_code:,
       text:,
       subpotent_reason:,
@@ -5927,53 +5948,53 @@ fn parse_potatomedicationadherence() -> Decoder(
   })
 }
 
-type PotatomedicationrequestExtensionSliceAccumulator {
-  PotatomedicationrequestExtensionSliceAccumulator(
+type PotatoMedicationrequestExtensionSliceAccumulator {
+  PotatoMedicationrequestExtensionSliceAccumulator(
     medication_adherence: List(ct.Potatomedicationadherence),
   )
 }
 
-pub type PotatomedicationrequestParsedExtensionSlice {
-  PotatomedicationrequestParsedExtensionSliceMedicationadherence(
+pub type PotatoMedicationrequestParsedExtensionSlice {
+  PotatoMedicationrequestParsedExtensionSliceMedicationadherence(
     ct.Potatomedicationadherence,
   )
-  PotatomedicationrequestParsedExtensionSliceIgnored
+  PotatoMedicationrequestParsedExtensionSliceIgnored
 }
 
-type PotatomedicationrequestExtensionSlices {
-  PotatomedicationrequestExtensionSlices(
+type PotatoMedicationrequestExtensionSlices {
+  PotatoMedicationrequestExtensionSlices(
     medication_adherence: List(ct.Potatomedicationadherence),
   )
 }
 
-type PotatomedicationrequestCategorySliceAccumulator {
-  PotatomedicationrequestCategorySliceAccumulator(
-    us_core: List(ct.CodeableconceptPotatomedicationrequestCategoryUsCore),
+type PotatoMedicationrequestCategorySliceAccumulator {
+  PotatoMedicationrequestCategorySliceAccumulator(
+    us_core: List(ct.CodeableconceptPotatoMedicationrequestCategoryUsCore),
     open: List(ct.Potatocodeableconcept),
   )
 }
 
-type PotatomedicationrequestParsedCategorySlice {
-  PotatomedicationrequestParsedCategorySliceUsCore(
-    ct.CodeableconceptPotatomedicationrequestCategoryUsCore,
+type PotatoMedicationrequestParsedCategorySlice {
+  PotatoMedicationrequestParsedCategorySliceUsCore(
+    ct.CodeableconceptPotatoMedicationrequestCategoryUsCore,
   )
-  PotatomedicationrequestParsedCategorySliceOpen(ct.Potatocodeableconcept)
+  PotatoMedicationrequestParsedCategorySliceOpen(ct.Potatocodeableconcept)
 }
 
-type PotatomedicationrequestCategorySlices {
-  PotatomedicationrequestCategorySlices(
-    us_core: List(ct.CodeableconceptPotatomedicationrequestCategoryUsCore),
+type PotatoMedicationrequestCategorySlices {
+  PotatoMedicationrequestCategorySlices(
+    us_core: List(ct.CodeableconceptPotatoMedicationrequestCategoryUsCore),
     open: List(ct.Potatocodeableconcept),
   )
 }
 
-pub fn potatomedicationrequest_substitution_allowed_decoder() -> Decoder(
-  PotatomedicationrequestSubstitutionAllowed,
+pub fn potato_medicationrequest_substitution_allowed_decoder() -> Decoder(
+  PotatoMedicationrequestSubstitutionAllowed,
 ) {
   decode.one_of(
     {
       use value <- decode.field("allowedBoolean", decode.bool)
-      decode.success(PotatomedicationrequestSubstitutionAllowedBoolean(value))
+      decode.success(PotatoMedicationrequestSubstitutionAllowedBoolean(value))
     },
     [
       {
@@ -5982,15 +6003,15 @@ pub fn potatomedicationrequest_substitution_allowed_decoder() -> Decoder(
           ct.potatocodeableconcept_decoder(),
         )
         decode.success(
-          PotatomedicationrequestSubstitutionAllowedCodeableconcept(value),
+          PotatoMedicationrequestSubstitutionAllowedCodeableconcept(value),
         )
       },
     ],
   )
 }
 
-pub fn potatomedicationrequest_substitution_decoder() -> Decoder(
-  PotatomedicationrequestSubstitution,
+pub fn potato_medicationrequest_substitution_decoder() -> Decoder(
+  PotatoMedicationrequestSubstitution,
 ) {
   use <- decode.recursive
   use reason <- decode.optional_field(
@@ -6000,14 +6021,14 @@ pub fn potatomedicationrequest_substitution_decoder() -> Decoder(
   )
   use id <- decode_optional_string("id")
   use allowed <- decode.then(
-    potatomedicationrequest_substitution_allowed_decoder(),
+    potato_medicationrequest_substitution_allowed_decoder(),
   )
-  let placeholder = PotatomedicationrequestSubstitution(reason:, id:, allowed:)
+  let placeholder = PotatoMedicationrequestSubstitution(reason:, id:, allowed:)
   decode.success(placeholder)
 }
 
-pub fn potatomedicationrequest_dispenserequest_initialfill_decoder() -> Decoder(
-  PotatomedicationrequestDispenserequestInitialfill,
+pub fn potato_medicationrequest_dispenserequest_initialfill_decoder() -> Decoder(
+  PotatoMedicationrequestDispenserequestInitialfill,
 ) {
   use <- decode.recursive
   use quantity <- decode.optional_field(
@@ -6022,12 +6043,12 @@ pub fn potatomedicationrequest_dispenserequest_initialfill_decoder() -> Decoder(
     decode.optional(ct.potatoduration_decoder()),
   )
   let placeholder =
-    PotatomedicationrequestDispenserequestInitialfill(quantity:, id:, duration:)
+    PotatoMedicationrequestDispenserequestInitialfill(quantity:, id:, duration:)
   decode.success(placeholder)
 }
 
-pub fn potatomedicationrequest_dispenserequest_decoder() -> Decoder(
-  PotatomedicationrequestDispenserequest,
+pub fn potato_medicationrequest_dispenserequest_decoder() -> Decoder(
+  PotatoMedicationrequestDispenserequest,
 ) {
   use <- decode.recursive
   use validity_period <- decode.optional_field(
@@ -6054,7 +6075,7 @@ pub fn potatomedicationrequest_dispenserequest_decoder() -> Decoder(
     "initialFill",
     None,
     decode.optional(
-      potatomedicationrequest_dispenserequest_initialfill_decoder(),
+      potato_medicationrequest_dispenserequest_initialfill_decoder(),
     ),
   )
   use id <- decode_optional_string("id")
@@ -6069,7 +6090,7 @@ pub fn potatomedicationrequest_dispenserequest_decoder() -> Decoder(
     decode.optional(ct.potatoduration_decoder()),
   )
   let placeholder =
-    PotatomedicationrequestDispenserequest(
+    PotatoMedicationrequestDispenserequest(
       validity_period:,
       quantity:,
       performer:,
@@ -6082,13 +6103,13 @@ pub fn potatomedicationrequest_dispenserequest_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn potatomedicationrequest_reported_decoder() -> Decoder(
-  PotatomedicationrequestReported,
+pub fn potato_medicationrequest_reported_decoder() -> Decoder(
+  PotatoMedicationrequestReported,
 ) {
   decode.one_of(
     {
       use value <- decode.field("reportedBoolean", decode.bool)
-      decode.success(PotatomedicationrequestReportedBoolean(value))
+      decode.success(PotatoMedicationrequestReportedBoolean(value))
     },
     [
       {
@@ -6096,14 +6117,14 @@ pub fn potatomedicationrequest_reported_decoder() -> Decoder(
           "reportedReference",
           ct.potatoreference_decoder(),
         )
-        decode.success(PotatomedicationrequestReportedReference(value))
+        decode.success(PotatoMedicationrequestReportedReference(value))
       },
     ],
   )
 }
 
-pub fn potatomedicationrequest_medication_decoder() -> Decoder(
-  PotatomedicationrequestMedication,
+pub fn potato_medicationrequest_medication_decoder() -> Decoder(
+  PotatoMedicationrequestMedication,
 ) {
   decode.one_of(
     {
@@ -6111,7 +6132,7 @@ pub fn potatomedicationrequest_medication_decoder() -> Decoder(
         "medicationCodeableConcept",
         ct.potatocodeableconcept_decoder(),
       )
-      decode.success(PotatomedicationrequestMedicationCodeableconcept(value))
+      decode.success(PotatoMedicationrequestMedicationCodeableconcept(value))
     },
     [
       {
@@ -6119,14 +6140,14 @@ pub fn potatomedicationrequest_medication_decoder() -> Decoder(
           "medicationReference",
           ct.potatoreference_decoder(),
         )
-        decode.success(PotatomedicationrequestMedicationReference(value))
+        decode.success(PotatoMedicationrequestMedicationReference(value))
       },
     ],
   )
 }
 
-pub fn potatomedicationrequest_extension_slice_decoder() -> Decoder(
-  Result(PotatomedicationrequestParsedExtensionSlice, String),
+pub fn potato_medicationrequest_extension_slice_decoder() -> Decoder(
+  Result(PotatoMedicationrequestParsedExtensionSlice, String),
 ) {
   use url <- decode.field("url", decode.string)
   use _id <- decode.optional_field("id", None, decode.optional(decode.string))
@@ -6136,19 +6157,19 @@ pub fn potatomedicationrequest_extension_slice_decoder() -> Decoder(
         parse_potatomedicationadherence()
         |> decode.map(fn(parsed) {
           result.map(parsed, fn(value) {
-            PotatomedicationrequestParsedExtensionSliceMedicationadherence(
+            PotatoMedicationrequestParsedExtensionSliceMedicationadherence(
               value,
             )
           })
         })
       _ ->
-        decode.success(Ok(PotatomedicationrequestParsedExtensionSliceIgnored))
+        decode.success(Ok(PotatoMedicationrequestParsedExtensionSliceIgnored))
     },
     decode.success,
   )
 }
 
-pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
+pub fn potato_medicationrequest_decoder() -> Decoder(PotatoMedicationrequest) {
   use <- decode.recursive
   use text <- decode.optional_field(
     "text",
@@ -6163,7 +6184,7 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
   use substitution <- decode.optional_field(
     "substitution",
     None,
-    decode.optional(potatomedicationrequest_substitution_decoder()),
+    decode.optional(potato_medicationrequest_substitution_decoder()),
   )
   use subject <- decode.field("subject", ct.potatoreference_decoder())
   use status_reason <- decode.optional_field(
@@ -6173,7 +6194,7 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
   )
   use status <- decode.field(
     "status",
-    valuesets.medicationrequeststatus_decoder(),
+    valueset.medicationrequest_status_decoder(),
   )
   use requester <- decode.optional_field(
     "requester",
@@ -6181,7 +6202,7 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
     decode.optional(ct.potatoreference_decoder()),
   )
   use reported <- decode.then(
-    none_if_omitted(potatomedicationrequest_reported_decoder()),
+    none_if_omitted(potato_medicationrequest_reported_decoder()),
   )
   use recorder <- decode.optional_field(
     "recorder",
@@ -6201,7 +6222,7 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
   use priority <- decode.optional_field(
     "priority",
     None,
-    decode.optional(valuesets.requestpriority_decoder()),
+    decode.optional(valueset.request_priority_decoder()),
   )
   use prior_prescription <- decode.optional_field(
     "priorPrescription",
@@ -6228,11 +6249,11 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
     None,
     decode.optional(ct.potatometa_decoder()),
   )
-  use medication <- decode.then(potatomedicationrequest_medication_decoder())
+  use medication <- decode.then(potato_medicationrequest_medication_decoder())
   use language <- decode_optional_string("language")
   use intent <- decode.field(
     "intent",
-    valuesets.medicationrequestintent_decoder(),
+    valueset.medicationrequest_intent_decoder(),
   )
   use insurance <- decode.optional_field(
     "insurance",
@@ -6264,12 +6285,12 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
   use extension_base_values <- decode.optional_field(
     "extension",
     [],
-    decode.list(potatomedicationrequest_extension_slice_decoder()),
+    decode.list(potato_medicationrequest_extension_slice_decoder()),
   )
   let extension_accumulator =
     list.index_fold(
       extension_base_values,
-      Ok(PotatomedicationrequestExtensionSliceAccumulator([])),
+      Ok(PotatoMedicationrequestExtensionSliceAccumulator([])),
       fn(accumulator_result, parsed, index) {
         case accumulator_result {
           Error(errors) -> Error(errors)
@@ -6285,18 +6306,18 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
                 ])
               Ok(slice) ->
                 case slice {
-                  PotatomedicationrequestParsedExtensionSliceMedicationadherence(
+                  PotatoMedicationrequestParsedExtensionSliceMedicationadherence(
                     value,
                   ) ->
                     Ok(
-                      PotatomedicationrequestExtensionSliceAccumulator(
+                      PotatoMedicationrequestExtensionSliceAccumulator(
                         medication_adherence: [
                           value,
                           ..accumulator.medication_adherence
                         ],
                       ),
                     )
-                  PotatomedicationrequestParsedExtensionSliceIgnored ->
+                  PotatoMedicationrequestParsedExtensionSliceIgnored ->
                     Ok(accumulator)
                 }
             }
@@ -6306,7 +6327,7 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
   let extension_slices = case extension_accumulator {
     Ok(accumulator) ->
       Ok(
-        PotatomedicationrequestExtensionSlices(
+        PotatoMedicationrequestExtensionSlices(
           medication_adherence: list.reverse(accumulator.medication_adherence),
         ),
       )
@@ -6325,13 +6346,13 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
   use dosage_instruction <- decode.optional_field(
     "dosageInstruction",
     [],
-    decode.list(ct.dosage_potatomedicationrequest_dosageinstruction_decoder()),
+    decode.list(ct.dosage_potato_medicationrequest_dosageinstruction_decoder()),
   )
   use do_not_perform <- decode_optional_bool("doNotPerform")
   use dispense_request <- decode.optional_field(
     "dispenseRequest",
     None,
-    decode.optional(potatomedicationrequest_dispenserequest_decoder()),
+    decode.optional(potato_medicationrequest_dispenserequest_decoder()),
   )
   use detected_issue <- decode.optional_field(
     "detectedIssue",
@@ -6363,7 +6384,7 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
                   case
                     decode.run(
                       value,
-                      ct.codeableconcept_potatomedicationrequest_category_us_core_decoder(),
+                      ct.codeableconcept_potato_medicationrequest_category_us_core_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -6381,27 +6402,27 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
         }
       {
         ct.DiscriminatorMatches ->
-          ct.codeableconcept_potatomedicationrequest_category_us_core_decoder()
-          |> decode.map(PotatomedicationrequestParsedCategorySliceUsCore)
+          ct.codeableconcept_potato_medicationrequest_category_us_core_decoder()
+          |> decode.map(PotatoMedicationrequestParsedCategorySliceUsCore)
         ct.DiscriminatorDifferent ->
           ct.potatocodeableconcept_decoder()
-          |> decode.map(PotatomedicationrequestParsedCategorySliceOpen)
+          |> decode.map(PotatoMedicationrequestParsedCategorySliceOpen)
       }
     }),
   )
   let category_accumulator =
     list.index_fold(
       category_base_values,
-      PotatomedicationrequestCategorySliceAccumulator([], []),
+      PotatoMedicationrequestCategorySliceAccumulator([], []),
       fn(accumulator, parsed, _index) {
         case parsed {
-          PotatomedicationrequestParsedCategorySliceUsCore(value) ->
-            PotatomedicationrequestCategorySliceAccumulator(
+          PotatoMedicationrequestParsedCategorySliceUsCore(value) ->
+            PotatoMedicationrequestCategorySliceAccumulator(
               ..accumulator,
               us_core: [value, ..accumulator.us_core],
             )
-          PotatomedicationrequestParsedCategorySliceOpen(value) ->
-            PotatomedicationrequestCategorySliceAccumulator(
+          PotatoMedicationrequestParsedCategorySliceOpen(value) ->
+            PotatoMedicationrequestCategorySliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -6409,7 +6430,7 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
       },
     )
   let category_slices =
-    PotatomedicationrequestCategorySlices(
+    PotatoMedicationrequestCategorySlices(
       us_core: list.reverse(category_accumulator.us_core),
       open: list.reverse(category_accumulator.open),
     )
@@ -6427,8 +6448,8 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        PotatomedicationrequestExtensionSlices([]),
-        "Potatomedicationrequest slices",
+        PotatoMedicationrequestExtensionSlices([]),
+        "PotatoMedicationrequest slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
@@ -6448,7 +6469,7 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
     }),
   )
   use extension_slices <- decode.then(extension_slices_decoder)
-  decode.success(Potatomedicationrequest(
+  decode.success(PotatoMedicationrequest(
     text:,
     supporting_information:,
     substitution:,
@@ -6492,8 +6513,8 @@ pub fn potatomedicationrequest_decoder() -> Decoder(Potatomedicationrequest) {
   ))
 }
 
-pub fn potatomedicationstatement_medication_decoder() -> Decoder(
-  PotatomedicationstatementMedication,
+pub fn potato_medicationstatement_medication_decoder() -> Decoder(
+  PotatoMedicationstatementMedication,
 ) {
   decode.one_of(
     {
@@ -6501,7 +6522,7 @@ pub fn potatomedicationstatement_medication_decoder() -> Decoder(
         "medicationCodeableConcept",
         ct.potatocodeableconcept_decoder(),
       )
-      decode.success(PotatomedicationstatementMedicationCodeableconcept(value))
+      decode.success(PotatoMedicationstatementMedicationCodeableconcept(value))
     },
     [
       {
@@ -6509,30 +6530,32 @@ pub fn potatomedicationstatement_medication_decoder() -> Decoder(
           "medicationReference",
           ct.potatoreference_decoder(),
         )
-        decode.success(PotatomedicationstatementMedicationReference(value))
+        decode.success(PotatoMedicationstatementMedicationReference(value))
       },
     ],
   )
 }
 
-pub fn potatomedicationstatement_effective_decoder() -> Decoder(
-  PotatomedicationstatementEffective,
+pub fn potato_medicationstatement_effective_decoder() -> Decoder(
+  PotatoMedicationstatementEffective,
 ) {
   decode.one_of(
     {
       use value <- decode.field("effectiveDateTime", pt.datetime_decoder())
-      decode.success(PotatomedicationstatementEffectiveDatetime(value))
+      decode.success(PotatoMedicationstatementEffectiveDatetime(value))
     },
     [
       {
         use value <- decode.field("effectivePeriod", ct.potatoperiod_decoder())
-        decode.success(PotatomedicationstatementEffectivePeriod(value))
+        decode.success(PotatoMedicationstatementEffectivePeriod(value))
       },
     ],
   )
 }
 
-pub fn potatomedicationstatement_decoder() -> Decoder(Potatomedicationstatement) {
+pub fn potato_medicationstatement_decoder() -> Decoder(
+  PotatoMedicationstatement,
+) {
   use <- decode.recursive
   use text <- decode.optional_field(
     "text",
@@ -6547,7 +6570,7 @@ pub fn potatomedicationstatement_decoder() -> Decoder(Potatomedicationstatement)
   )
   use status <- decode.field(
     "status",
-    valuesets.medicationstatementstatus_decoder(),
+    valueset.medicationstatement_status_decoder(),
   )
   use reason_reference <- decode.optional_field(
     "reasonReference",
@@ -6574,7 +6597,7 @@ pub fn potatomedicationstatement_decoder() -> Decoder(Potatomedicationstatement)
     None,
     decode.optional(ct.potatometa_decoder()),
   )
-  use medication <- decode.then(potatomedicationstatement_medication_decoder())
+  use medication <- decode.then(potato_medicationstatement_medication_decoder())
   use language <- decode_optional_string("language")
   use information_source <- decode.optional_field(
     "informationSource",
@@ -6589,7 +6612,7 @@ pub fn potatomedicationstatement_decoder() -> Decoder(Potatomedicationstatement)
   )
   use id <- decode_optional_string("id")
   use effective <- decode.then(
-    none_if_omitted(potatomedicationstatement_effective_decoder()),
+    none_if_omitted(potato_medicationstatement_effective_decoder()),
   )
   use dosage <- decode.optional_field(
     "dosage",
@@ -6627,7 +6650,7 @@ pub fn potatomedicationstatement_decoder() -> Decoder(Potatomedicationstatement)
     decode.list(ct.potatoreference_decoder()),
   )
   let placeholder =
-    Potatomedicationstatement(
+    PotatoMedicationstatement(
       text:,
       subject:,
       status_reason:,
@@ -7031,48 +7054,48 @@ fn parse_potatotribalaffiliation() -> Decoder(
   })
 }
 
-type PotatopatientExtensionSliceAccumulator {
-  PotatopatientExtensionSliceAccumulator(
+type PotatoPatientExtensionSliceAccumulator {
+  PotatoPatientExtensionSliceAccumulator(
     tribal_affiliation: List(ct.Potatotribalaffiliation),
     sex: Option(String),
     race: Option(ct.Potatorace),
     gender_identity: List(ct.Potatocodeableconcept),
     ethnicity: Option(ct.Potatoethnicity),
-    birthsex: Option(valuesets.Two16840111376214102124),
+    birthsex: Option(valueset.Two16840111376214102124),
   )
 }
 
-pub type PotatopatientParsedExtensionSlice {
-  PotatopatientParsedExtensionSliceTribalaffiliation(ct.Potatotribalaffiliation)
-  PotatopatientParsedExtensionSliceSex(String)
-  PotatopatientParsedExtensionSliceRace(ct.Potatorace)
-  PotatopatientParsedExtensionSliceGenderidentity(ct.Potatocodeableconcept)
-  PotatopatientParsedExtensionSliceEthnicity(ct.Potatoethnicity)
-  PotatopatientParsedExtensionSliceBirthsex(valuesets.Two16840111376214102124)
-  PotatopatientParsedExtensionSliceIgnored
+pub type PotatoPatientParsedExtensionSlice {
+  PotatoPatientParsedExtensionSliceTribalaffiliation(ct.Potatotribalaffiliation)
+  PotatoPatientParsedExtensionSliceSex(String)
+  PotatoPatientParsedExtensionSliceRace(ct.Potatorace)
+  PotatoPatientParsedExtensionSliceGenderidentity(ct.Potatocodeableconcept)
+  PotatoPatientParsedExtensionSliceEthnicity(ct.Potatoethnicity)
+  PotatoPatientParsedExtensionSliceBirthsex(valueset.Two16840111376214102124)
+  PotatoPatientParsedExtensionSliceIgnored
 }
 
-type PotatopatientExtensionSlices {
-  PotatopatientExtensionSlices(
+type PotatoPatientExtensionSlices {
+  PotatoPatientExtensionSlices(
     tribal_affiliation: List(ct.Potatotribalaffiliation),
     sex: Option(String),
     race: Option(ct.Potatorace),
     gender_identity: List(ct.Potatocodeableconcept),
     ethnicity: Option(ct.Potatoethnicity),
-    birthsex: Option(valuesets.Two16840111376214102124),
+    birthsex: Option(valueset.Two16840111376214102124),
   )
 }
 
-pub fn potatopatient_link_decoder() -> Decoder(PotatopatientLink) {
+pub fn potato_patient_link_decoder() -> Decoder(PotatoPatientLink) {
   use <- decode.recursive
-  use type_ <- decode.field("type", valuesets.linktype_decoder())
+  use type_ <- decode.field("type", valueset.link_type_decoder())
   use other <- decode.field("other", ct.potatoreference_decoder())
   use id <- decode_optional_string("id")
-  let placeholder = PotatopatientLink(type_:, other:, id:)
+  let placeholder = PotatoPatientLink(type_:, other:, id:)
   decode.success(placeholder)
 }
 
-pub fn potatopatient_contact_decoder() -> Decoder(PotatopatientContact) {
+pub fn potato_patient_contact_decoder() -> Decoder(PotatoPatientContact) {
   use <- decode.recursive
   use telecom <- decode.optional_field(
     "telecom",
@@ -7103,7 +7126,7 @@ pub fn potatopatient_contact_decoder() -> Decoder(PotatopatientContact) {
   use gender <- decode.optional_field(
     "gender",
     None,
-    decode.optional(valuesets.administrativegender_decoder()),
+    decode.optional(valueset.administrative_gender_decoder()),
   )
   use address <- decode.optional_field(
     "address",
@@ -7111,7 +7134,7 @@ pub fn potatopatient_contact_decoder() -> Decoder(PotatopatientContact) {
     decode.optional(ct.potatoaddress_decoder()),
   )
   let placeholder =
-    PotatopatientContact(
+    PotatoPatientContact(
       telecom:,
       relationship:,
       period:,
@@ -7124,36 +7147,36 @@ pub fn potatopatient_contact_decoder() -> Decoder(PotatopatientContact) {
   decode.success(placeholder)
 }
 
-pub fn potatopatient_communication_decoder() -> Decoder(
-  PotatopatientCommunication,
+pub fn potato_patient_communication_decoder() -> Decoder(
+  PotatoPatientCommunication,
 ) {
   use <- decode.recursive
   use preferred <- decode_optional_bool("preferred")
   use language <- decode.field("language", ct.potatocodeableconcept_decoder())
   use id <- decode_optional_string("id")
-  let placeholder = PotatopatientCommunication(preferred:, language:, id:)
+  let placeholder = PotatoPatientCommunication(preferred:, language:, id:)
   decode.success(placeholder)
 }
 
-pub fn potatopatient_multiplebirth_decoder() -> Decoder(
-  PotatopatientMultiplebirth,
+pub fn potato_patient_multiplebirth_decoder() -> Decoder(
+  PotatoPatientMultiplebirth,
 ) {
   decode.one_of(
     {
       use value <- decode.field("multipleBirthBoolean", decode.bool)
-      decode.success(PotatopatientMultiplebirthBoolean(value))
+      decode.success(PotatoPatientMultiplebirthBoolean(value))
     },
     [
       {
         use value <- decode.field("multipleBirthInteger", decode.int)
-        decode.success(PotatopatientMultiplebirthInteger(value))
+        decode.success(PotatoPatientMultiplebirthInteger(value))
       },
     ],
   )
 }
 
-pub fn potatopatient_extension_slice_decoder() -> Decoder(
-  Result(PotatopatientParsedExtensionSlice, String),
+pub fn potato_patient_extension_slice_decoder() -> Decoder(
+  Result(PotatoPatientParsedExtensionSlice, String),
 ) {
   use url <- decode.field("url", decode.string)
   use _id <- decode.optional_field("id", None, decode.optional(decode.string))
@@ -7163,7 +7186,7 @@ pub fn potatopatient_extension_slice_decoder() -> Decoder(
         parse_potatotribalaffiliation()
         |> decode.map(fn(parsed) {
           result.map(parsed, fn(value) {
-            PotatopatientParsedExtensionSliceTribalaffiliation(value)
+            PotatoPatientParsedExtensionSliceTribalaffiliation(value)
           })
         })
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-sex" ->
@@ -7171,14 +7194,14 @@ pub fn potatopatient_extension_slice_decoder() -> Decoder(
         |> decode.map(Ok)
         |> decode.map(fn(parsed) {
           result.map(parsed, fn(value) {
-            PotatopatientParsedExtensionSliceSex(value)
+            PotatoPatientParsedExtensionSliceSex(value)
           })
         })
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race" ->
         parse_potatorace()
         |> decode.map(fn(parsed) {
           result.map(parsed, fn(value) {
-            PotatopatientParsedExtensionSliceRace(value)
+            PotatoPatientParsedExtensionSliceRace(value)
           })
         })
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-genderIdentity" ->
@@ -7190,50 +7213,50 @@ pub fn potatopatient_extension_slice_decoder() -> Decoder(
         |> decode.map(Ok)
         |> decode.map(fn(parsed) {
           result.map(parsed, fn(value) {
-            PotatopatientParsedExtensionSliceGenderidentity(value)
+            PotatoPatientParsedExtensionSliceGenderidentity(value)
           })
         })
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity" ->
         parse_potatoethnicity()
         |> decode.map(fn(parsed) {
           result.map(parsed, fn(value) {
-            PotatopatientParsedExtensionSliceEthnicity(value)
+            PotatoPatientParsedExtensionSliceEthnicity(value)
           })
         })
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex" ->
         decode.field(
           "valueCode",
-          valuesets.two16840111376214102124_decoder(),
+          valueset.two16840111376214102124_decoder(),
           decode.success,
         )
         |> decode.map(Ok)
         |> decode.map(fn(parsed) {
           result.map(parsed, fn(value) {
-            PotatopatientParsedExtensionSliceBirthsex(value)
+            PotatoPatientParsedExtensionSliceBirthsex(value)
           })
         })
-      _ -> decode.success(Ok(PotatopatientParsedExtensionSliceIgnored))
+      _ -> decode.success(Ok(PotatoPatientParsedExtensionSliceIgnored))
     },
     decode.success,
   )
 }
 
-pub fn potatopatient_deceased_decoder() -> Decoder(PotatopatientDeceased) {
+pub fn potato_patient_deceased_decoder() -> Decoder(PotatoPatientDeceased) {
   decode.one_of(
     {
       use value <- decode.field("deceasedBoolean", decode.bool)
-      decode.success(PotatopatientDeceasedBoolean(value))
+      decode.success(PotatoPatientDeceasedBoolean(value))
     },
     [
       {
         use value <- decode.field("deceasedDateTime", pt.datetime_decoder())
-        decode.success(PotatopatientDeceasedDatetime(value))
+        decode.success(PotatoPatientDeceasedDatetime(value))
       },
     ],
   )
 }
 
-pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
+pub fn potato_patient_decoder() -> Decoder(PotatoPatient) {
   use <- decode.recursive
   use text <- decode.optional_field(
     "text",
@@ -7243,16 +7266,16 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
   use telecom <- decode.optional_field(
     "telecom",
     [],
-    decode.list(ct.contactpoint_potatopatient_telecom_decoder()),
+    decode.list(ct.contactpoint_potato_patient_telecom_decoder()),
   )
   use photo <- decode.optional_field(
     "photo",
     [],
     decode.list(ct.potatoattachment_decoder()),
   )
-  use name <- list1_decoder("name", ct.humanname_potatopatient_name_decoder())
+  use name <- list1_decoder("name", ct.humanname_potato_patient_name_decoder())
   use multiple_birth <- decode.then(
-    none_if_omitted(potatopatient_multiplebirth_decoder()),
+    none_if_omitted(potato_patient_multiplebirth_decoder()),
   )
   use meta <- decode.optional_field(
     "meta",
@@ -7272,13 +7295,13 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
   use link <- decode.optional_field(
     "link",
     [],
-    decode.list(potatopatient_link_decoder()),
+    decode.list(potato_patient_link_decoder()),
   )
   use language <- decode_optional_string("language")
   use implicit_rules <- decode_optional_string("implicitRules")
   use identifier <- list1_decoder(
     "identifier",
-    ct.identifier_potatopatient_identifier_decoder(),
+    ct.identifier_potato_patient_identifier_decoder(),
   )
   use id <- decode_optional_string("id")
   use general_practitioner <- decode.optional_field(
@@ -7286,16 +7309,16 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
     [],
     decode.list(ct.potatoreference_decoder()),
   )
-  use gender <- decode.field("gender", valuesets.administrativegender_decoder())
+  use gender <- decode.field("gender", valueset.administrative_gender_decoder())
   use extension_base_values <- decode.optional_field(
     "extension",
     [],
-    decode.list(potatopatient_extension_slice_decoder()),
+    decode.list(potato_patient_extension_slice_decoder()),
   )
   let extension_accumulator =
     list.index_fold(
       extension_base_values,
-      Ok(PotatopatientExtensionSliceAccumulator([], None, None, [], None, None)),
+      Ok(PotatoPatientExtensionSliceAccumulator([], None, None, [], None, None)),
       fn(accumulator_result, parsed, index) {
         case accumulator_result {
           Error(errors) -> Error(errors)
@@ -7311,9 +7334,9 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
                 ])
               Ok(slice) ->
                 case slice {
-                  PotatopatientParsedExtensionSliceTribalaffiliation(value) ->
+                  PotatoPatientParsedExtensionSliceTribalaffiliation(value) ->
                     Ok(
-                      PotatopatientExtensionSliceAccumulator(
+                      PotatoPatientExtensionSliceAccumulator(
                         ..accumulator,
                         tribal_affiliation: [
                           value,
@@ -7321,42 +7344,42 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
                         ],
                       ),
                     )
-                  PotatopatientParsedExtensionSliceSex(value) ->
+                  PotatoPatientParsedExtensionSliceSex(value) ->
                     Ok(
-                      PotatopatientExtensionSliceAccumulator(
+                      PotatoPatientExtensionSliceAccumulator(
                         ..accumulator,
                         sex: Some(value),
                       ),
                     )
-                  PotatopatientParsedExtensionSliceRace(value) ->
+                  PotatoPatientParsedExtensionSliceRace(value) ->
                     Ok(
-                      PotatopatientExtensionSliceAccumulator(
+                      PotatoPatientExtensionSliceAccumulator(
                         ..accumulator,
                         race: Some(value),
                       ),
                     )
-                  PotatopatientParsedExtensionSliceGenderidentity(value) ->
+                  PotatoPatientParsedExtensionSliceGenderidentity(value) ->
                     Ok(
-                      PotatopatientExtensionSliceAccumulator(
+                      PotatoPatientExtensionSliceAccumulator(
                         ..accumulator,
                         gender_identity: [value, ..accumulator.gender_identity],
                       ),
                     )
-                  PotatopatientParsedExtensionSliceEthnicity(value) ->
+                  PotatoPatientParsedExtensionSliceEthnicity(value) ->
                     Ok(
-                      PotatopatientExtensionSliceAccumulator(
+                      PotatoPatientExtensionSliceAccumulator(
                         ..accumulator,
                         ethnicity: Some(value),
                       ),
                     )
-                  PotatopatientParsedExtensionSliceBirthsex(value) ->
+                  PotatoPatientParsedExtensionSliceBirthsex(value) ->
                     Ok(
-                      PotatopatientExtensionSliceAccumulator(
+                      PotatoPatientExtensionSliceAccumulator(
                         ..accumulator,
                         birthsex: Some(value),
                       ),
                     )
-                  PotatopatientParsedExtensionSliceIgnored -> Ok(accumulator)
+                  PotatoPatientParsedExtensionSliceIgnored -> Ok(accumulator)
                 }
             }
         }
@@ -7364,7 +7387,7 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
     )
   let extension_slices = case extension_accumulator {
     Ok(accumulator) ->
-      Ok(PotatopatientExtensionSlices(
+      Ok(PotatoPatientExtensionSlices(
         tribal_affiliation: list.reverse(accumulator.tribal_affiliation),
         sex: accumulator.sex,
         race: accumulator.race,
@@ -7374,7 +7397,9 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
       ))
     Error(errors) -> Error(errors)
   }
-  use deceased <- decode.then(none_if_omitted(potatopatient_deceased_decoder()))
+  use deceased <- decode.then(
+    none_if_omitted(potato_patient_deceased_decoder()),
+  )
   use contained <- decode.optional_field(
     "contained",
     [],
@@ -7383,12 +7408,12 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
   use contact <- decode.optional_field(
     "contact",
     [],
-    decode.list(potatopatient_contact_decoder()),
+    decode.list(potato_patient_contact_decoder()),
   )
   use communication <- decode.optional_field(
     "communication",
     [],
-    decode.list(potatopatient_communication_decoder()),
+    decode.list(potato_patient_communication_decoder()),
   )
   use birth_date <- decode.optional_field(
     "birthDate",
@@ -7398,15 +7423,15 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
   use address <- decode.optional_field(
     "address",
     [],
-    decode.list(ct.address_potatopatient_address_decoder()),
+    decode.list(ct.address_potato_patient_address_decoder()),
   )
   use active <- decode_optional_bool("active")
   let extension_slices_decoder = case extension_slices {
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        PotatopatientExtensionSlices([], None, None, [], None, None),
-        "Potatopatient slices",
+        PotatoPatientExtensionSlices([], None, None, [], None, None),
+        "PotatoPatient slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
@@ -7426,7 +7451,7 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
     }),
   )
   use extension_slices <- decode.then(extension_slices_decoder)
-  decode.success(Potatopatient(
+  decode.success(PotatoPatient(
     text:,
     telecom:,
     photo:,
@@ -7459,34 +7484,34 @@ pub fn potatopatient_decoder() -> Decoder(Potatopatient) {
 }
 
 pub type ResourceType {
-  RtBundle
-  RtOperationoutcome
-  RtParameters
-  RtAllergyintolerance
-  RtAppointment
-  RtCondition
-  RtDocumentreference
-  RtEncounter
-  RtImmunization
-  RtMedicationrequest
-  RtMedicationstatement
-  RtPatient
+  ResourceTypeBundle
+  ResourceTypeOperationoutcome
+  ResourceTypeParameters
+  ResourceTypeAllergyintolerance
+  ResourceTypeAppointment
+  ResourceTypeCondition
+  ResourceTypeDocumentreference
+  ResourceTypeEncounter
+  ResourceTypeImmunization
+  ResourceTypeMedicationrequest
+  ResourceTypeMedicationstatement
+  ResourceTypePatient
 }
 
 pub fn resource_type_to_string(resource_type: ResourceType) -> String {
   case resource_type {
-    RtBundle -> "Bundle"
-    RtOperationoutcome -> "OperationOutcome"
-    RtParameters -> "Parameters"
-    RtAllergyintolerance -> "AllergyIntolerance"
-    RtAppointment -> "Appointment"
-    RtCondition -> "Condition"
-    RtDocumentreference -> "DocumentReference"
-    RtEncounter -> "Encounter"
-    RtImmunization -> "Immunization"
-    RtMedicationrequest -> "MedicationRequest"
-    RtMedicationstatement -> "MedicationStatement"
-    RtPatient -> "Patient"
+    ResourceTypeBundle -> "Bundle"
+    ResourceTypeOperationoutcome -> "OperationOutcome"
+    ResourceTypeParameters -> "Parameters"
+    ResourceTypeAllergyintolerance -> "AllergyIntolerance"
+    ResourceTypeAppointment -> "Appointment"
+    ResourceTypeCondition -> "Condition"
+    ResourceTypeDocumentreference -> "DocumentReference"
+    ResourceTypeEncounter -> "Encounter"
+    ResourceTypeImmunization -> "Immunization"
+    ResourceTypeMedicationrequest -> "MedicationRequest"
+    ResourceTypeMedicationstatement -> "MedicationStatement"
+    ResourceTypePatient -> "Patient"
   }
 }
 
@@ -7494,35 +7519,36 @@ pub type Resource {
   ResourceBundle(Bundle)
   ResourceOperationoutcome(Operationoutcome)
   ResourceParameters(Parameters)
-  ResourcePotatoallergyintolerance(Potatoallergyintolerance)
-  ResourcePotatoappointment(Potatoappointment)
-  ResourcePotatocondition(Potatocondition)
-  ResourcePotatodocumentreference(Potatodocumentreference)
-  ResourcePotatoencounter(Potatoencounter)
-  ResourcePotatoimmunization(Potatoimmunization)
-  ResourcePotatomedicationrequest(Potatomedicationrequest)
-  ResourcePotatomedicationstatement(Potatomedicationstatement)
-  ResourcePotatopatient(Potatopatient)
+  ResourcePotatoAllergyintolerance(PotatoAllergyintolerance)
+  ResourcePotatoAppointment(PotatoAppointment)
+  ResourcePotatoCondition(PotatoCondition)
+  ResourcePotatoDocumentreference(PotatoDocumentreference)
+  ResourcePotatoEncounter(PotatoEncounter)
+  ResourcePotatoImmunization(PotatoImmunization)
+  ResourcePotatoMedicationrequest(PotatoMedicationrequest)
+  ResourcePotatoMedicationstatement(PotatoMedicationstatement)
+  ResourcePotatoPatient(PotatoPatient)
 }
 
-pub fn resource_to_json(resource: Resource) {
+pub fn to_json(resource: Resource) -> Json {
   case resource {
     ResourceBundle(resource) -> bundle_to_json(resource)
     ResourceOperationoutcome(resource) -> operationoutcome_to_json(resource)
     ResourceParameters(resource) -> parameters_to_json(resource)
-    ResourcePotatoallergyintolerance(resource) ->
-      potatoallergyintolerance_to_json(resource)
-    ResourcePotatoappointment(resource) -> potatoappointment_to_json(resource)
-    ResourcePotatocondition(resource) -> potatocondition_to_json(resource)
-    ResourcePotatodocumentreference(resource) ->
-      potatodocumentreference_to_json(resource)
-    ResourcePotatoencounter(resource) -> potatoencounter_to_json(resource)
-    ResourcePotatoimmunization(resource) -> potatoimmunization_to_json(resource)
-    ResourcePotatomedicationrequest(resource) ->
-      potatomedicationrequest_to_json(resource)
-    ResourcePotatomedicationstatement(resource) ->
-      potatomedicationstatement_to_json(resource)
-    ResourcePotatopatient(resource) -> potatopatient_to_json(resource)
+    ResourcePotatoAllergyintolerance(resource) ->
+      potato_allergyintolerance_to_json(resource)
+    ResourcePotatoAppointment(resource) -> potato_appointment_to_json(resource)
+    ResourcePotatoCondition(resource) -> potato_condition_to_json(resource)
+    ResourcePotatoDocumentreference(resource) ->
+      potato_documentreference_to_json(resource)
+    ResourcePotatoEncounter(resource) -> potato_encounter_to_json(resource)
+    ResourcePotatoImmunization(resource) ->
+      potato_immunization_to_json(resource)
+    ResourcePotatoMedicationrequest(resource) ->
+      potato_medicationrequest_to_json(resource)
+    ResourcePotatoMedicationstatement(resource) ->
+      potato_medicationstatement_to_json(resource)
+    ResourcePotatoPatient(resource) -> potato_patient_to_json(resource)
   }
 }
 
@@ -7534,26 +7560,26 @@ pub fn resource_decoder() -> Decoder(Resource) {
       operationoutcome_decoder() |> decode.map(ResourceOperationoutcome)
     "Parameters" -> parameters_decoder() |> decode.map(ResourceParameters)
     "AllergyIntolerance" ->
-      potatoallergyintolerance_decoder()
-      |> decode.map(ResourcePotatoallergyintolerance)
+      potato_allergyintolerance_decoder()
+      |> decode.map(ResourcePotatoAllergyintolerance)
     "Appointment" ->
-      potatoappointment_decoder() |> decode.map(ResourcePotatoappointment)
+      potato_appointment_decoder() |> decode.map(ResourcePotatoAppointment)
     "Condition" ->
-      potatocondition_decoder() |> decode.map(ResourcePotatocondition)
+      potato_condition_decoder() |> decode.map(ResourcePotatoCondition)
     "DocumentReference" ->
-      potatodocumentreference_decoder()
-      |> decode.map(ResourcePotatodocumentreference)
+      potato_documentreference_decoder()
+      |> decode.map(ResourcePotatoDocumentreference)
     "Encounter" ->
-      potatoencounter_decoder() |> decode.map(ResourcePotatoencounter)
+      potato_encounter_decoder() |> decode.map(ResourcePotatoEncounter)
     "Immunization" ->
-      potatoimmunization_decoder() |> decode.map(ResourcePotatoimmunization)
+      potato_immunization_decoder() |> decode.map(ResourcePotatoImmunization)
     "MedicationRequest" ->
-      potatomedicationrequest_decoder()
-      |> decode.map(ResourcePotatomedicationrequest)
+      potato_medicationrequest_decoder()
+      |> decode.map(ResourcePotatoMedicationrequest)
     "MedicationStatement" ->
-      potatomedicationstatement_decoder()
-      |> decode.map(ResourcePotatomedicationstatement)
-    "Patient" -> potatopatient_decoder() |> decode.map(ResourcePotatopatient)
+      potato_medicationstatement_decoder()
+      |> decode.map(ResourcePotatoMedicationstatement)
+    "Patient" -> potato_patient_decoder() |> decode.map(ResourcePotatoPatient)
     _ ->
       bundle_decoder()
       |> decode.map(ResourceBundle)

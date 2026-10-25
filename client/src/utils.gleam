@@ -1,8 +1,8 @@
 import fhir/potato_client_1_0_0/client_rsvp
-import fhir/potato_client_1_0_0/complex_types.{type List1, List1} as ct
-import fhir/potato_client_1_0_0/primitive_types as pt
-import fhir/potato_client_1_0_0/resources
-import fhir/potato_client_1_0_0/valuesets
+import fhir/potato_client_1_0_0/complex_type.{type List1, List1} as ct
+import fhir/potato_client_1_0_0/primitive_type as pt
+import fhir/potato_client_1_0_0/resource
+import fhir/potato_client_1_0_0/valueset
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/result
@@ -20,7 +20,7 @@ pub fn err_to_string(server_url: String) {
 }
 
 pub fn humannames_to_single_name_string(
-  names: List1(ct.HumannamePotatopatientName),
+  names: List1(ct.HumannamePotatoPatientName),
 ) -> String {
   // for now just taking first name from list
   // i have code from old project comparing period starts
@@ -29,7 +29,7 @@ pub fn humannames_to_single_name_string(
   humanname_to_string(names.first)
 }
 
-pub fn humanname_to_string(name: ct.HumannamePotatopatientName) -> String {
+pub fn humanname_to_string(name: ct.HumannamePotatoPatientName) -> String {
   case name.text {
     Some(txt) -> txt
     None -> {
@@ -70,7 +70,7 @@ pub fn as_list1(item: a) -> List1(a) {
   List1(first: item, rest: [])
 }
 
-pub fn first_zip(patient: resources.Potatopatient) {
+pub fn first_zip(patient: resource.PotatoPatient) {
   patient.address
   |> list.find_map(fn(address) {
     case address.postal_code {
@@ -82,17 +82,17 @@ pub fn first_zip(patient: resources.Potatopatient) {
 }
 
 // could sort by rank but again, whatever
-pub fn first_phone(patient: resources.Potatopatient) {
+pub fn first_phone(patient: resource.PotatoPatient) {
   patient.telecom
   |> list.find_map(fn(telecom) {
     case telecom.system {
-      valuesets.ContactpointsystemPhone -> Ok(telecom.value)
+      valueset.ContactpointSystemPhone -> Ok(telecom.value)
       _ -> Error(Nil)
     }
   })
 }
 
-pub fn birth_date(patient: resources.Potatopatient) {
+pub fn birth_date(patient: resource.PotatoPatient) {
   case patient.birth_date {
     None -> Error(Nil)
     // mary insists DD/MM/YYYY is right
@@ -103,7 +103,7 @@ pub fn birth_date(patient: resources.Potatopatient) {
   }
 }
 
-pub fn mrn(patient: resources.Potatopatient) {
+pub fn mrn(patient: resource.PotatoPatient) {
   identifier_value_by_system_code(
     patient,
     "http://terminology.hl7.org/CodeSystem/v2-0203",
@@ -111,7 +111,7 @@ pub fn mrn(patient: resources.Potatopatient) {
   )
 }
 
-pub fn ssn(patient: resources.Potatopatient) {
+pub fn ssn(patient: resource.PotatoPatient) {
   identifier_value_by_system_code(
     patient,
     "http://terminology.hl7.org/CodeSystem/v2-0203",
@@ -120,7 +120,7 @@ pub fn ssn(patient: resources.Potatopatient) {
 }
 
 pub fn identifier_value_by_system_code(
-  patient: resources.Potatopatient,
+  patient: resource.PotatoPatient,
   find_system system: String,
   find_code code: String,
 ) {

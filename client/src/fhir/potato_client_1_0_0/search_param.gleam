@@ -4,7 +4,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 
-pub fn to_string(params) {
+pub fn to_string(params: List(#(String, Option(String)))) -> String {
   list.fold(
     from: [],
     over: params,
@@ -32,8 +32,8 @@ pub type Operationoutcome {
   Operationoutcome
 }
 
-pub type Potatoallergyintolerance {
-  Potatoallergyintolerance(
+pub type PotatoAllergyintolerance {
+  PotatoAllergyintolerance(
     severity: Option(String),
     date: Option(String),
     identifier: Option(String),
@@ -53,8 +53,8 @@ pub type Potatoallergyintolerance {
   )
 }
 
-pub type Potatoappointment {
-  Potatoappointment(
+pub type PotatoAppointment {
+  PotatoAppointment(
     date: Option(String),
     identifier: Option(String),
     specialty: Option(String),
@@ -75,8 +75,8 @@ pub type Potatoappointment {
   )
 }
 
-pub type Potatocondition {
-  Potatocondition(
+pub type PotatoCondition {
+  PotatoCondition(
     severity: Option(String),
     evidence_detail: Option(String),
     identifier: Option(String),
@@ -101,8 +101,8 @@ pub type Potatocondition {
   )
 }
 
-pub type Potatodocumentreference {
-  Potatodocumentreference(
+pub type PotatoDocumentreference {
+  PotatoDocumentreference(
     date: Option(String),
     subject: Option(String),
     description: Option(String),
@@ -131,8 +131,8 @@ pub type Potatodocumentreference {
   )
 }
 
-pub type Potatoencounter {
-  Potatoencounter(
+pub type PotatoEncounter {
+  PotatoEncounter(
     date: Option(String),
     identifier: Option(String),
     participant_type: Option(String),
@@ -159,8 +159,8 @@ pub type Potatoencounter {
   )
 }
 
-pub type Potatoimmunization {
-  Potatoimmunization(
+pub type PotatoImmunization {
+  PotatoImmunization(
     date: Option(String),
     identifier: Option(String),
     performer: Option(String),
@@ -180,8 +180,8 @@ pub type Potatoimmunization {
   )
 }
 
-pub type Potatomedicationrequest {
-  Potatomedicationrequest(
+pub type PotatoMedicationrequest {
+  PotatoMedicationrequest(
     requester: Option(String),
     date: Option(String),
     identifier: Option(String),
@@ -201,8 +201,8 @@ pub type Potatomedicationrequest {
   )
 }
 
-pub type Potatomedicationstatement {
-  Potatomedicationstatement(
+pub type PotatoMedicationstatement {
+  PotatoMedicationstatement(
     identifier: Option(String),
     effective: Option(String),
     code: Option(String),
@@ -217,8 +217,8 @@ pub type Potatomedicationstatement {
   )
 }
 
-pub type Potatopatient {
-  Potatopatient(
+pub type PotatoPatient {
+  PotatoPatient(
     identifier: Option(String),
     given: Option(String),
     address: Option(String),
@@ -245,16 +245,16 @@ pub type Potatopatient {
   )
 }
 
-pub fn bundle_new() {
+pub fn bundle_new() -> Bundle {
   Bundle(None, None, None, None, None)
 }
 
-pub fn operationoutcome_new() {
+pub fn operationoutcome_new() -> Operationoutcome {
   Operationoutcome
 }
 
-pub fn potatoallergyintolerance_new() {
-  Potatoallergyintolerance(
+pub fn potato_allergyintolerance_new() -> PotatoAllergyintolerance {
+  PotatoAllergyintolerance(
     None,
     None,
     None,
@@ -274,34 +274,8 @@ pub fn potatoallergyintolerance_new() {
   )
 }
 
-pub fn potatoappointment_new() {
-  Potatoappointment(
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-  )
-}
-
-pub fn potatocondition_new() {
-  Potatocondition(
-    None,
-    None,
-    None,
-    None,
+pub fn potato_appointment_new() -> PotatoAppointment {
+  PotatoAppointment(
     None,
     None,
     None,
@@ -322,12 +296,8 @@ pub fn potatocondition_new() {
   )
 }
 
-pub fn potatodocumentreference_new() {
-  Potatodocumentreference(
-    None,
-    None,
-    None,
-    None,
+pub fn potato_condition_new() -> PotatoCondition {
+  PotatoCondition(
     None,
     None,
     None,
@@ -352,8 +322,10 @@ pub fn potatodocumentreference_new() {
   )
 }
 
-pub fn potatoencounter_new() {
-  Potatoencounter(
+pub fn potato_documentreference_new() -> PotatoDocumentreference {
+  PotatoDocumentreference(
+    None,
+    None,
     None,
     None,
     None,
@@ -380,8 +352,8 @@ pub fn potatoencounter_new() {
   )
 }
 
-pub fn potatoimmunization_new() {
-  Potatoimmunization(
+pub fn potato_encounter_new() -> PotatoEncounter {
+  PotatoEncounter(
     None,
     None,
     None,
@@ -389,20 +361,6 @@ pub fn potatoimmunization_new() {
     None,
     None,
     None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-  )
-}
-
-pub fn potatomedicationrequest_new() {
-  Potatomedicationrequest(
     None,
     None,
     None,
@@ -422,8 +380,13 @@ pub fn potatomedicationrequest_new() {
   )
 }
 
-pub fn potatomedicationstatement_new() {
-  Potatomedicationstatement(
+pub fn potato_immunization_new() -> PotatoImmunization {
+  PotatoImmunization(
+    None,
+    None,
+    None,
+    None,
+    None,
     None,
     None,
     None,
@@ -438,8 +401,45 @@ pub fn potatomedicationstatement_new() {
   )
 }
 
-pub fn potatopatient_new() {
-  Potatopatient(
+pub fn potato_medicationrequest_new() -> PotatoMedicationrequest {
+  PotatoMedicationrequest(
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+  )
+}
+
+pub fn potato_medicationstatement_new() -> PotatoMedicationstatement {
+  PotatoMedicationstatement(
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+  )
+}
+
+pub fn potato_patient_new() -> PotatoPatient {
+  PotatoPatient(
     None,
     None,
     None,

@@ -1,5 +1,5 @@
 import fhir/potato_client_1_0_0/client_rsvp
-import fhir/potato_client_1_0_0/resources
+import fhir/potato_client_1_0_0/resource
 import fhir/potato_client_1_0_0/sansio
 import glaze/oat/sidebar
 import gleam/dict
@@ -61,7 +61,7 @@ pub type PatientLoad {
 }
 
 pub type PatientData {
-  PatientData(patient: resources.Potatopatient)
+  PatientData(patient: resource.PotatoPatient)
 }
 
 pub type RoutePatientPage {
@@ -196,7 +196,7 @@ fn user_navigated_to(route: Route, model: Model) -> #(Model, Effect(Msg)) {
           "_id="
             <> id
             <> "&_revinclude=AllergyIntolerance:patient&_revinclude=DocumentReference:patient&_revinclude=Immunization:patient&_revinclude=MedicationRequest:patient&_revinclude=MedicationStatement:patient&_revinclude=Observation:patient&_revinclude=Condition:patient&_revinclude=Encounter:patient",
-          resources.RtPatient,
+          resource.ResourceTypePatient,
           model.client,
           ServerReturnedPatientEverything,
         )
@@ -211,7 +211,7 @@ type Msg {
   UserNavigatedTo(route: Route)
   // patient search
   MsgMainSearchPatient(search_patient.Msg)
-  ServerReturnedPatientEverything(Result(resources.Bundle, client_rsvp.Err))
+  ServerReturnedPatientEverything(Result(resource.Bundle, client_rsvp.Err))
   // from page with no specific patient
   MsgSettings(settings.Msg)
   MsgCalendar(calendar.Msg)
@@ -254,19 +254,19 @@ fn update(model: Model, message: Msg) -> #(Model, Effect(Msg)) {
       let patient_info = case patient_search_result {
         Ok(pat_bundle) -> {
           let resources = sansio.bundle_to_groupedresources(pat_bundle)
-          case resources.potatopatient {
+          case resources.potato_patient {
             [] -> PatientLoadNotFound("no patient found")
             [first, ..] ->
               PatientLoadFound(PatientData(
                 patient: first,
-                // patient_allergies: resources.allergyintolerance,
-              // patient_documentreferences: resources.documentreference,
-              // patient_encounters: resources.encounter,
-              // patient_immunizations: resources.immunization,
-              // patient_medications: resources.medication,
-              // patient_medication_requests: resources.medicationrequest,
-              // patient_medication_statements: resources.medicationstatement,
-              // patient_observations: resources.observation,
+                // patient_allergies: resource.allergyintolerance,
+                // patient_documentreferences: resource.documentreference,
+                // patient_encounters: resource.encounter,
+                // patient_immunizations: resource.immunization,
+                // patient_medications: resource.medication,
+                // patient_medication_requests: resource.medicationrequest,
+                // patient_medication_statements: resource.medicationstatement,
+                // patient_observations: resource.observation,
               ))
           }
         }

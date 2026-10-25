@@ -1,9 +1,9 @@
 ////[https://hl7.org/fhir/r4](https://hl7.org/fhir/r4) complex types
 
-import fhir/potato_client_1_0_0/primitive_types.{
+import fhir/potato_client_1_0_0/primitive_type.{
   type DateTime, type Instant, type Time,
 } as pt
-import fhir/potato_client_1_0_0/valuesets
+import fhir/potato_client_1_0_0/valueset
 import gleam/bool
 import gleam/dynamic/decode.{type Decoder}
 import gleam/int
@@ -30,8 +30,8 @@ pub type List1(a) {
   List1(first: a, rest: List(a))
 }
 
-pub fn list1_to_json(l: List1(a), tj: fn(a) -> Json) {
-  json.array([l.first, ..l.rest], tj)
+pub fn list1_to_json(l: List1(a), to_json: fn(a) -> Json) -> Json {
+  json.array([l.first, ..l.rest], to_json)
 }
 
 pub fn list1_decoder(
@@ -39,8 +39,8 @@ pub fn list1_decoder(
   inner: decode.Decoder(a),
   next: fn(List1(a)) -> decode.Decoder(b),
 ) -> decode.Decoder(b) {
-  use lst <- decode.field(name, decode.list(inner))
-  case lst {
+  use items <- decode.field(name, decode.list(inner))
+  case items {
     [first, ..rest] -> next(List1(first:, rest:))
     _ -> {
       use fail_decode_to_satisfy_gleam_type <- decode.field(name, inner)
@@ -54,11 +54,11 @@ pub fn none_if_omitted(d: decode.Decoder(a)) -> decode.Decoder(Option(a)) {
 }
 
 //std lib decode.float will NOT decode numbers without decimal point eg 4, only 4.0
-pub fn decode_number() {
+pub fn decode_number() -> Decoder(Float) {
   decode.one_of(decode.float, [decode.map(decode.int, int.to_float)])
 }
 
-// Primitive and PrimitiveExtPart are used for decoding JSON
+// Primitive and PrimitiveExtensionPart are used for decoding JSON
 // but generic primitive extensions are NOT supported;
 // the only supported primitive extensions are when profiles define them
 // in which case they are generated as actual types
@@ -603,8 +603,8 @@ pub type Potatoaddress {
     postal_code: Option(String),
     state: Option(String),
     text: Option(String),
-    type_: Option(valuesets.Addresstype),
-    use_: Option(valuesets.Addressuse),
+    type_: Option(valueset.AddressType),
+    use_: Option(valueset.AddressUse),
   )
 }
 
@@ -627,11 +627,11 @@ pub fn potatoaddress_new() -> Potatoaddress {
 pub fn potatoaddress_to_json(potatoaddress: Potatoaddress) -> Json {
   let fields = []
   let fields = case potatoaddress.use_ {
-    Some(v) -> [#("use", valuesets.addressuse_to_json(v)), ..fields]
+    Some(v) -> [#("use", valueset.address_use_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case potatoaddress.type_ {
-    Some(v) -> [#("type", valuesets.addresstype_to_json(v)), ..fields]
+    Some(v) -> [#("type", valueset.address_type_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case potatoaddress.text {
@@ -676,7 +676,7 @@ pub fn potatoaddress_to_json(potatoaddress: Potatoaddress) -> Json {
 pub type Potatoage {
   Potatoage(
     code: Option(String),
-    comparator: Option(valuesets.Quantitycomparator),
+    comparator: Option(valueset.QuantityComparator),
     id: Option(String),
     system: Option(String),
     unit: Option(String),
@@ -715,7 +715,7 @@ pub fn potatoage_to_json(potatoage: Potatoage) -> Json {
   }
   let fields = case potatoage.comparator {
     Some(v) -> [
-      #("comparator", valuesets.quantitycomparator_to_json(v)),
+      #("comparator", valueset.quantity_comparator_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -937,8 +937,8 @@ pub type Potatocontactpoint {
     id: Option(String),
     period: Option(Potatoperiod),
     rank: Option(Int),
-    system: Option(valuesets.Contactpointsystem),
-    use_: Option(valuesets.Contactpointuse),
+    system: Option(valueset.ContactpointSystem),
+    use_: Option(valueset.ContactpointUse),
     value: Option(String),
   )
 }
@@ -963,11 +963,11 @@ pub fn potatocontactpoint_to_json(
     None -> fields
   }
   let fields = case potatocontactpoint.use_ {
-    Some(v) -> [#("use", valuesets.contactpointuse_to_json(v)), ..fields]
+    Some(v) -> [#("use", valueset.contactpoint_use_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case potatocontactpoint.system {
-    Some(v) -> [#("system", valuesets.contactpointsystem_to_json(v)), ..fields]
+    Some(v) -> [#("system", valueset.contactpoint_system_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case potatocontactpoint.rank {
@@ -1214,7 +1214,7 @@ pub fn potatodosage_doseandrate_rate_to_json(
 pub type Potatoduration {
   Potatoduration(
     code: Option(String),
-    comparator: Option(valuesets.Quantitycomparator),
+    comparator: Option(valueset.QuantityComparator),
     id: Option(String),
     system: Option(String),
     unit: Option(String),
@@ -1253,7 +1253,7 @@ pub fn potatoduration_to_json(potatoduration: Potatoduration) -> Json {
   }
   let fields = case potatoduration.comparator {
     Some(v) -> [
-      #("comparator", valuesets.quantitycomparator_to_json(v)),
+      #("comparator", valueset.quantity_comparator_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -1274,7 +1274,7 @@ pub type Potatohumanname {
     prefix: List(String),
     suffix: List(String),
     text: Option(String),
-    use_: Option(valuesets.Nameuse),
+    use_: Option(valueset.NameUse),
   )
 }
 
@@ -1294,7 +1294,7 @@ pub fn potatohumanname_new() -> Potatohumanname {
 pub fn potatohumanname_to_json(potatohumanname: Potatohumanname) -> Json {
   let fields = []
   let fields = case potatohumanname.use_ {
-    Some(v) -> [#("use", valuesets.nameuse_to_json(v)), ..fields]
+    Some(v) -> [#("use", valueset.name_use_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case potatohumanname.text {
@@ -1335,7 +1335,7 @@ pub type Potatoidentifier {
     period: Option(Potatoperiod),
     system: Option(String),
     type_: Option(Potatocodeableconcept),
-    use_: Option(valuesets.Identifieruse),
+    use_: Option(valueset.IdentifierUse),
     value: Option(String),
   )
 }
@@ -1359,7 +1359,7 @@ pub fn potatoidentifier_to_json(potatoidentifier: Potatoidentifier) -> Json {
     None -> fields
   }
   let fields = case potatoidentifier.use_ {
-    Some(v) -> [#("use", valuesets.identifieruse_to_json(v)), ..fields]
+    Some(v) -> [#("use", valueset.identifier_use_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case potatoidentifier.type_ {
@@ -1449,20 +1449,20 @@ pub type Potatonarrative {
   Potatonarrative(
     div: String,
     id: Option(String),
-    status: valuesets.Narrativestatus,
+    status: valueset.NarrativeStatus,
   )
 }
 
 pub fn potatonarrative_new(
   div div: String,
-  status status: valuesets.Narrativestatus,
+  status status: valueset.NarrativeStatus,
 ) -> Potatonarrative {
   Potatonarrative(div:, id: None, status:)
 }
 
 pub fn potatonarrative_to_json(potatonarrative: Potatonarrative) -> Json {
   let fields = [
-    #("status", valuesets.narrativestatus_to_json(potatonarrative.status)),
+    #("status", valueset.narrative_status_to_json(potatonarrative.status)),
     #("div", json.string(potatonarrative.div)),
   ]
   let fields = case potatonarrative.id {
@@ -1504,7 +1504,7 @@ pub fn potatoperiod_to_json(potatoperiod: Potatoperiod) -> Json {
 pub type Potatoquantity {
   Potatoquantity(
     code: Option(String),
-    comparator: Option(valuesets.Quantitycomparator),
+    comparator: Option(valueset.QuantityComparator),
     id: Option(String),
     system: Option(String),
     unit: Option(String),
@@ -1543,7 +1543,7 @@ pub fn potatoquantity_to_json(potatoquantity: Potatoquantity) -> Json {
   }
   let fields = case potatoquantity.comparator {
     Some(v) -> [
-      #("comparator", valuesets.quantitycomparator_to_json(v)),
+      #("comparator", valueset.quantity_comparator_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -1723,19 +1723,19 @@ pub type PotatotimingRepeat {
     bounds: Option(PotatotimingRepeatBounds),
     count: Option(Int),
     count_max: Option(Int),
-    day_of_week: List(valuesets.Daysofweek),
+    day_of_week: List(valueset.DaysOfWeek),
     duration: Option(Float),
     duration_max: Option(Float),
-    duration_unit: Option(valuesets.Unitsoftime),
+    duration_unit: Option(valueset.UnitsOfTime),
     frequency: Option(Int),
     frequency_max: Option(Int),
     id: Option(String),
     offset: Option(Int),
     period: Option(Float),
     period_max: Option(Float),
-    period_unit: Option(valuesets.Unitsoftime),
+    period_unit: Option(valueset.UnitsOfTime),
     time_of_day: List(Time),
-    when: List(valuesets.Eventtiming),
+    when: List(valueset.EventTiming),
   )
 }
 
@@ -1794,7 +1794,7 @@ pub fn potatotiming_repeat_to_json(
   let fields = case potatotiming_repeat.when {
     [] -> fields
     values -> [
-      #("when", json.array(values, valuesets.eventtiming_to_json)),
+      #("when", json.array(values, valueset.event_timing_to_json)),
       ..fields
     ]
   }
@@ -1803,7 +1803,7 @@ pub fn potatotiming_repeat_to_json(
     values -> [#("timeOfDay", json.array(values, pt.time_to_json)), ..fields]
   }
   let fields = case potatotiming_repeat.period_unit {
-    Some(v) -> [#("periodUnit", valuesets.unitsoftime_to_json(v)), ..fields]
+    Some(v) -> [#("periodUnit", valueset.units_of_time_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case potatotiming_repeat.period_max {
@@ -1831,7 +1831,7 @@ pub fn potatotiming_repeat_to_json(
     None -> fields
   }
   let fields = case potatotiming_repeat.duration_unit {
-    Some(v) -> [#("durationUnit", valuesets.unitsoftime_to_json(v)), ..fields]
+    Some(v) -> [#("durationUnit", valueset.units_of_time_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case potatotiming_repeat.duration_max {
@@ -1845,7 +1845,7 @@ pub fn potatotiming_repeat_to_json(
   let fields = case potatotiming_repeat.day_of_week {
     [] -> fields
     values -> [
-      #("dayOfWeek", json.array(values, valuesets.daysofweek_to_json)),
+      #("dayOfWeek", json.array(values, valueset.days_of_week_to_json)),
       ..fields
     ]
   }
@@ -1885,8 +1885,8 @@ pub fn potatotiming_repeat_bounds_to_json(
   }
 }
 
-pub type AddressPotatopatientAddress {
-  AddressPotatopatientAddress(
+pub type AddressPotatoPatientAddress {
+  AddressPotatoPatientAddress(
     city: Option(String),
     country: Option(String),
     district: Option(String),
@@ -1896,13 +1896,13 @@ pub type AddressPotatopatientAddress {
     postal_code: Option(String),
     state: Option(String),
     text: Option(String),
-    type_: Option(valuesets.Addresstype),
-    use_: Option(valuesets.Addressuse),
+    type_: Option(valueset.AddressType),
+    use_: Option(valueset.AddressUse),
   )
 }
 
-pub fn address_potatopatient_address_new() -> AddressPotatopatientAddress {
-  AddressPotatopatientAddress(
+pub fn address_potato_patient_address_new() -> AddressPotatoPatientAddress {
+  AddressPotatoPatientAddress(
     city: None,
     country: None,
     district: None,
@@ -1917,74 +1917,74 @@ pub fn address_potatopatient_address_new() -> AddressPotatopatientAddress {
   )
 }
 
-pub fn address_potatopatient_address_to_json(
-  address_potatopatient_address: AddressPotatopatientAddress,
+pub fn address_potato_patient_address_to_json(
+  address_potato_patient_address: AddressPotatoPatientAddress,
 ) -> Json {
   let fields = []
-  let fields = case address_potatopatient_address.use_ {
-    Some(v) -> [#("use", valuesets.addressuse_to_json(v)), ..fields]
+  let fields = case address_potato_patient_address.use_ {
+    Some(v) -> [#("use", valueset.address_use_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.type_ {
-    Some(v) -> [#("type", valuesets.addresstype_to_json(v)), ..fields]
+  let fields = case address_potato_patient_address.type_ {
+    Some(v) -> [#("type", valueset.address_type_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.text {
+  let fields = case address_potato_patient_address.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.state {
+  let fields = case address_potato_patient_address.state {
     Some(v) -> [#("state", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.postal_code {
+  let fields = case address_potato_patient_address.postal_code {
     Some(v) -> [#("postalCode", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.period {
+  let fields = case address_potato_patient_address.period {
     Some(v) -> [#("period", period_omit_extension_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.line {
+  let fields = case address_potato_patient_address.line {
     [] -> fields
     values -> [#("line", json.array(values, json.string)), ..fields]
   }
-  let fields = case address_potatopatient_address.id {
+  let fields = case address_potato_patient_address.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.district {
+  let fields = case address_potato_patient_address.district {
     Some(v) -> [#("district", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.country {
+  let fields = case address_potato_patient_address.country {
     Some(v) -> [#("country", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case address_potatopatient_address.city {
+  let fields = case address_potato_patient_address.city {
     Some(v) -> [#("city", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type CodeableconceptPotatoallergyintoleranceClinicalstatus {
-  CodeableconceptPotatoallergyintoleranceClinicalstatus(
+pub type CodeableconceptPotatoAllergyintoleranceClinicalstatus {
+  CodeableconceptPotatoAllergyintoleranceClinicalstatus(
     coding: List(CodingOmitExtension),
     required: List1(
-      CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired,
+      CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired,
     ),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_new(
+pub fn codeableconcept_potato_allergyintolerance_clinicalstatus_new(
   required required: List1(
-    CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired,
+    CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired,
   ),
-) -> CodeableconceptPotatoallergyintoleranceClinicalstatus {
-  CodeableconceptPotatoallergyintoleranceClinicalstatus(
+) -> CodeableconceptPotatoAllergyintoleranceClinicalstatus {
+  CodeableconceptPotatoAllergyintoleranceClinicalstatus(
     coding: [],
     required:,
     id: None,
@@ -1992,9 +1992,9 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_new(
   )
 }
 
-pub type CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired {
-  CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired(
-    code: Option(valuesets.Allergyintoleranceclinical),
+pub type CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired {
+  CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired(
+    code: Option(valueset.AllergyintoleranceClinical),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -2003,8 +2003,8 @@ pub type CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired {
   )
 }
 
-pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_new() -> CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired {
-  CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired(
+pub fn codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required_new() -> CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired {
+  CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired(
     code: None,
     display: None,
     id: None,
@@ -2014,37 +2014,39 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_n
   )
 }
 
-pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_to_json(
-  codeableconcept_potatoallergyintolerance_clinicalstatus: CodeableconceptPotatoallergyintoleranceClinicalstatus,
+pub fn codeableconcept_potato_allergyintolerance_clinicalstatus_to_json(
+  codeableconcept_potato_allergyintolerance_clinicalstatus: CodeableconceptPotatoAllergyintoleranceClinicalstatus,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatoallergyintolerance_clinicalstatus.text
+    codeableconcept_potato_allergyintolerance_clinicalstatus.text
   {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case codeableconcept_potatoallergyintolerance_clinicalstatus.id {
+  let fields = case
+    codeableconcept_potato_allergyintolerance_clinicalstatus.id
+  {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let slice_values =
     list.flatten([
       [
-        codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_to_json(
-          codeableconcept_potatoallergyintolerance_clinicalstatus.required.first,
+        codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required_to_json(
+          codeableconcept_potato_allergyintolerance_clinicalstatus.required.first,
         ),
         ..list.map(
-          codeableconcept_potatoallergyintolerance_clinicalstatus.required.rest,
+          codeableconcept_potato_allergyintolerance_clinicalstatus.required.rest,
           fn(value) {
-            codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_to_json(
+            codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required_to_json(
               value,
             )
           },
         )
       ],
       list.map(
-        codeableconcept_potatoallergyintolerance_clinicalstatus.coding,
+        codeableconcept_potato_allergyintolerance_clinicalstatus.coding,
         fn(value) { fn(value) { coding_omit_extension_to_json(value) }(value) },
       ),
     ])
@@ -2055,45 +2057,45 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_to_json(
   json.object(fields)
 }
 
-pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_to_json(
-  codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required: CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired,
+pub fn codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required_to_json(
+  codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required: CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required.version
+    codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required.version
   {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required.user_selected
+    codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required.user_selected
   {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required.system
+    codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required.system
   {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required.id
+    codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required.display
+    codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required.display
   {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required.code
+    codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required.code
   {
     Some(v) -> [
-      #("code", valuesets.allergyintoleranceclinical_to_json(v)),
+      #("code", valueset.allergyintolerance_clinical_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -2101,23 +2103,23 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_t
   json.object(fields)
 }
 
-pub type CodeableconceptPotatoallergyintoleranceVerificationstatus {
-  CodeableconceptPotatoallergyintoleranceVerificationstatus(
+pub type CodeableconceptPotatoAllergyintoleranceVerificationstatus {
+  CodeableconceptPotatoAllergyintoleranceVerificationstatus(
     coding: List(CodingOmitExtension),
     required: List1(
-      CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired,
+      CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired,
     ),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn codeableconcept_potatoallergyintolerance_verificationstatus_new(
+pub fn codeableconcept_potato_allergyintolerance_verificationstatus_new(
   required required: List1(
-    CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired,
+    CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired,
   ),
-) -> CodeableconceptPotatoallergyintoleranceVerificationstatus {
-  CodeableconceptPotatoallergyintoleranceVerificationstatus(
+) -> CodeableconceptPotatoAllergyintoleranceVerificationstatus {
+  CodeableconceptPotatoAllergyintoleranceVerificationstatus(
     coding: [],
     required:,
     id: None,
@@ -2125,9 +2127,9 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_new(
   )
 }
 
-pub type CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired {
-  CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired(
-    code: Option(valuesets.Allergyintoleranceverification),
+pub type CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired {
+  CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired(
+    code: Option(valueset.AllergyintoleranceVerification),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -2136,8 +2138,8 @@ pub type CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired
   )
 }
 
-pub fn codeableconcept_potatoallergyintolerance_verificationstatus_coding_required_new() -> CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired {
-  CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired(
+pub fn codeableconcept_potato_allergyintolerance_verificationstatus_coding_required_new() -> CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired {
+  CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired(
     code: None,
     display: None,
     id: None,
@@ -2147,18 +2149,18 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_coding_requir
   )
 }
 
-pub fn codeableconcept_potatoallergyintolerance_verificationstatus_to_json(
-  codeableconcept_potatoallergyintolerance_verificationstatus: CodeableconceptPotatoallergyintoleranceVerificationstatus,
+pub fn codeableconcept_potato_allergyintolerance_verificationstatus_to_json(
+  codeableconcept_potato_allergyintolerance_verificationstatus: CodeableconceptPotatoAllergyintoleranceVerificationstatus,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatoallergyintolerance_verificationstatus.text
+    codeableconcept_potato_allergyintolerance_verificationstatus.text
   {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_verificationstatus.id
+    codeableconcept_potato_allergyintolerance_verificationstatus.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
@@ -2166,20 +2168,20 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_to_json(
   let slice_values =
     list.flatten([
       [
-        codeableconcept_potatoallergyintolerance_verificationstatus_coding_required_to_json(
-          codeableconcept_potatoallergyintolerance_verificationstatus.required.first,
+        codeableconcept_potato_allergyintolerance_verificationstatus_coding_required_to_json(
+          codeableconcept_potato_allergyintolerance_verificationstatus.required.first,
         ),
         ..list.map(
-          codeableconcept_potatoallergyintolerance_verificationstatus.required.rest,
+          codeableconcept_potato_allergyintolerance_verificationstatus.required.rest,
           fn(value) {
-            codeableconcept_potatoallergyintolerance_verificationstatus_coding_required_to_json(
+            codeableconcept_potato_allergyintolerance_verificationstatus_coding_required_to_json(
               value,
             )
           },
         )
       ],
       list.map(
-        codeableconcept_potatoallergyintolerance_verificationstatus.coding,
+        codeableconcept_potato_allergyintolerance_verificationstatus.coding,
         fn(value) { fn(value) { coding_omit_extension_to_json(value) }(value) },
       ),
     ])
@@ -2190,45 +2192,45 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_to_json(
   json.object(fields)
 }
 
-pub fn codeableconcept_potatoallergyintolerance_verificationstatus_coding_required_to_json(
-  codeableconcept_potatoallergyintolerance_verificationstatus_coding_required: CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired,
+pub fn codeableconcept_potato_allergyintolerance_verificationstatus_coding_required_to_json(
+  codeableconcept_potato_allergyintolerance_verificationstatus_coding_required: CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatoallergyintolerance_verificationstatus_coding_required.version
+    codeableconcept_potato_allergyintolerance_verificationstatus_coding_required.version
   {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_verificationstatus_coding_required.user_selected
+    codeableconcept_potato_allergyintolerance_verificationstatus_coding_required.user_selected
   {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_verificationstatus_coding_required.system
+    codeableconcept_potato_allergyintolerance_verificationstatus_coding_required.system
   {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_verificationstatus_coding_required.id
+    codeableconcept_potato_allergyintolerance_verificationstatus_coding_required.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_verificationstatus_coding_required.display
+    codeableconcept_potato_allergyintolerance_verificationstatus_coding_required.display
   {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatoallergyintolerance_verificationstatus_coding_required.code
+    codeableconcept_potato_allergyintolerance_verificationstatus_coding_required.code
   {
     Some(v) -> [
-      #("code", valuesets.allergyintoleranceverification_to_json(v)),
+      #("code", valueset.allergyintolerance_verification_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -2236,23 +2238,23 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_coding_requir
   json.object(fields)
 }
 
-pub type CodeableconceptPotatoconditionCategoryScreeningAssessment {
-  CodeableconceptPotatoconditionCategoryScreeningAssessment(
+pub type CodeableconceptPotatoConditionCategoryScreeningAssessment {
+  CodeableconceptPotatoConditionCategoryScreeningAssessment(
     coding: List(CodingOmitExtension),
     required: List1(
-      CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired,
+      CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired,
     ),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn codeableconcept_potatocondition_category_screening_assessment_new(
+pub fn codeableconcept_potato_condition_category_screening_assessment_new(
   required required: List1(
-    CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired,
+    CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired,
   ),
-) -> CodeableconceptPotatoconditionCategoryScreeningAssessment {
-  CodeableconceptPotatoconditionCategoryScreeningAssessment(
+) -> CodeableconceptPotatoConditionCategoryScreeningAssessment {
+  CodeableconceptPotatoConditionCategoryScreeningAssessment(
     coding: [],
     required:,
     id: None,
@@ -2260,9 +2262,9 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_new(
   )
 }
 
-pub type CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired {
-  CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired(
-    code: Option(valuesets.Uscorescreeningassessmentconditioncategory),
+pub type CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired {
+  CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired(
+    code: Option(valueset.UsCoreScreeningAssessmentConditionCategory),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -2271,8 +2273,8 @@ pub type CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired
   )
 }
 
-pub fn codeableconcept_potatocondition_category_screening_assessment_coding_required_new() -> CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired {
-  CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired(
+pub fn codeableconcept_potato_condition_category_screening_assessment_coding_required_new() -> CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired {
+  CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired(
     code: None,
     display: None,
     id: None,
@@ -2282,18 +2284,18 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_coding_requ
   )
 }
 
-pub fn codeableconcept_potatocondition_category_screening_assessment_to_json(
-  codeableconcept_potatocondition_category_screening_assessment: CodeableconceptPotatoconditionCategoryScreeningAssessment,
+pub fn codeableconcept_potato_condition_category_screening_assessment_to_json(
+  codeableconcept_potato_condition_category_screening_assessment: CodeableconceptPotatoConditionCategoryScreeningAssessment,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatocondition_category_screening_assessment.text
+    codeableconcept_potato_condition_category_screening_assessment.text
   {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_screening_assessment.id
+    codeableconcept_potato_condition_category_screening_assessment.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
@@ -2301,20 +2303,20 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_to_json(
   let slice_values =
     list.flatten([
       [
-        codeableconcept_potatocondition_category_screening_assessment_coding_required_to_json(
-          codeableconcept_potatocondition_category_screening_assessment.required.first,
+        codeableconcept_potato_condition_category_screening_assessment_coding_required_to_json(
+          codeableconcept_potato_condition_category_screening_assessment.required.first,
         ),
         ..list.map(
-          codeableconcept_potatocondition_category_screening_assessment.required.rest,
+          codeableconcept_potato_condition_category_screening_assessment.required.rest,
           fn(value) {
-            codeableconcept_potatocondition_category_screening_assessment_coding_required_to_json(
+            codeableconcept_potato_condition_category_screening_assessment_coding_required_to_json(
               value,
             )
           },
         )
       ],
       list.map(
-        codeableconcept_potatocondition_category_screening_assessment.coding,
+        codeableconcept_potato_condition_category_screening_assessment.coding,
         fn(value) { fn(value) { coding_omit_extension_to_json(value) }(value) },
       ),
     ])
@@ -2325,45 +2327,48 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_to_json(
   json.object(fields)
 }
 
-pub fn codeableconcept_potatocondition_category_screening_assessment_coding_required_to_json(
-  codeableconcept_potatocondition_category_screening_assessment_coding_required: CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired,
+pub fn codeableconcept_potato_condition_category_screening_assessment_coding_required_to_json(
+  codeableconcept_potato_condition_category_screening_assessment_coding_required: CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatocondition_category_screening_assessment_coding_required.version
+    codeableconcept_potato_condition_category_screening_assessment_coding_required.version
   {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_screening_assessment_coding_required.user_selected
+    codeableconcept_potato_condition_category_screening_assessment_coding_required.user_selected
   {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_screening_assessment_coding_required.system
+    codeableconcept_potato_condition_category_screening_assessment_coding_required.system
   {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_screening_assessment_coding_required.id
+    codeableconcept_potato_condition_category_screening_assessment_coding_required.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_screening_assessment_coding_required.display
+    codeableconcept_potato_condition_category_screening_assessment_coding_required.display
   {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_screening_assessment_coding_required.code
+    codeableconcept_potato_condition_category_screening_assessment_coding_required.code
   {
     Some(v) -> [
-      #("code", valuesets.uscorescreeningassessmentconditioncategory_to_json(v)),
+      #(
+        "code",
+        valueset.us_core_screening_assessment_condition_category_to_json(v),
+      ),
       ..fields
     ]
     None -> fields
@@ -2371,21 +2376,21 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_coding_requ
   json.object(fields)
 }
 
-pub type CodeableconceptPotatoconditionCategoryUsCore {
-  CodeableconceptPotatoconditionCategoryUsCore(
+pub type CodeableconceptPotatoConditionCategoryUsCore {
+  CodeableconceptPotatoConditionCategoryUsCore(
     coding: List(CodingOmitExtension),
-    required: List1(CodeableconceptPotatoconditionCategoryUsCoreCodingRequired),
+    required: List1(CodeableconceptPotatoConditionCategoryUsCoreCodingRequired),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn codeableconcept_potatocondition_category_us_core_new(
+pub fn codeableconcept_potato_condition_category_us_core_new(
   required required: List1(
-    CodeableconceptPotatoconditionCategoryUsCoreCodingRequired,
+    CodeableconceptPotatoConditionCategoryUsCoreCodingRequired,
   ),
-) -> CodeableconceptPotatoconditionCategoryUsCore {
-  CodeableconceptPotatoconditionCategoryUsCore(
+) -> CodeableconceptPotatoConditionCategoryUsCore {
+  CodeableconceptPotatoConditionCategoryUsCore(
     coding: [],
     required:,
     id: None,
@@ -2393,9 +2398,9 @@ pub fn codeableconcept_potatocondition_category_us_core_new(
   )
 }
 
-pub type CodeableconceptPotatoconditionCategoryUsCoreCodingRequired {
-  CodeableconceptPotatoconditionCategoryUsCoreCodingRequired(
-    code: Option(valuesets.Uscoreproblemorhealthconcern),
+pub type CodeableconceptPotatoConditionCategoryUsCoreCodingRequired {
+  CodeableconceptPotatoConditionCategoryUsCoreCodingRequired(
+    code: Option(valueset.UsCoreProblemOrHealthConcern),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -2404,8 +2409,8 @@ pub type CodeableconceptPotatoconditionCategoryUsCoreCodingRequired {
   )
 }
 
-pub fn codeableconcept_potatocondition_category_us_core_coding_required_new() -> CodeableconceptPotatoconditionCategoryUsCoreCodingRequired {
-  CodeableconceptPotatoconditionCategoryUsCoreCodingRequired(
+pub fn codeableconcept_potato_condition_category_us_core_coding_required_new() -> CodeableconceptPotatoConditionCategoryUsCoreCodingRequired {
+  CodeableconceptPotatoConditionCategoryUsCoreCodingRequired(
     code: None,
     display: None,
     id: None,
@@ -2415,35 +2420,35 @@ pub fn codeableconcept_potatocondition_category_us_core_coding_required_new() ->
   )
 }
 
-pub fn codeableconcept_potatocondition_category_us_core_to_json(
-  codeableconcept_potatocondition_category_us_core: CodeableconceptPotatoconditionCategoryUsCore,
+pub fn codeableconcept_potato_condition_category_us_core_to_json(
+  codeableconcept_potato_condition_category_us_core: CodeableconceptPotatoConditionCategoryUsCore,
 ) -> Json {
   let fields = []
-  let fields = case codeableconcept_potatocondition_category_us_core.text {
+  let fields = case codeableconcept_potato_condition_category_us_core.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case codeableconcept_potatocondition_category_us_core.id {
+  let fields = case codeableconcept_potato_condition_category_us_core.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let slice_values =
     list.flatten([
       [
-        codeableconcept_potatocondition_category_us_core_coding_required_to_json(
-          codeableconcept_potatocondition_category_us_core.required.first,
+        codeableconcept_potato_condition_category_us_core_coding_required_to_json(
+          codeableconcept_potato_condition_category_us_core.required.first,
         ),
         ..list.map(
-          codeableconcept_potatocondition_category_us_core.required.rest,
+          codeableconcept_potato_condition_category_us_core.required.rest,
           fn(value) {
-            codeableconcept_potatocondition_category_us_core_coding_required_to_json(
+            codeableconcept_potato_condition_category_us_core_coding_required_to_json(
               value,
             )
           },
         )
       ],
       list.map(
-        codeableconcept_potatocondition_category_us_core.coding,
+        codeableconcept_potato_condition_category_us_core.coding,
         fn(value) { fn(value) { coding_omit_extension_to_json(value) }(value) },
       ),
     ])
@@ -2454,45 +2459,45 @@ pub fn codeableconcept_potatocondition_category_us_core_to_json(
   json.object(fields)
 }
 
-pub fn codeableconcept_potatocondition_category_us_core_coding_required_to_json(
-  codeableconcept_potatocondition_category_us_core_coding_required: CodeableconceptPotatoconditionCategoryUsCoreCodingRequired,
+pub fn codeableconcept_potato_condition_category_us_core_coding_required_to_json(
+  codeableconcept_potato_condition_category_us_core_coding_required: CodeableconceptPotatoConditionCategoryUsCoreCodingRequired,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatocondition_category_us_core_coding_required.version
+    codeableconcept_potato_condition_category_us_core_coding_required.version
   {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_us_core_coding_required.user_selected
+    codeableconcept_potato_condition_category_us_core_coding_required.user_selected
   {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_us_core_coding_required.system
+    codeableconcept_potato_condition_category_us_core_coding_required.system
   {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_us_core_coding_required.id
+    codeableconcept_potato_condition_category_us_core_coding_required.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_us_core_coding_required.display
+    codeableconcept_potato_condition_category_us_core_coding_required.display
   {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_category_us_core_coding_required.code
+    codeableconcept_potato_condition_category_us_core_coding_required.code
   {
     Some(v) -> [
-      #("code", valuesets.uscoreproblemorhealthconcern_to_json(v)),
+      #("code", valueset.us_core_problem_or_health_concern_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -2500,21 +2505,21 @@ pub fn codeableconcept_potatocondition_category_us_core_coding_required_to_json(
   json.object(fields)
 }
 
-pub type CodeableconceptPotatoconditionClinicalstatus {
-  CodeableconceptPotatoconditionClinicalstatus(
+pub type CodeableconceptPotatoConditionClinicalstatus {
+  CodeableconceptPotatoConditionClinicalstatus(
     coding: List(CodingOmitExtension),
-    required: List1(CodeableconceptPotatoconditionClinicalstatusCodingRequired),
+    required: List1(CodeableconceptPotatoConditionClinicalstatusCodingRequired),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn codeableconcept_potatocondition_clinicalstatus_new(
+pub fn codeableconcept_potato_condition_clinicalstatus_new(
   required required: List1(
-    CodeableconceptPotatoconditionClinicalstatusCodingRequired,
+    CodeableconceptPotatoConditionClinicalstatusCodingRequired,
   ),
-) -> CodeableconceptPotatoconditionClinicalstatus {
-  CodeableconceptPotatoconditionClinicalstatus(
+) -> CodeableconceptPotatoConditionClinicalstatus {
+  CodeableconceptPotatoConditionClinicalstatus(
     coding: [],
     required:,
     id: None,
@@ -2522,9 +2527,9 @@ pub fn codeableconcept_potatocondition_clinicalstatus_new(
   )
 }
 
-pub type CodeableconceptPotatoconditionClinicalstatusCodingRequired {
-  CodeableconceptPotatoconditionClinicalstatusCodingRequired(
-    code: Option(valuesets.Conditionclinical),
+pub type CodeableconceptPotatoConditionClinicalstatusCodingRequired {
+  CodeableconceptPotatoConditionClinicalstatusCodingRequired(
+    code: Option(valueset.ConditionClinical),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -2533,8 +2538,8 @@ pub type CodeableconceptPotatoconditionClinicalstatusCodingRequired {
   )
 }
 
-pub fn codeableconcept_potatocondition_clinicalstatus_coding_required_new() -> CodeableconceptPotatoconditionClinicalstatusCodingRequired {
-  CodeableconceptPotatoconditionClinicalstatusCodingRequired(
+pub fn codeableconcept_potato_condition_clinicalstatus_coding_required_new() -> CodeableconceptPotatoConditionClinicalstatusCodingRequired {
+  CodeableconceptPotatoConditionClinicalstatusCodingRequired(
     code: None,
     display: None,
     id: None,
@@ -2544,162 +2549,35 @@ pub fn codeableconcept_potatocondition_clinicalstatus_coding_required_new() -> C
   )
 }
 
-pub fn codeableconcept_potatocondition_clinicalstatus_to_json(
-  codeableconcept_potatocondition_clinicalstatus: CodeableconceptPotatoconditionClinicalstatus,
+pub fn codeableconcept_potato_condition_clinicalstatus_to_json(
+  codeableconcept_potato_condition_clinicalstatus: CodeableconceptPotatoConditionClinicalstatus,
 ) -> Json {
   let fields = []
-  let fields = case codeableconcept_potatocondition_clinicalstatus.text {
+  let fields = case codeableconcept_potato_condition_clinicalstatus.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case codeableconcept_potatocondition_clinicalstatus.id {
+  let fields = case codeableconcept_potato_condition_clinicalstatus.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let slice_values =
     list.flatten([
       [
-        codeableconcept_potatocondition_clinicalstatus_coding_required_to_json(
-          codeableconcept_potatocondition_clinicalstatus.required.first,
+        codeableconcept_potato_condition_clinicalstatus_coding_required_to_json(
+          codeableconcept_potato_condition_clinicalstatus.required.first,
         ),
         ..list.map(
-          codeableconcept_potatocondition_clinicalstatus.required.rest,
+          codeableconcept_potato_condition_clinicalstatus.required.rest,
           fn(value) {
-            codeableconcept_potatocondition_clinicalstatus_coding_required_to_json(
-              value,
-            )
-          },
-        )
-      ],
-      list.map(codeableconcept_potatocondition_clinicalstatus.coding, fn(value) {
-        fn(value) { coding_omit_extension_to_json(value) }(value)
-      }),
-    ])
-  let fields = case slice_values {
-    [] -> fields
-    values -> [#("coding", json.preprocessed_array(values)), ..fields]
-  }
-  json.object(fields)
-}
-
-pub fn codeableconcept_potatocondition_clinicalstatus_coding_required_to_json(
-  codeableconcept_potatocondition_clinicalstatus_coding_required: CodeableconceptPotatoconditionClinicalstatusCodingRequired,
-) -> Json {
-  let fields = []
-  let fields = case
-    codeableconcept_potatocondition_clinicalstatus_coding_required.version
-  {
-    Some(v) -> [#("version", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case
-    codeableconcept_potatocondition_clinicalstatus_coding_required.user_selected
-  {
-    Some(v) -> [#("userSelected", json.bool(v)), ..fields]
-    None -> fields
-  }
-  let fields = case
-    codeableconcept_potatocondition_clinicalstatus_coding_required.system
-  {
-    Some(v) -> [#("system", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case
-    codeableconcept_potatocondition_clinicalstatus_coding_required.id
-  {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case
-    codeableconcept_potatocondition_clinicalstatus_coding_required.display
-  {
-    Some(v) -> [#("display", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case
-    codeableconcept_potatocondition_clinicalstatus_coding_required.code
-  {
-    Some(v) -> [#("code", valuesets.conditionclinical_to_json(v)), ..fields]
-    None -> fields
-  }
-  json.object(fields)
-}
-
-pub type CodeableconceptPotatoconditionVerificationstatus {
-  CodeableconceptPotatoconditionVerificationstatus(
-    coding: List(CodingOmitExtension),
-    required: List1(
-      CodeableconceptPotatoconditionVerificationstatusCodingRequired,
-    ),
-    id: Option(String),
-    text: Option(String),
-  )
-}
-
-pub fn codeableconcept_potatocondition_verificationstatus_new(
-  required required: List1(
-    CodeableconceptPotatoconditionVerificationstatusCodingRequired,
-  ),
-) -> CodeableconceptPotatoconditionVerificationstatus {
-  CodeableconceptPotatoconditionVerificationstatus(
-    coding: [],
-    required:,
-    id: None,
-    text: None,
-  )
-}
-
-pub type CodeableconceptPotatoconditionVerificationstatusCodingRequired {
-  CodeableconceptPotatoconditionVerificationstatusCodingRequired(
-    code: Option(valuesets.Conditionverstatus),
-    display: Option(String),
-    id: Option(String),
-    system: Option(String),
-    user_selected: Option(Bool),
-    version: Option(String),
-  )
-}
-
-pub fn codeableconcept_potatocondition_verificationstatus_coding_required_new() -> CodeableconceptPotatoconditionVerificationstatusCodingRequired {
-  CodeableconceptPotatoconditionVerificationstatusCodingRequired(
-    code: None,
-    display: None,
-    id: None,
-    system: None,
-    user_selected: None,
-    version: None,
-  )
-}
-
-pub fn codeableconcept_potatocondition_verificationstatus_to_json(
-  codeableconcept_potatocondition_verificationstatus: CodeableconceptPotatoconditionVerificationstatus,
-) -> Json {
-  let fields = []
-  let fields = case codeableconcept_potatocondition_verificationstatus.text {
-    Some(v) -> [#("text", json.string(v)), ..fields]
-    None -> fields
-  }
-  let fields = case codeableconcept_potatocondition_verificationstatus.id {
-    Some(v) -> [#("id", json.string(v)), ..fields]
-    None -> fields
-  }
-  let slice_values =
-    list.flatten([
-      [
-        codeableconcept_potatocondition_verificationstatus_coding_required_to_json(
-          codeableconcept_potatocondition_verificationstatus.required.first,
-        ),
-        ..list.map(
-          codeableconcept_potatocondition_verificationstatus.required.rest,
-          fn(value) {
-            codeableconcept_potatocondition_verificationstatus_coding_required_to_json(
+            codeableconcept_potato_condition_clinicalstatus_coding_required_to_json(
               value,
             )
           },
         )
       ],
       list.map(
-        codeableconcept_potatocondition_verificationstatus.coding,
+        codeableconcept_potato_condition_clinicalstatus.coding,
         fn(value) { fn(value) { coding_omit_extension_to_json(value) }(value) },
       ),
     ])
@@ -2710,66 +2588,66 @@ pub fn codeableconcept_potatocondition_verificationstatus_to_json(
   json.object(fields)
 }
 
-pub fn codeableconcept_potatocondition_verificationstatus_coding_required_to_json(
-  codeableconcept_potatocondition_verificationstatus_coding_required: CodeableconceptPotatoconditionVerificationstatusCodingRequired,
+pub fn codeableconcept_potato_condition_clinicalstatus_coding_required_to_json(
+  codeableconcept_potato_condition_clinicalstatus_coding_required: CodeableconceptPotatoConditionClinicalstatusCodingRequired,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatocondition_verificationstatus_coding_required.version
+    codeableconcept_potato_condition_clinicalstatus_coding_required.version
   {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_verificationstatus_coding_required.user_selected
+    codeableconcept_potato_condition_clinicalstatus_coding_required.user_selected
   {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_verificationstatus_coding_required.system
+    codeableconcept_potato_condition_clinicalstatus_coding_required.system
   {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_verificationstatus_coding_required.id
+    codeableconcept_potato_condition_clinicalstatus_coding_required.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_verificationstatus_coding_required.display
+    codeableconcept_potato_condition_clinicalstatus_coding_required.display
   {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatocondition_verificationstatus_coding_required.code
+    codeableconcept_potato_condition_clinicalstatus_coding_required.code
   {
-    Some(v) -> [#("code", valuesets.conditionverstatus_to_json(v)), ..fields]
+    Some(v) -> [#("code", valueset.condition_clinical_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type CodeableconceptPotatodocumentreferenceCategoryUscore {
-  CodeableconceptPotatodocumentreferenceCategoryUscore(
+pub type CodeableconceptPotatoConditionVerificationstatus {
+  CodeableconceptPotatoConditionVerificationstatus(
     coding: List(CodingOmitExtension),
     required: List1(
-      CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired,
+      CodeableconceptPotatoConditionVerificationstatusCodingRequired,
     ),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn codeableconcept_potatodocumentreference_category_uscore_new(
+pub fn codeableconcept_potato_condition_verificationstatus_new(
   required required: List1(
-    CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired,
+    CodeableconceptPotatoConditionVerificationstatusCodingRequired,
   ),
-) -> CodeableconceptPotatodocumentreferenceCategoryUscore {
-  CodeableconceptPotatodocumentreferenceCategoryUscore(
+) -> CodeableconceptPotatoConditionVerificationstatus {
+  CodeableconceptPotatoConditionVerificationstatus(
     coding: [],
     required:,
     id: None,
@@ -2777,9 +2655,9 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_new(
   )
 }
 
-pub type CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired {
-  CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired(
-    code: Option(valuesets.Uscoredocumentreferencecategory),
+pub type CodeableconceptPotatoConditionVerificationstatusCodingRequired {
+  CodeableconceptPotatoConditionVerificationstatusCodingRequired(
+    code: Option(valueset.ConditionVerStatus),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -2788,8 +2666,8 @@ pub type CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired {
   )
 }
 
-pub fn codeableconcept_potatodocumentreference_category_uscore_coding_required_new() -> CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired {
-  CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired(
+pub fn codeableconcept_potato_condition_verificationstatus_coding_required_new() -> CodeableconceptPotatoConditionVerificationstatusCodingRequired {
+  CodeableconceptPotatoConditionVerificationstatusCodingRequired(
     code: None,
     display: None,
     id: None,
@@ -2799,37 +2677,35 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_coding_required_n
   )
 }
 
-pub fn codeableconcept_potatodocumentreference_category_uscore_to_json(
-  codeableconcept_potatodocumentreference_category_uscore: CodeableconceptPotatodocumentreferenceCategoryUscore,
+pub fn codeableconcept_potato_condition_verificationstatus_to_json(
+  codeableconcept_potato_condition_verificationstatus: CodeableconceptPotatoConditionVerificationstatus,
 ) -> Json {
   let fields = []
-  let fields = case
-    codeableconcept_potatodocumentreference_category_uscore.text
-  {
+  let fields = case codeableconcept_potato_condition_verificationstatus.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case codeableconcept_potatodocumentreference_category_uscore.id {
+  let fields = case codeableconcept_potato_condition_verificationstatus.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let slice_values =
     list.flatten([
       [
-        codeableconcept_potatodocumentreference_category_uscore_coding_required_to_json(
-          codeableconcept_potatodocumentreference_category_uscore.required.first,
+        codeableconcept_potato_condition_verificationstatus_coding_required_to_json(
+          codeableconcept_potato_condition_verificationstatus.required.first,
         ),
         ..list.map(
-          codeableconcept_potatodocumentreference_category_uscore.required.rest,
+          codeableconcept_potato_condition_verificationstatus.required.rest,
           fn(value) {
-            codeableconcept_potatodocumentreference_category_uscore_coding_required_to_json(
+            codeableconcept_potato_condition_verificationstatus_coding_required_to_json(
               value,
             )
           },
         )
       ],
       list.map(
-        codeableconcept_potatodocumentreference_category_uscore.coding,
+        codeableconcept_potato_condition_verificationstatus.coding,
         fn(value) { fn(value) { coding_omit_extension_to_json(value) }(value) },
       ),
     ])
@@ -2840,45 +2716,177 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_to_json(
   json.object(fields)
 }
 
-pub fn codeableconcept_potatodocumentreference_category_uscore_coding_required_to_json(
-  codeableconcept_potatodocumentreference_category_uscore_coding_required: CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired,
+pub fn codeableconcept_potato_condition_verificationstatus_coding_required_to_json(
+  codeableconcept_potato_condition_verificationstatus_coding_required: CodeableconceptPotatoConditionVerificationstatusCodingRequired,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatodocumentreference_category_uscore_coding_required.version
+    codeableconcept_potato_condition_verificationstatus_coding_required.version
   {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatodocumentreference_category_uscore_coding_required.user_selected
+    codeableconcept_potato_condition_verificationstatus_coding_required.user_selected
   {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatodocumentreference_category_uscore_coding_required.system
+    codeableconcept_potato_condition_verificationstatus_coding_required.system
   {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatodocumentreference_category_uscore_coding_required.id
+    codeableconcept_potato_condition_verificationstatus_coding_required.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatodocumentreference_category_uscore_coding_required.display
+    codeableconcept_potato_condition_verificationstatus_coding_required.display
   {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatodocumentreference_category_uscore_coding_required.code
+    codeableconcept_potato_condition_verificationstatus_coding_required.code
+  {
+    Some(v) -> [#("code", valueset.condition_ver_status_to_json(v)), ..fields]
+    None -> fields
+  }
+  json.object(fields)
+}
+
+pub type CodeableconceptPotatoDocumentreferenceCategoryUscore {
+  CodeableconceptPotatoDocumentreferenceCategoryUscore(
+    coding: List(CodingOmitExtension),
+    required: List1(
+      CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired,
+    ),
+    id: Option(String),
+    text: Option(String),
+  )
+}
+
+pub fn codeableconcept_potato_documentreference_category_uscore_new(
+  required required: List1(
+    CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired,
+  ),
+) -> CodeableconceptPotatoDocumentreferenceCategoryUscore {
+  CodeableconceptPotatoDocumentreferenceCategoryUscore(
+    coding: [],
+    required:,
+    id: None,
+    text: None,
+  )
+}
+
+pub type CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired {
+  CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired(
+    code: Option(valueset.UsCoreDocumentreferenceCategory),
+    display: Option(String),
+    id: Option(String),
+    system: Option(String),
+    user_selected: Option(Bool),
+    version: Option(String),
+  )
+}
+
+pub fn codeableconcept_potato_documentreference_category_uscore_coding_required_new() -> CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired {
+  CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired(
+    code: None,
+    display: None,
+    id: None,
+    system: None,
+    user_selected: None,
+    version: None,
+  )
+}
+
+pub fn codeableconcept_potato_documentreference_category_uscore_to_json(
+  codeableconcept_potato_documentreference_category_uscore: CodeableconceptPotatoDocumentreferenceCategoryUscore,
+) -> Json {
+  let fields = []
+  let fields = case
+    codeableconcept_potato_documentreference_category_uscore.text
+  {
+    Some(v) -> [#("text", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case
+    codeableconcept_potato_documentreference_category_uscore.id
+  {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  let slice_values =
+    list.flatten([
+      [
+        codeableconcept_potato_documentreference_category_uscore_coding_required_to_json(
+          codeableconcept_potato_documentreference_category_uscore.required.first,
+        ),
+        ..list.map(
+          codeableconcept_potato_documentreference_category_uscore.required.rest,
+          fn(value) {
+            codeableconcept_potato_documentreference_category_uscore_coding_required_to_json(
+              value,
+            )
+          },
+        )
+      ],
+      list.map(
+        codeableconcept_potato_documentreference_category_uscore.coding,
+        fn(value) { fn(value) { coding_omit_extension_to_json(value) }(value) },
+      ),
+    ])
+  let fields = case slice_values {
+    [] -> fields
+    values -> [#("coding", json.preprocessed_array(values)), ..fields]
+  }
+  json.object(fields)
+}
+
+pub fn codeableconcept_potato_documentreference_category_uscore_coding_required_to_json(
+  codeableconcept_potato_documentreference_category_uscore_coding_required: CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired,
+) -> Json {
+  let fields = []
+  let fields = case
+    codeableconcept_potato_documentreference_category_uscore_coding_required.version
+  {
+    Some(v) -> [#("version", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case
+    codeableconcept_potato_documentreference_category_uscore_coding_required.user_selected
+  {
+    Some(v) -> [#("userSelected", json.bool(v)), ..fields]
+    None -> fields
+  }
+  let fields = case
+    codeableconcept_potato_documentreference_category_uscore_coding_required.system
+  {
+    Some(v) -> [#("system", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case
+    codeableconcept_potato_documentreference_category_uscore_coding_required.id
+  {
+    Some(v) -> [#("id", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case
+    codeableconcept_potato_documentreference_category_uscore_coding_required.display
+  {
+    Some(v) -> [#("display", json.string(v)), ..fields]
+    None -> fields
+  }
+  let fields = case
+    codeableconcept_potato_documentreference_category_uscore_coding_required.code
   {
     Some(v) -> [
-      #("code", valuesets.uscoredocumentreferencecategory_to_json(v)),
+      #("code", valueset.us_core_documentreference_category_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -2886,23 +2894,23 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_coding_required_t
   json.object(fields)
 }
 
-pub type CodeableconceptPotatomedicationrequestCategoryUsCore {
-  CodeableconceptPotatomedicationrequestCategoryUsCore(
+pub type CodeableconceptPotatoMedicationrequestCategoryUsCore {
+  CodeableconceptPotatoMedicationrequestCategoryUsCore(
     coding: List(CodingOmitExtension),
     required: List1(
-      CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired,
+      CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired,
     ),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn codeableconcept_potatomedicationrequest_category_us_core_new(
+pub fn codeableconcept_potato_medicationrequest_category_us_core_new(
   required required: List1(
-    CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired,
+    CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired,
   ),
-) -> CodeableconceptPotatomedicationrequestCategoryUsCore {
-  CodeableconceptPotatomedicationrequestCategoryUsCore(
+) -> CodeableconceptPotatoMedicationrequestCategoryUsCore {
+  CodeableconceptPotatoMedicationrequestCategoryUsCore(
     coding: [],
     required:,
     id: None,
@@ -2910,9 +2918,9 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_new(
   )
 }
 
-pub type CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired {
-  CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired(
-    code: Option(valuesets.Medicationrequestcategory),
+pub type CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired {
+  CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired(
+    code: Option(valueset.MedicationrequestCategory),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -2921,8 +2929,8 @@ pub type CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired {
   )
 }
 
-pub fn codeableconcept_potatomedicationrequest_category_us_core_coding_required_new() -> CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired {
-  CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired(
+pub fn codeableconcept_potato_medicationrequest_category_us_core_coding_required_new() -> CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired {
+  CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired(
     code: None,
     display: None,
     id: None,
@@ -2932,18 +2940,18 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_coding_required_
   )
 }
 
-pub fn codeableconcept_potatomedicationrequest_category_us_core_to_json(
-  codeableconcept_potatomedicationrequest_category_us_core: CodeableconceptPotatomedicationrequestCategoryUsCore,
+pub fn codeableconcept_potato_medicationrequest_category_us_core_to_json(
+  codeableconcept_potato_medicationrequest_category_us_core: CodeableconceptPotatoMedicationrequestCategoryUsCore,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatomedicationrequest_category_us_core.text
+    codeableconcept_potato_medicationrequest_category_us_core.text
   {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatomedicationrequest_category_us_core.id
+    codeableconcept_potato_medicationrequest_category_us_core.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
@@ -2951,20 +2959,20 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_to_json(
   let slice_values =
     list.flatten([
       [
-        codeableconcept_potatomedicationrequest_category_us_core_coding_required_to_json(
-          codeableconcept_potatomedicationrequest_category_us_core.required.first,
+        codeableconcept_potato_medicationrequest_category_us_core_coding_required_to_json(
+          codeableconcept_potato_medicationrequest_category_us_core.required.first,
         ),
         ..list.map(
-          codeableconcept_potatomedicationrequest_category_us_core.required.rest,
+          codeableconcept_potato_medicationrequest_category_us_core.required.rest,
           fn(value) {
-            codeableconcept_potatomedicationrequest_category_us_core_coding_required_to_json(
+            codeableconcept_potato_medicationrequest_category_us_core_coding_required_to_json(
               value,
             )
           },
         )
       ],
       list.map(
-        codeableconcept_potatomedicationrequest_category_us_core.coding,
+        codeableconcept_potato_medicationrequest_category_us_core.coding,
         fn(value) { fn(value) { coding_omit_extension_to_json(value) }(value) },
       ),
     ])
@@ -2975,45 +2983,45 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_to_json(
   json.object(fields)
 }
 
-pub fn codeableconcept_potatomedicationrequest_category_us_core_coding_required_to_json(
-  codeableconcept_potatomedicationrequest_category_us_core_coding_required: CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired,
+pub fn codeableconcept_potato_medicationrequest_category_us_core_coding_required_to_json(
+  codeableconcept_potato_medicationrequest_category_us_core_coding_required: CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired,
 ) -> Json {
   let fields = []
   let fields = case
-    codeableconcept_potatomedicationrequest_category_us_core_coding_required.version
+    codeableconcept_potato_medicationrequest_category_us_core_coding_required.version
   {
     Some(v) -> [#("version", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatomedicationrequest_category_us_core_coding_required.user_selected
+    codeableconcept_potato_medicationrequest_category_us_core_coding_required.user_selected
   {
     Some(v) -> [#("userSelected", json.bool(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatomedicationrequest_category_us_core_coding_required.system
+    codeableconcept_potato_medicationrequest_category_us_core_coding_required.system
   {
     Some(v) -> [#("system", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatomedicationrequest_category_us_core_coding_required.id
+    codeableconcept_potato_medicationrequest_category_us_core_coding_required.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatomedicationrequest_category_us_core_coding_required.display
+    codeableconcept_potato_medicationrequest_category_us_core_coding_required.display
   {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    codeableconcept_potatomedicationrequest_category_us_core_coding_required.code
+    codeableconcept_potato_medicationrequest_category_us_core_coding_required.code
   {
     Some(v) -> [
-      #("code", valuesets.medicationrequestcategory_to_json(v)),
+      #("code", valueset.medicationrequest_category_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -3023,7 +3031,7 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_coding_required_
 
 pub type CodingPotatoethnicityExtensionDetailedValue {
   CodingPotatoethnicityExtensionDetailedValue(
-    code: Option(valuesets.Detailedethnicity),
+    code: Option(valueset.DetailedEthnicity),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -3070,7 +3078,7 @@ pub fn coding_potatoethnicity_extension_detailed_value_to_json(
     None -> fields
   }
   let fields = case coding_potatoethnicity_extension_detailed_value.code {
-    Some(v) -> [#("code", valuesets.detailedethnicity_to_json(v)), ..fields]
+    Some(v) -> [#("code", valueset.detailed_ethnicity_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
@@ -3078,7 +3086,7 @@ pub fn coding_potatoethnicity_extension_detailed_value_to_json(
 
 pub type CodingPotatoethnicityExtensionOmbcategoryValue {
   CodingPotatoethnicityExtensionOmbcategoryValue(
-    code: Option(valuesets.Ombethnicitycategory),
+    code: Option(valueset.OmbEthnicityCategory),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -3125,7 +3133,7 @@ pub fn coding_potatoethnicity_extension_ombcategory_value_to_json(
     None -> fields
   }
   let fields = case coding_potatoethnicity_extension_ombcategory_value.code {
-    Some(v) -> [#("code", valuesets.ombethnicitycategory_to_json(v)), ..fields]
+    Some(v) -> [#("code", valueset.omb_ethnicity_category_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
@@ -3133,7 +3141,7 @@ pub fn coding_potatoethnicity_extension_ombcategory_value_to_json(
 
 pub type CodingPotatoraceExtensionDetailedValue {
   CodingPotatoraceExtensionDetailedValue(
-    code: Option(valuesets.Detailedrace),
+    code: Option(valueset.DetailedRace),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -3178,7 +3186,7 @@ pub fn coding_potatorace_extension_detailed_value_to_json(
     None -> fields
   }
   let fields = case coding_potatorace_extension_detailed_value.code {
-    Some(v) -> [#("code", valuesets.detailedrace_to_json(v)), ..fields]
+    Some(v) -> [#("code", valueset.detailed_race_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
@@ -3186,7 +3194,7 @@ pub fn coding_potatorace_extension_detailed_value_to_json(
 
 pub type CodingPotatoraceExtensionOmbcategoryValue {
   CodingPotatoraceExtensionOmbcategoryValue(
-    code: Option(valuesets.Ombracecategory),
+    code: Option(valueset.OmbRaceCategory),
     display: Option(String),
     id: Option(String),
     system: Option(String),
@@ -3233,28 +3241,28 @@ pub fn coding_potatorace_extension_ombcategory_value_to_json(
     None -> fields
   }
   let fields = case coding_potatorace_extension_ombcategory_value.code {
-    Some(v) -> [#("code", valuesets.ombracecategory_to_json(v)), ..fields]
+    Some(v) -> [#("code", valueset.omb_race_category_to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type ContactpointPotatopatientTelecom {
-  ContactpointPotatopatientTelecom(
+pub type ContactpointPotatoPatientTelecom {
+  ContactpointPotatoPatientTelecom(
     id: Option(String),
     period: Option(PeriodOmitExtension),
     rank: Option(Int),
-    system: valuesets.Contactpointsystem,
-    use_: Option(valuesets.Contactpointuse),
+    system: valueset.ContactpointSystem,
+    use_: Option(valueset.ContactpointUse),
     value: String,
   )
 }
 
-pub fn contactpoint_potatopatient_telecom_new(
-  system system: valuesets.Contactpointsystem,
+pub fn contactpoint_potato_patient_telecom_new(
+  system system: valueset.ContactpointSystem,
   value value: String,
-) -> ContactpointPotatopatientTelecom {
-  ContactpointPotatopatientTelecom(
+) -> ContactpointPotatoPatientTelecom {
+  ContactpointPotatoPatientTelecom(
     id: None,
     period: None,
     rank: None,
@@ -3264,64 +3272,64 @@ pub fn contactpoint_potatopatient_telecom_new(
   )
 }
 
-pub fn contactpoint_potatopatient_telecom_to_json(
-  contactpoint_potatopatient_telecom: ContactpointPotatopatientTelecom,
+pub fn contactpoint_potato_patient_telecom_to_json(
+  contactpoint_potato_patient_telecom: ContactpointPotatoPatientTelecom,
 ) -> Json {
   let fields = [
-    #("value", json.string(contactpoint_potatopatient_telecom.value)),
+    #("value", json.string(contactpoint_potato_patient_telecom.value)),
     #(
       "system",
-      valuesets.contactpointsystem_to_json(
-        contactpoint_potatopatient_telecom.system,
+      valueset.contactpoint_system_to_json(
+        contactpoint_potato_patient_telecom.system,
       ),
     ),
   ]
-  let fields = case contactpoint_potatopatient_telecom.use_ {
-    Some(v) -> [#("use", valuesets.contactpointuse_to_json(v)), ..fields]
+  let fields = case contactpoint_potato_patient_telecom.use_ {
+    Some(v) -> [#("use", valueset.contactpoint_use_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case contactpoint_potatopatient_telecom.rank {
+  let fields = case contactpoint_potato_patient_telecom.rank {
     Some(v) -> [#("rank", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case contactpoint_potatopatient_telecom.period {
+  let fields = case contactpoint_potato_patient_telecom.period {
     Some(v) -> [#("period", period_omit_extension_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case contactpoint_potatopatient_telecom.id {
+  let fields = case contactpoint_potato_patient_telecom.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type DosagePotatomedicationrequestDosageinstruction {
-  DosagePotatomedicationrequestDosageinstruction(
+pub type DosagePotatoMedicationrequestDosageinstruction {
+  DosagePotatoMedicationrequestDosageinstruction(
     additional_instruction: List(
-      DosagePotatomedicationrequestDosageinstructionAdditionalinstruction,
+      DosagePotatoMedicationrequestDosageinstructionAdditionalinstruction,
     ),
-    as_needed: Option(DosagePotatomedicationrequestDosageinstructionAsneeded),
+    as_needed: Option(DosagePotatoMedicationrequestDosageinstructionAsneeded),
     dose_and_rate: List(
-      DosagePotatomedicationrequestDosageinstructionDoseandrate,
+      DosagePotatoMedicationrequestDosageinstructionDoseandrate,
     ),
     id: Option(String),
     max_dose_per_administration: Option(QuantityOmitExtensionComparator),
     max_dose_per_lifetime: Option(QuantityOmitExtensionComparator),
     max_dose_per_period: Option(
-      DosagePotatomedicationrequestDosageinstructionMaxdoseperperiod,
+      DosagePotatoMedicationrequestDosageinstructionMaxdoseperperiod,
     ),
-    method: Option(DosagePotatomedicationrequestDosageinstructionMethod),
+    method: Option(DosagePotatoMedicationrequestDosageinstructionMethod),
     patient_instruction: Option(String),
-    route: Option(DosagePotatomedicationrequestDosageinstructionRoute),
+    route: Option(DosagePotatoMedicationrequestDosageinstructionRoute),
     sequence: Option(Int),
-    site: Option(DosagePotatomedicationrequestDosageinstructionSite),
+    site: Option(DosagePotatoMedicationrequestDosageinstructionSite),
     text: Option(String),
-    timing: Option(DosagePotatomedicationrequestDosageinstructionTiming),
+    timing: Option(DosagePotatoMedicationrequestDosageinstructionTiming),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_new() -> DosagePotatomedicationrequestDosageinstruction {
-  DosagePotatomedicationrequestDosageinstruction(
+pub fn dosage_potato_medicationrequest_dosageinstruction_new() -> DosagePotatoMedicationrequestDosageinstruction {
+  DosagePotatoMedicationrequestDosageinstruction(
     additional_instruction: [],
     as_needed: None,
     dose_and_rate: [],
@@ -3339,40 +3347,40 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_new() -> DosagePotatomed
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionAsneeded {
-  DosagePotatomedicationrequestDosageinstructionAsneededBoolean(value: Bool)
-  DosagePotatomedicationrequestDosageinstructionAsneededCodeableconcept(
+pub type DosagePotatoMedicationrequestDosageinstructionAsneeded {
+  DosagePotatoMedicationrequestDosageinstructionAsneededBoolean(value: Bool)
+  DosagePotatoMedicationrequestDosageinstructionAsneededCodeableconcept(
     value: Potatocodeableconcept,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionAdditionalinstruction {
-  DosagePotatomedicationrequestDosageinstructionAdditionalinstruction(
+pub type DosagePotatoMedicationrequestDosageinstructionAdditionalinstruction {
+  DosagePotatoMedicationrequestDosageinstructionAdditionalinstruction(
     coding: List(Potatocoding),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_additionalinstruction_new() -> DosagePotatomedicationrequestDosageinstructionAdditionalinstruction {
-  DosagePotatomedicationrequestDosageinstructionAdditionalinstruction(
+pub fn dosage_potato_medicationrequest_dosageinstruction_additionalinstruction_new() -> DosagePotatoMedicationrequestDosageinstructionAdditionalinstruction {
+  DosagePotatoMedicationrequestDosageinstructionAdditionalinstruction(
     coding: [],
     id: None,
     text: None,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionDoseandrate {
-  DosagePotatomedicationrequestDosageinstructionDoseandrate(
-    dose: Option(DosagePotatomedicationrequestDosageinstructionDoseandrateDose),
+pub type DosagePotatoMedicationrequestDosageinstructionDoseandrate {
+  DosagePotatoMedicationrequestDosageinstructionDoseandrate(
+    dose: Option(DosagePotatoMedicationrequestDosageinstructionDoseandrateDose),
     id: Option(String),
-    rate: Option(DosagePotatomedicationrequestDosageinstructionDoseandrateRate),
-    type_: Option(DosagePotatomedicationrequestDosageinstructionDoseandrateType),
+    rate: Option(DosagePotatoMedicationrequestDosageinstructionDoseandrateRate),
+    type_: Option(DosagePotatoMedicationrequestDosageinstructionDoseandrateType),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_new() -> DosagePotatomedicationrequestDosageinstructionDoseandrate {
-  DosagePotatomedicationrequestDosageinstructionDoseandrate(
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_new() -> DosagePotatoMedicationrequestDosageinstructionDoseandrate {
+  DosagePotatoMedicationrequestDosageinstructionDoseandrate(
     dose: None,
     id: None,
     rate: None,
@@ -3380,118 +3388,118 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_new() -> Dos
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionDoseandrateRate {
-  DosagePotatomedicationrequestDosageinstructionDoseandrateRateRatio(
+pub type DosagePotatoMedicationrequestDosageinstructionDoseandrateRate {
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRatio(
     value: Potatoratio,
   )
-  DosagePotatomedicationrequestDosageinstructionDoseandrateRateRange(
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRange(
     value: Potatorange,
   )
-  DosagePotatomedicationrequestDosageinstructionDoseandrateRateQuantity(
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateRateQuantity(
     value: Potatosimplequantity,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionDoseandrateDose {
-  DosagePotatomedicationrequestDosageinstructionDoseandrateDoseQuantity(
+pub type DosagePotatoMedicationrequestDosageinstructionDoseandrateDose {
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseQuantity(
     value: Potatosimplequantity,
   )
-  DosagePotatomedicationrequestDosageinstructionDoseandrateDoseRange(
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseRange(
     value: Potatorange,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionDoseandrateType {
-  DosagePotatomedicationrequestDosageinstructionDoseandrateType(
+pub type DosagePotatoMedicationrequestDosageinstructionDoseandrateType {
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateType(
     coding: List(Potatocoding),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_type_new() -> DosagePotatomedicationrequestDosageinstructionDoseandrateType {
-  DosagePotatomedicationrequestDosageinstructionDoseandrateType(
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_type_new() -> DosagePotatoMedicationrequestDosageinstructionDoseandrateType {
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateType(
     coding: [],
     id: None,
     text: None,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionMaxdoseperperiod {
-  DosagePotatomedicationrequestDosageinstructionMaxdoseperperiod(
+pub type DosagePotatoMedicationrequestDosageinstructionMaxdoseperperiod {
+  DosagePotatoMedicationrequestDosageinstructionMaxdoseperperiod(
     denominator: Option(Potatoquantity),
     id: Option(String),
     numerator: Option(Potatoquantity),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod_new() -> DosagePotatomedicationrequestDosageinstructionMaxdoseperperiod {
-  DosagePotatomedicationrequestDosageinstructionMaxdoseperperiod(
+pub fn dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod_new() -> DosagePotatoMedicationrequestDosageinstructionMaxdoseperperiod {
+  DosagePotatoMedicationrequestDosageinstructionMaxdoseperperiod(
     denominator: None,
     id: None,
     numerator: None,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionMethod {
-  DosagePotatomedicationrequestDosageinstructionMethod(
+pub type DosagePotatoMedicationrequestDosageinstructionMethod {
+  DosagePotatoMedicationrequestDosageinstructionMethod(
     coding: List(Potatocoding),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_method_new() -> DosagePotatomedicationrequestDosageinstructionMethod {
-  DosagePotatomedicationrequestDosageinstructionMethod(
+pub fn dosage_potato_medicationrequest_dosageinstruction_method_new() -> DosagePotatoMedicationrequestDosageinstructionMethod {
+  DosagePotatoMedicationrequestDosageinstructionMethod(
     coding: [],
     id: None,
     text: None,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionRoute {
-  DosagePotatomedicationrequestDosageinstructionRoute(
+pub type DosagePotatoMedicationrequestDosageinstructionRoute {
+  DosagePotatoMedicationrequestDosageinstructionRoute(
     coding: List(Potatocoding),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_route_new() -> DosagePotatomedicationrequestDosageinstructionRoute {
-  DosagePotatomedicationrequestDosageinstructionRoute(
+pub fn dosage_potato_medicationrequest_dosageinstruction_route_new() -> DosagePotatoMedicationrequestDosageinstructionRoute {
+  DosagePotatoMedicationrequestDosageinstructionRoute(
     coding: [],
     id: None,
     text: None,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionSite {
-  DosagePotatomedicationrequestDosageinstructionSite(
+pub type DosagePotatoMedicationrequestDosageinstructionSite {
+  DosagePotatoMedicationrequestDosageinstructionSite(
     coding: List(Potatocoding),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_site_new() -> DosagePotatomedicationrequestDosageinstructionSite {
-  DosagePotatomedicationrequestDosageinstructionSite(
+pub fn dosage_potato_medicationrequest_dosageinstruction_site_new() -> DosagePotatoMedicationrequestDosageinstructionSite {
+  DosagePotatoMedicationrequestDosageinstructionSite(
     coding: [],
     id: None,
     text: None,
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionTiming {
-  DosagePotatomedicationrequestDosageinstructionTiming(
+pub type DosagePotatoMedicationrequestDosageinstructionTiming {
+  DosagePotatoMedicationrequestDosageinstructionTiming(
     code: Option(Potatocodeableconcept),
     event: List(DateTime),
     id: Option(String),
-    repeat: Option(DosagePotatomedicationrequestDosageinstructionTimingRepeat),
+    repeat: Option(DosagePotatoMedicationrequestDosageinstructionTimingRepeat),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_timing_new() -> DosagePotatomedicationrequestDosageinstructionTiming {
-  DosagePotatomedicationrequestDosageinstructionTiming(
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_new() -> DosagePotatoMedicationrequestDosageinstructionTiming {
+  DosagePotatoMedicationrequestDosageinstructionTiming(
     code: None,
     event: [],
     id: None,
@@ -3499,31 +3507,31 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_new() -> DosagePo
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionTimingRepeat {
-  DosagePotatomedicationrequestDosageinstructionTimingRepeat(
+pub type DosagePotatoMedicationrequestDosageinstructionTimingRepeat {
+  DosagePotatoMedicationrequestDosageinstructionTimingRepeat(
     bounds: Option(
-      DosagePotatomedicationrequestDosageinstructionTimingRepeatBounds,
+      DosagePotatoMedicationrequestDosageinstructionTimingRepeatBounds,
     ),
     count: Option(Int),
     count_max: Option(Int),
-    day_of_week: List(valuesets.Daysofweek),
+    day_of_week: List(valueset.DaysOfWeek),
     duration: Option(Float),
     duration_max: Option(Float),
-    duration_unit: Option(valuesets.Unitsoftime),
+    duration_unit: Option(valueset.UnitsOfTime),
     frequency: Option(Int),
     frequency_max: Option(Int),
     id: Option(String),
     offset: Option(Int),
     period: Option(Float),
     period_max: Option(Float),
-    period_unit: Option(valuesets.Unitsoftime),
+    period_unit: Option(valueset.UnitsOfTime),
     time_of_day: List(Time),
-    when: List(valuesets.Eventtiming),
+    when: List(valueset.EventTiming),
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_new() -> DosagePotatomedicationrequestDosageinstructionTimingRepeat {
-  DosagePotatomedicationrequestDosageinstructionTimingRepeat(
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_new() -> DosagePotatoMedicationrequestDosageinstructionTimingRepeat {
+  DosagePotatoMedicationrequestDosageinstructionTimingRepeat(
     bounds: None,
     count: None,
     count_max: None,
@@ -3543,83 +3551,83 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_new() -> D
   )
 }
 
-pub type DosagePotatomedicationrequestDosageinstructionTimingRepeatBounds {
-  DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsDuration(
+pub type DosagePotatoMedicationrequestDosageinstructionTimingRepeatBounds {
+  DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsDuration(
     value: Potatoduration,
   )
-  DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsRange(
+  DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsRange(
     value: Potatorange,
   )
-  DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
+  DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
     value: Potatoperiod,
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_to_json(
-  dosage_potatomedicationrequest_dosageinstruction: DosagePotatomedicationrequestDosageinstruction,
+pub fn dosage_potato_medicationrequest_dosageinstruction_to_json(
+  dosage_potato_medicationrequest_dosageinstruction: DosagePotatoMedicationrequestDosageinstruction,
 ) -> Json {
   let fields = []
-  let fields = case dosage_potatomedicationrequest_dosageinstruction.timing {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction.timing {
     Some(v) -> [
       #(
         "timing",
-        dosage_potatomedicationrequest_dosageinstruction_timing_to_json(v),
+        dosage_potato_medicationrequest_dosageinstruction_timing_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction.text {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction.site {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction.site {
     Some(v) -> [
       #(
         "site",
-        dosage_potatomedicationrequest_dosageinstruction_site_to_json(v),
+        dosage_potato_medicationrequest_dosageinstruction_site_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction.sequence {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction.sequence {
     Some(v) -> [#("sequence", json.int(v)), ..fields]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction.route {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction.route {
     Some(v) -> [
       #(
         "route",
-        dosage_potatomedicationrequest_dosageinstruction_route_to_json(v),
+        dosage_potato_medicationrequest_dosageinstruction_route_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction.patient_instruction
+    dosage_potato_medicationrequest_dosageinstruction.patient_instruction
   {
     Some(v) -> [#("patientInstruction", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction.method {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction.method {
     Some(v) -> [
       #(
         "method",
-        dosage_potatomedicationrequest_dosageinstruction_method_to_json(v),
+        dosage_potato_medicationrequest_dosageinstruction_method_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction.max_dose_per_period
+    dosage_potato_medicationrequest_dosageinstruction.max_dose_per_period
   {
     Some(v) -> [
       #(
         "maxDosePerPeriod",
-        dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod_to_json(
+        dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod_to_json(
           v,
         ),
       ),
@@ -3628,7 +3636,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_to_json(
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction.max_dose_per_lifetime
+    dosage_potato_medicationrequest_dosageinstruction.max_dose_per_lifetime
   {
     Some(v) -> [
       #("maxDosePerLifetime", quantity_omit_extension_comparator_to_json(v)),
@@ -3637,7 +3645,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_to_json(
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction.max_dose_per_administration
+    dosage_potato_medicationrequest_dosageinstruction.max_dose_per_administration
   {
     Some(v) -> [
       #(
@@ -3648,12 +3656,12 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_to_json(
     ]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction.id {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction.dose_and_rate
+    dosage_potato_medicationrequest_dosageinstruction.dose_and_rate
   {
     [] -> fields
     values -> [
@@ -3661,31 +3669,33 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_to_json(
         "doseAndRate",
         json.array(
           values,
-          dosage_potatomedicationrequest_dosageinstruction_doseandrate_to_json,
+          dosage_potato_medicationrequest_dosageinstruction_doseandrate_to_json,
         ),
       ),
       ..fields
     ]
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction.as_needed {
+  let fields = case
+    dosage_potato_medicationrequest_dosageinstruction.as_needed
+  {
     Some(v) -> [
       #(
         "asNeeded"
           <> case v {
-          DosagePotatomedicationrequestDosageinstructionAsneededBoolean(_) ->
+          DosagePotatoMedicationrequestDosageinstructionAsneededBoolean(_) ->
             "Boolean"
-          DosagePotatomedicationrequestDosageinstructionAsneededCodeableconcept(
+          DosagePotatoMedicationrequestDosageinstructionAsneededCodeableconcept(
             _,
           ) -> "CodeableConcept"
         },
-        dosage_potatomedicationrequest_dosageinstruction_asneeded_to_json(v),
+        dosage_potato_medicationrequest_dosageinstruction_asneeded_to_json(v),
       ),
       ..fields
     ]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction.additional_instruction
+    dosage_potato_medicationrequest_dosageinstruction.additional_instruction
   {
     [] -> fields
     values -> [
@@ -3693,7 +3703,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_to_json(
         "additionalInstruction",
         json.array(
           values,
-          dosage_potatomedicationrequest_dosageinstruction_additionalinstruction_to_json,
+          dosage_potato_medicationrequest_dosageinstruction_additionalinstruction_to_json,
         ),
       ),
       ..fields
@@ -3702,35 +3712,35 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_asneeded_to_json(
-  value: DosagePotatomedicationrequestDosageinstructionAsneeded,
+pub fn dosage_potato_medicationrequest_dosageinstruction_asneeded_to_json(
+  value: DosagePotatoMedicationrequestDosageinstructionAsneeded,
 ) -> Json {
   case value {
-    DosagePotatomedicationrequestDosageinstructionAsneededBoolean(value) ->
+    DosagePotatoMedicationrequestDosageinstructionAsneededBoolean(value) ->
       json.bool(value)
-    DosagePotatomedicationrequestDosageinstructionAsneededCodeableconcept(value) ->
+    DosagePotatoMedicationrequestDosageinstructionAsneededCodeableconcept(value) ->
       potatocodeableconcept_to_json(value)
   }
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_additionalinstruction_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_additionalinstruction: DosagePotatomedicationrequestDosageinstructionAdditionalinstruction,
+pub fn dosage_potato_medicationrequest_dosageinstruction_additionalinstruction_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_additionalinstruction: DosagePotatoMedicationrequestDosageinstructionAdditionalinstruction,
 ) -> Json {
   let fields = []
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_additionalinstruction.text
+    dosage_potato_medicationrequest_dosageinstruction_additionalinstruction.text
   {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_additionalinstruction.id
+    dosage_potato_medicationrequest_dosageinstruction_additionalinstruction.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_additionalinstruction.coding
+    dosage_potato_medicationrequest_dosageinstruction_additionalinstruction.coding
   {
     [] -> fields
     values -> [#("coding", json.array(values, potatocoding_to_json)), ..fields]
@@ -3738,17 +3748,17 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_additionalinstruction_to
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_doseandrate: DosagePotatomedicationrequestDosageinstructionDoseandrate,
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_doseandrate: DosagePotatoMedicationrequestDosageinstructionDoseandrate,
 ) -> Json {
   let fields = []
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_doseandrate.type_
+    dosage_potato_medicationrequest_dosageinstruction_doseandrate.type_
   {
     Some(v) -> [
       #(
         "type",
-        dosage_potatomedicationrequest_dosageinstruction_doseandrate_type_to_json(
+        dosage_potato_medicationrequest_dosageinstruction_doseandrate_type_to_json(
           v,
         ),
       ),
@@ -3757,21 +3767,21 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_to_json(
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_doseandrate.rate
+    dosage_potato_medicationrequest_dosageinstruction_doseandrate.rate
   {
     Some(v) -> [
       #(
         "rate"
           <> case v {
-          DosagePotatomedicationrequestDosageinstructionDoseandrateRateRatio(_) ->
+          DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRatio(_) ->
             "Ratio"
-          DosagePotatomedicationrequestDosageinstructionDoseandrateRateRange(_) ->
+          DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRange(_) ->
             "Range"
-          DosagePotatomedicationrequestDosageinstructionDoseandrateRateQuantity(
+          DosagePotatoMedicationrequestDosageinstructionDoseandrateRateQuantity(
             _,
           ) -> "Quantity"
         },
-        dosage_potatomedicationrequest_dosageinstruction_doseandrate_rate_to_json(
+        dosage_potato_medicationrequest_dosageinstruction_doseandrate_rate_to_json(
           v,
         ),
       ),
@@ -3780,25 +3790,25 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_to_json(
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_doseandrate.id
+    dosage_potato_medicationrequest_dosageinstruction_doseandrate.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_doseandrate.dose
+    dosage_potato_medicationrequest_dosageinstruction_doseandrate.dose
   {
     Some(v) -> [
       #(
         "dose"
           <> case v {
-          DosagePotatomedicationrequestDosageinstructionDoseandrateDoseQuantity(
+          DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseQuantity(
             _,
           ) -> "Quantity"
-          DosagePotatomedicationrequestDosageinstructionDoseandrateDoseRange(_) ->
+          DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseRange(_) ->
             "Range"
         },
-        dosage_potatomedicationrequest_dosageinstruction_doseandrate_dose_to_json(
+        dosage_potato_medicationrequest_dosageinstruction_doseandrate_dose_to_json(
           v,
         ),
       ),
@@ -3809,48 +3819,48 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_dose_to_json(
-  value: DosagePotatomedicationrequestDosageinstructionDoseandrateDose,
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_dose_to_json(
+  value: DosagePotatoMedicationrequestDosageinstructionDoseandrateDose,
 ) -> Json {
   case value {
-    DosagePotatomedicationrequestDosageinstructionDoseandrateDoseQuantity(value) ->
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseQuantity(value) ->
       potatosimplequantity_to_json(value)
-    DosagePotatomedicationrequestDosageinstructionDoseandrateDoseRange(value) ->
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseRange(value) ->
       potatorange_to_json(value)
   }
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_rate_to_json(
-  value: DosagePotatomedicationrequestDosageinstructionDoseandrateRate,
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_rate_to_json(
+  value: DosagePotatoMedicationrequestDosageinstructionDoseandrateRate,
 ) -> Json {
   case value {
-    DosagePotatomedicationrequestDosageinstructionDoseandrateRateRatio(value) ->
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRatio(value) ->
       potatoratio_to_json(value)
-    DosagePotatomedicationrequestDosageinstructionDoseandrateRateRange(value) ->
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRange(value) ->
       potatorange_to_json(value)
-    DosagePotatomedicationrequestDosageinstructionDoseandrateRateQuantity(value) ->
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateQuantity(value) ->
       potatosimplequantity_to_json(value)
   }
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_type_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_doseandrate_type: DosagePotatomedicationrequestDosageinstructionDoseandrateType,
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_type_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_doseandrate_type: DosagePotatoMedicationrequestDosageinstructionDoseandrateType,
 ) -> Json {
   let fields = []
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_doseandrate_type.text
+    dosage_potato_medicationrequest_dosageinstruction_doseandrate_type.text
   {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_doseandrate_type.id
+    dosage_potato_medicationrequest_dosageinstruction_doseandrate_type.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_doseandrate_type.coding
+    dosage_potato_medicationrequest_dosageinstruction_doseandrate_type.coding
   {
     [] -> fields
     values -> [#("coding", json.array(values, potatocoding_to_json)), ..fields]
@@ -3858,24 +3868,24 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_type_to_json
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod: DosagePotatomedicationrequestDosageinstructionMaxdoseperperiod,
+pub fn dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod: DosagePotatoMedicationrequestDosageinstructionMaxdoseperperiod,
 ) -> Json {
   let fields = []
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod.numerator
+    dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod.numerator
   {
     Some(v) -> [#("numerator", potatoquantity_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod.id
+    dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod.denominator
+    dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod.denominator
   {
     Some(v) -> [#("denominator", potatoquantity_to_json(v)), ..fields]
     None -> fields
@@ -3883,22 +3893,24 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod_to_json
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_method_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_method: DosagePotatomedicationrequestDosageinstructionMethod,
+pub fn dosage_potato_medicationrequest_dosageinstruction_method_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_method: DosagePotatoMedicationrequestDosageinstructionMethod,
 ) -> Json {
   let fields = []
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_method.text
+    dosage_potato_medicationrequest_dosageinstruction_method.text
   {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction_method.id {
+  let fields = case
+    dosage_potato_medicationrequest_dosageinstruction_method.id
+  {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_method.coding
+    dosage_potato_medicationrequest_dosageinstruction_method.coding
   {
     [] -> fields
     values -> [#("coding", json.array(values, potatocoding_to_json)), ..fields]
@@ -3906,22 +3918,22 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_method_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_route_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_route: DosagePotatomedicationrequestDosageinstructionRoute,
+pub fn dosage_potato_medicationrequest_dosageinstruction_route_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_route: DosagePotatoMedicationrequestDosageinstructionRoute,
 ) -> Json {
   let fields = []
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_route.text
+    dosage_potato_medicationrequest_dosageinstruction_route.text
   {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction_route.id {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction_route.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_route.coding
+    dosage_potato_medicationrequest_dosageinstruction_route.coding
   {
     [] -> fields
     values -> [#("coding", json.array(values, potatocoding_to_json)), ..fields]
@@ -3929,20 +3941,22 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_route_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_site_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_site: DosagePotatomedicationrequestDosageinstructionSite,
+pub fn dosage_potato_medicationrequest_dosageinstruction_site_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_site: DosagePotatoMedicationrequestDosageinstructionSite,
 ) -> Json {
   let fields = []
-  let fields = case dosage_potatomedicationrequest_dosageinstruction_site.text {
+  let fields = case
+    dosage_potato_medicationrequest_dosageinstruction_site.text
+  {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction_site.id {
+  let fields = case dosage_potato_medicationrequest_dosageinstruction_site.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_site.coding
+    dosage_potato_medicationrequest_dosageinstruction_site.coding
   {
     [] -> fields
     values -> [#("coding", json.array(values, potatocoding_to_json)), ..fields]
@@ -3950,17 +3964,17 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_site_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_timing_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_timing: DosagePotatomedicationrequestDosageinstructionTiming,
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_timing: DosagePotatoMedicationrequestDosageinstructionTiming,
 ) -> Json {
   let fields = []
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing.repeat
+    dosage_potato_medicationrequest_dosageinstruction_timing.repeat
   {
     Some(v) -> [
       #(
         "repeat",
-        dosage_potatomedicationrequest_dosageinstruction_timing_repeat_to_json(
+        dosage_potato_medicationrequest_dosageinstruction_timing_repeat_to_json(
           v,
         ),
       ),
@@ -3968,18 +3982,20 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_to_json(
     ]
     None -> fields
   }
-  let fields = case dosage_potatomedicationrequest_dosageinstruction_timing.id {
+  let fields = case
+    dosage_potato_medicationrequest_dosageinstruction_timing.id
+  {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing.event
+    dosage_potato_medicationrequest_dosageinstruction_timing.event
   {
     [] -> fields
     values -> [#("event", json.array(values, pt.datetime_to_json)), ..fields]
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing.code
+    dosage_potato_medicationrequest_dosageinstruction_timing.code
   {
     Some(v) -> [#("code", potatocodeableconcept_to_json(v)), ..fields]
     None -> fields
@@ -3987,124 +4003,124 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_to_json(
-  dosage_potatomedicationrequest_dosageinstruction_timing_repeat: DosagePotatomedicationrequestDosageinstructionTimingRepeat,
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_to_json(
+  dosage_potato_medicationrequest_dosageinstruction_timing_repeat: DosagePotatoMedicationrequestDosageinstructionTimingRepeat,
 ) -> Json {
   let fields = []
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.when
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.when
   {
     [] -> fields
     values -> [
-      #("when", json.array(values, valuesets.eventtiming_to_json)),
+      #("when", json.array(values, valueset.event_timing_to_json)),
       ..fields
     ]
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.time_of_day
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.time_of_day
   {
     [] -> fields
     values -> [#("timeOfDay", json.array(values, pt.time_to_json)), ..fields]
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.period_unit
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.period_unit
   {
-    Some(v) -> [#("periodUnit", valuesets.unitsoftime_to_json(v)), ..fields]
+    Some(v) -> [#("periodUnit", valueset.units_of_time_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.period_max
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.period_max
   {
     Some(v) -> [#("periodMax", json.float(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.period
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.period
   {
     Some(v) -> [#("period", json.float(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.offset
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.offset
   {
     Some(v) -> [#("offset", json.int(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.id
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.id
   {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.frequency_max
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.frequency_max
   {
     Some(v) -> [#("frequencyMax", json.int(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.frequency
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.frequency
   {
     Some(v) -> [#("frequency", json.int(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.duration_unit
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.duration_unit
   {
-    Some(v) -> [#("durationUnit", valuesets.unitsoftime_to_json(v)), ..fields]
+    Some(v) -> [#("durationUnit", valueset.units_of_time_to_json(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.duration_max
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.duration_max
   {
     Some(v) -> [#("durationMax", json.float(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.duration
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.duration
   {
     Some(v) -> [#("duration", json.float(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.day_of_week
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.day_of_week
   {
     [] -> fields
     values -> [
-      #("dayOfWeek", json.array(values, valuesets.daysofweek_to_json)),
+      #("dayOfWeek", json.array(values, valueset.days_of_week_to_json)),
       ..fields
     ]
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.count_max
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.count_max
   {
     Some(v) -> [#("countMax", json.int(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.count
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.count
   {
     Some(v) -> [#("count", json.int(v)), ..fields]
     None -> fields
   }
   let fields = case
-    dosage_potatomedicationrequest_dosageinstruction_timing_repeat.bounds
+    dosage_potato_medicationrequest_dosageinstruction_timing_repeat.bounds
   {
     Some(v) -> [
       #(
         "bounds"
           <> case v {
-          DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsDuration(
+          DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsDuration(
             _,
           ) -> "Duration"
-          DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsRange(
+          DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsRange(
             _,
           ) -> "Range"
-          DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
+          DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
             _,
           ) -> "Period"
         },
-        dosage_potatomedicationrequest_dosageinstruction_timing_repeat_bounds_to_json(
+        dosage_potato_medicationrequest_dosageinstruction_timing_repeat_bounds_to_json(
           v,
         ),
       ),
@@ -4115,23 +4131,23 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_bounds_to_json(
-  value: DosagePotatomedicationrequestDosageinstructionTimingRepeatBounds,
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_bounds_to_json(
+  value: DosagePotatoMedicationrequestDosageinstructionTimingRepeatBounds,
 ) -> Json {
   case value {
-    DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsDuration(
+    DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsDuration(
       value,
     ) -> potatoduration_to_json(value)
-    DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsRange(value) ->
+    DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsRange(value) ->
       potatorange_to_json(value)
-    DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
+    DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
       value,
     ) -> potatoperiod_to_json(value)
   }
 }
 
-pub type HumannamePotatopatientName {
-  HumannamePotatopatientName(
+pub type HumannamePotatoPatientName {
+  HumannamePotatoPatientName(
     family: Option(String),
     given: List(String),
     id: Option(String),
@@ -4139,12 +4155,12 @@ pub type HumannamePotatopatientName {
     prefix: List(String),
     suffix: List(String),
     text: Option(String),
-    use_: Option(valuesets.Nameuse),
+    use_: Option(valueset.NameUse),
   )
 }
 
-pub fn humanname_potatopatient_name_new() -> HumannamePotatopatientName {
-  HumannamePotatopatientName(
+pub fn humanname_potato_patient_name_new() -> HumannamePotatoPatientName {
+  HumannamePotatoPatientName(
     family: None,
     given: [],
     id: None,
@@ -4156,62 +4172,62 @@ pub fn humanname_potatopatient_name_new() -> HumannamePotatopatientName {
   )
 }
 
-pub fn humanname_potatopatient_name_to_json(
-  humanname_potatopatient_name: HumannamePotatopatientName,
+pub fn humanname_potato_patient_name_to_json(
+  humanname_potato_patient_name: HumannamePotatoPatientName,
 ) -> Json {
   let fields = []
-  let fields = case humanname_potatopatient_name.use_ {
-    Some(v) -> [#("use", valuesets.nameuse_to_json(v)), ..fields]
+  let fields = case humanname_potato_patient_name.use_ {
+    Some(v) -> [#("use", valueset.name_use_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case humanname_potatopatient_name.text {
+  let fields = case humanname_potato_patient_name.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case humanname_potatopatient_name.suffix {
+  let fields = case humanname_potato_patient_name.suffix {
     [] -> fields
     values -> [#("suffix", json.array(values, json.string)), ..fields]
   }
-  let fields = case humanname_potatopatient_name.prefix {
+  let fields = case humanname_potato_patient_name.prefix {
     [] -> fields
     values -> [#("prefix", json.array(values, json.string)), ..fields]
   }
-  let fields = case humanname_potatopatient_name.period {
+  let fields = case humanname_potato_patient_name.period {
     Some(v) -> [#("period", period_omit_extension_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case humanname_potatopatient_name.id {
+  let fields = case humanname_potato_patient_name.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case humanname_potatopatient_name.given {
+  let fields = case humanname_potato_patient_name.given {
     [] -> fields
     values -> [#("given", json.array(values, json.string)), ..fields]
   }
-  let fields = case humanname_potatopatient_name.family {
+  let fields = case humanname_potato_patient_name.family {
     Some(v) -> [#("family", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type IdentifierPotatoencounterIdentifier {
-  IdentifierPotatoencounterIdentifier(
-    assigner: Option(IdentifierPotatoencounterIdentifierAssigner),
+pub type IdentifierPotatoEncounterIdentifier {
+  IdentifierPotatoEncounterIdentifier(
+    assigner: Option(IdentifierPotatoEncounterIdentifierAssigner),
     id: Option(String),
     period: Option(PeriodOmitExtension),
     system: String,
-    type_: Option(IdentifierPotatoencounterIdentifierType),
-    use_: Option(valuesets.Identifieruse),
+    type_: Option(IdentifierPotatoEncounterIdentifierType),
+    use_: Option(valueset.IdentifierUse),
     value: String,
   )
 }
 
-pub fn identifier_potatoencounter_identifier_new(
+pub fn identifier_potato_encounter_identifier_new(
   system system: String,
   value value: String,
-) -> IdentifierPotatoencounterIdentifier {
-  IdentifierPotatoencounterIdentifier(
+) -> IdentifierPotatoEncounterIdentifier {
+  IdentifierPotatoEncounterIdentifier(
     assigner: None,
     id: None,
     period: None,
@@ -4222,8 +4238,8 @@ pub fn identifier_potatoencounter_identifier_new(
   )
 }
 
-pub type IdentifierPotatoencounterIdentifierAssigner {
-  IdentifierPotatoencounterIdentifierAssigner(
+pub type IdentifierPotatoEncounterIdentifierAssigner {
+  IdentifierPotatoEncounterIdentifierAssigner(
     display: Option(String),
     id: Option(String),
     identifier: Option(Potatoidentifier),
@@ -4232,8 +4248,8 @@ pub type IdentifierPotatoencounterIdentifierAssigner {
   )
 }
 
-pub fn identifier_potatoencounter_identifier_assigner_new() -> IdentifierPotatoencounterIdentifierAssigner {
-  IdentifierPotatoencounterIdentifierAssigner(
+pub fn identifier_potato_encounter_identifier_assigner_new() -> IdentifierPotatoEncounterIdentifierAssigner {
+  IdentifierPotatoEncounterIdentifierAssigner(
     display: None,
     id: None,
     identifier: None,
@@ -4242,47 +4258,47 @@ pub fn identifier_potatoencounter_identifier_assigner_new() -> IdentifierPotatoe
   )
 }
 
-pub type IdentifierPotatoencounterIdentifierType {
-  IdentifierPotatoencounterIdentifierType(
+pub type IdentifierPotatoEncounterIdentifierType {
+  IdentifierPotatoEncounterIdentifierType(
     coding: List(Potatocoding),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn identifier_potatoencounter_identifier_type_new() -> IdentifierPotatoencounterIdentifierType {
-  IdentifierPotatoencounterIdentifierType(coding: [], id: None, text: None)
+pub fn identifier_potato_encounter_identifier_type_new() -> IdentifierPotatoEncounterIdentifierType {
+  IdentifierPotatoEncounterIdentifierType(coding: [], id: None, text: None)
 }
 
-pub fn identifier_potatoencounter_identifier_to_json(
-  identifier_potatoencounter_identifier: IdentifierPotatoencounterIdentifier,
+pub fn identifier_potato_encounter_identifier_to_json(
+  identifier_potato_encounter_identifier: IdentifierPotatoEncounterIdentifier,
 ) -> Json {
   let fields = [
-    #("value", json.string(identifier_potatoencounter_identifier.value)),
-    #("system", json.string(identifier_potatoencounter_identifier.system)),
+    #("value", json.string(identifier_potato_encounter_identifier.value)),
+    #("system", json.string(identifier_potato_encounter_identifier.system)),
   ]
-  let fields = case identifier_potatoencounter_identifier.use_ {
-    Some(v) -> [#("use", valuesets.identifieruse_to_json(v)), ..fields]
+  let fields = case identifier_potato_encounter_identifier.use_ {
+    Some(v) -> [#("use", valueset.identifier_use_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier.type_ {
+  let fields = case identifier_potato_encounter_identifier.type_ {
     Some(v) -> [
-      #("type", identifier_potatoencounter_identifier_type_to_json(v)),
+      #("type", identifier_potato_encounter_identifier_type_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier.period {
+  let fields = case identifier_potato_encounter_identifier.period {
     Some(v) -> [#("period", period_omit_extension_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier.id {
+  let fields = case identifier_potato_encounter_identifier.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier.assigner {
+  let fields = case identifier_potato_encounter_identifier.assigner {
     Some(v) -> [
-      #("assigner", identifier_potatoencounter_identifier_assigner_to_json(v)),
+      #("assigner", identifier_potato_encounter_identifier_assigner_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -4290,69 +4306,69 @@ pub fn identifier_potatoencounter_identifier_to_json(
   json.object(fields)
 }
 
-pub fn identifier_potatoencounter_identifier_assigner_to_json(
-  identifier_potatoencounter_identifier_assigner: IdentifierPotatoencounterIdentifierAssigner,
+pub fn identifier_potato_encounter_identifier_assigner_to_json(
+  identifier_potato_encounter_identifier_assigner: IdentifierPotatoEncounterIdentifierAssigner,
 ) -> Json {
   let fields = []
-  let fields = case identifier_potatoencounter_identifier_assigner.type_ {
+  let fields = case identifier_potato_encounter_identifier_assigner.type_ {
     Some(v) -> [#("type", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier_assigner.reference {
+  let fields = case identifier_potato_encounter_identifier_assigner.reference {
     Some(v) -> [#("reference", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier_assigner.identifier {
+  let fields = case identifier_potato_encounter_identifier_assigner.identifier {
     Some(v) -> [#("identifier", potatoidentifier_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier_assigner.id {
+  let fields = case identifier_potato_encounter_identifier_assigner.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier_assigner.display {
+  let fields = case identifier_potato_encounter_identifier_assigner.display {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn identifier_potatoencounter_identifier_type_to_json(
-  identifier_potatoencounter_identifier_type: IdentifierPotatoencounterIdentifierType,
+pub fn identifier_potato_encounter_identifier_type_to_json(
+  identifier_potato_encounter_identifier_type: IdentifierPotatoEncounterIdentifierType,
 ) -> Json {
   let fields = []
-  let fields = case identifier_potatoencounter_identifier_type.text {
+  let fields = case identifier_potato_encounter_identifier_type.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier_type.id {
+  let fields = case identifier_potato_encounter_identifier_type.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatoencounter_identifier_type.coding {
+  let fields = case identifier_potato_encounter_identifier_type.coding {
     [] -> fields
     values -> [#("coding", json.array(values, potatocoding_to_json)), ..fields]
   }
   json.object(fields)
 }
 
-pub type IdentifierPotatopatientIdentifier {
-  IdentifierPotatopatientIdentifier(
-    assigner: Option(IdentifierPotatopatientIdentifierAssigner),
+pub type IdentifierPotatoPatientIdentifier {
+  IdentifierPotatoPatientIdentifier(
+    assigner: Option(IdentifierPotatoPatientIdentifierAssigner),
     id: Option(String),
     period: Option(PeriodOmitExtension),
     system: String,
-    type_: Option(IdentifierPotatopatientIdentifierType),
-    use_: Option(valuesets.Identifieruse),
+    type_: Option(IdentifierPotatoPatientIdentifierType),
+    use_: Option(valueset.IdentifierUse),
     value: String,
   )
 }
 
-pub fn identifier_potatopatient_identifier_new(
+pub fn identifier_potato_patient_identifier_new(
   system system: String,
   value value: String,
-) -> IdentifierPotatopatientIdentifier {
-  IdentifierPotatopatientIdentifier(
+) -> IdentifierPotatoPatientIdentifier {
+  IdentifierPotatoPatientIdentifier(
     assigner: None,
     id: None,
     period: None,
@@ -4363,8 +4379,8 @@ pub fn identifier_potatopatient_identifier_new(
   )
 }
 
-pub type IdentifierPotatopatientIdentifierAssigner {
-  IdentifierPotatopatientIdentifierAssigner(
+pub type IdentifierPotatoPatientIdentifierAssigner {
+  IdentifierPotatoPatientIdentifierAssigner(
     display: Option(String),
     id: Option(String),
     identifier: Option(Potatoidentifier),
@@ -4373,8 +4389,8 @@ pub type IdentifierPotatopatientIdentifierAssigner {
   )
 }
 
-pub fn identifier_potatopatient_identifier_assigner_new() -> IdentifierPotatopatientIdentifierAssigner {
-  IdentifierPotatopatientIdentifierAssigner(
+pub fn identifier_potato_patient_identifier_assigner_new() -> IdentifierPotatoPatientIdentifierAssigner {
+  IdentifierPotatoPatientIdentifierAssigner(
     display: None,
     id: None,
     identifier: None,
@@ -4383,47 +4399,47 @@ pub fn identifier_potatopatient_identifier_assigner_new() -> IdentifierPotatopat
   )
 }
 
-pub type IdentifierPotatopatientIdentifierType {
-  IdentifierPotatopatientIdentifierType(
+pub type IdentifierPotatoPatientIdentifierType {
+  IdentifierPotatoPatientIdentifierType(
     coding: List(Potatocoding),
     id: Option(String),
     text: Option(String),
   )
 }
 
-pub fn identifier_potatopatient_identifier_type_new() -> IdentifierPotatopatientIdentifierType {
-  IdentifierPotatopatientIdentifierType(coding: [], id: None, text: None)
+pub fn identifier_potato_patient_identifier_type_new() -> IdentifierPotatoPatientIdentifierType {
+  IdentifierPotatoPatientIdentifierType(coding: [], id: None, text: None)
 }
 
-pub fn identifier_potatopatient_identifier_to_json(
-  identifier_potatopatient_identifier: IdentifierPotatopatientIdentifier,
+pub fn identifier_potato_patient_identifier_to_json(
+  identifier_potato_patient_identifier: IdentifierPotatoPatientIdentifier,
 ) -> Json {
   let fields = [
-    #("value", json.string(identifier_potatopatient_identifier.value)),
-    #("system", json.string(identifier_potatopatient_identifier.system)),
+    #("value", json.string(identifier_potato_patient_identifier.value)),
+    #("system", json.string(identifier_potato_patient_identifier.system)),
   ]
-  let fields = case identifier_potatopatient_identifier.use_ {
-    Some(v) -> [#("use", valuesets.identifieruse_to_json(v)), ..fields]
+  let fields = case identifier_potato_patient_identifier.use_ {
+    Some(v) -> [#("use", valueset.identifier_use_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier.type_ {
+  let fields = case identifier_potato_patient_identifier.type_ {
     Some(v) -> [
-      #("type", identifier_potatopatient_identifier_type_to_json(v)),
+      #("type", identifier_potato_patient_identifier_type_to_json(v)),
       ..fields
     ]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier.period {
+  let fields = case identifier_potato_patient_identifier.period {
     Some(v) -> [#("period", period_omit_extension_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier.id {
+  let fields = case identifier_potato_patient_identifier.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier.assigner {
+  let fields = case identifier_potato_patient_identifier.assigner {
     Some(v) -> [
-      #("assigner", identifier_potatopatient_identifier_assigner_to_json(v)),
+      #("assigner", identifier_potato_patient_identifier_assigner_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -4431,54 +4447,54 @@ pub fn identifier_potatopatient_identifier_to_json(
   json.object(fields)
 }
 
-pub fn identifier_potatopatient_identifier_assigner_to_json(
-  identifier_potatopatient_identifier_assigner: IdentifierPotatopatientIdentifierAssigner,
+pub fn identifier_potato_patient_identifier_assigner_to_json(
+  identifier_potato_patient_identifier_assigner: IdentifierPotatoPatientIdentifierAssigner,
 ) -> Json {
   let fields = []
-  let fields = case identifier_potatopatient_identifier_assigner.type_ {
+  let fields = case identifier_potato_patient_identifier_assigner.type_ {
     Some(v) -> [#("type", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier_assigner.reference {
+  let fields = case identifier_potato_patient_identifier_assigner.reference {
     Some(v) -> [#("reference", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier_assigner.identifier {
+  let fields = case identifier_potato_patient_identifier_assigner.identifier {
     Some(v) -> [#("identifier", potatoidentifier_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier_assigner.id {
+  let fields = case identifier_potato_patient_identifier_assigner.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier_assigner.display {
+  let fields = case identifier_potato_patient_identifier_assigner.display {
     Some(v) -> [#("display", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn identifier_potatopatient_identifier_type_to_json(
-  identifier_potatopatient_identifier_type: IdentifierPotatopatientIdentifierType,
+pub fn identifier_potato_patient_identifier_type_to_json(
+  identifier_potato_patient_identifier_type: IdentifierPotatoPatientIdentifierType,
 ) -> Json {
   let fields = []
-  let fields = case identifier_potatopatient_identifier_type.text {
+  let fields = case identifier_potato_patient_identifier_type.text {
     Some(v) -> [#("text", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier_type.id {
+  let fields = case identifier_potato_patient_identifier_type.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case identifier_potatopatient_identifier_type.coding {
+  let fields = case identifier_potato_patient_identifier_type.coding {
     [] -> fields
     values -> [#("coding", json.array(values, potatocoding_to_json)), ..fields]
   }
   json.object(fields)
 }
 
-pub type MetaPotatoconditionMeta {
-  MetaPotatoconditionMeta(
+pub type MetaPotatoConditionMeta {
+  MetaPotatoConditionMeta(
     id: Option(String),
     last_updated: Option(Instant),
     profile: List(String),
@@ -4489,8 +4505,8 @@ pub type MetaPotatoconditionMeta {
   )
 }
 
-pub fn meta_potatocondition_meta_new() -> MetaPotatoconditionMeta {
-  MetaPotatoconditionMeta(
+pub fn meta_potato_condition_meta_new() -> MetaPotatoConditionMeta {
+  MetaPotatoConditionMeta(
     id: None,
     last_updated: None,
     profile: [],
@@ -4501,15 +4517,15 @@ pub fn meta_potatocondition_meta_new() -> MetaPotatoconditionMeta {
   )
 }
 
-pub fn meta_potatocondition_meta_to_json(
-  meta_potatocondition_meta: MetaPotatoconditionMeta,
+pub fn meta_potato_condition_meta_to_json(
+  meta_potato_condition_meta: MetaPotatoConditionMeta,
 ) -> Json {
   let fields = []
-  let fields = case meta_potatocondition_meta.version_id {
+  let fields = case meta_potato_condition_meta.version_id {
     Some(v) -> [#("versionId", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case meta_potatocondition_meta.tag {
+  let fields = case meta_potato_condition_meta.tag {
     [] -> fields
     values -> [
       #(
@@ -4519,11 +4535,11 @@ pub fn meta_potatocondition_meta_to_json(
       ..fields
     ]
   }
-  let fields = case meta_potatocondition_meta.source {
+  let fields = case meta_potato_condition_meta.source {
     Some(v) -> [#("source", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case meta_potatocondition_meta.security {
+  let fields = case meta_potato_condition_meta.security {
     [] -> fields
     values -> [
       #(
@@ -4533,23 +4549,23 @@ pub fn meta_potatocondition_meta_to_json(
       ..fields
     ]
   }
-  let fields = case meta_potatocondition_meta.profile {
+  let fields = case meta_potato_condition_meta.profile {
     [] -> fields
     values -> [#("profile", json.array(values, json.string)), ..fields]
   }
-  let fields = case meta_potatocondition_meta.last_updated {
+  let fields = case meta_potato_condition_meta.last_updated {
     Some(v) -> [#("lastUpdated", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case meta_potatocondition_meta.id {
+  let fields = case meta_potato_condition_meta.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub type MetaPotatoencounterMeta {
-  MetaPotatoencounterMeta(
+pub type MetaPotatoEncounterMeta {
+  MetaPotatoEncounterMeta(
     id: Option(String),
     last_updated: Option(Instant),
     profile: List(String),
@@ -4560,8 +4576,8 @@ pub type MetaPotatoencounterMeta {
   )
 }
 
-pub fn meta_potatoencounter_meta_new() -> MetaPotatoencounterMeta {
-  MetaPotatoencounterMeta(
+pub fn meta_potato_encounter_meta_new() -> MetaPotatoEncounterMeta {
+  MetaPotatoEncounterMeta(
     id: None,
     last_updated: None,
     profile: [],
@@ -4572,15 +4588,15 @@ pub fn meta_potatoencounter_meta_new() -> MetaPotatoencounterMeta {
   )
 }
 
-pub fn meta_potatoencounter_meta_to_json(
-  meta_potatoencounter_meta: MetaPotatoencounterMeta,
+pub fn meta_potato_encounter_meta_to_json(
+  meta_potato_encounter_meta: MetaPotatoEncounterMeta,
 ) -> Json {
   let fields = []
-  let fields = case meta_potatoencounter_meta.version_id {
+  let fields = case meta_potato_encounter_meta.version_id {
     Some(v) -> [#("versionId", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case meta_potatoencounter_meta.tag {
+  let fields = case meta_potato_encounter_meta.tag {
     [] -> fields
     values -> [
       #(
@@ -4590,11 +4606,11 @@ pub fn meta_potatoencounter_meta_to_json(
       ..fields
     ]
   }
-  let fields = case meta_potatoencounter_meta.source {
+  let fields = case meta_potato_encounter_meta.source {
     Some(v) -> [#("source", json.string(v)), ..fields]
     None -> fields
   }
-  let fields = case meta_potatoencounter_meta.security {
+  let fields = case meta_potato_encounter_meta.security {
     [] -> fields
     values -> [
       #(
@@ -4604,15 +4620,15 @@ pub fn meta_potatoencounter_meta_to_json(
       ..fields
     ]
   }
-  let fields = case meta_potatoencounter_meta.profile {
+  let fields = case meta_potato_encounter_meta.profile {
     [] -> fields
     values -> [#("profile", json.array(values, json.string)), ..fields]
   }
-  let fields = case meta_potatoencounter_meta.last_updated {
+  let fields = case meta_potato_encounter_meta.last_updated {
     Some(v) -> [#("lastUpdated", pt.instant_to_json(v)), ..fields]
     None -> fields
   }
-  let fields = case meta_potatoencounter_meta.id {
+  let fields = case meta_potato_encounter_meta.id {
     Some(v) -> [#("id", json.string(v)), ..fields]
     None -> fields
   }
@@ -4624,12 +4640,12 @@ pub fn potatoaddress_decoder() -> Decoder(Potatoaddress) {
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.addressuse_decoder()),
+    decode.optional(valueset.address_use_decoder()),
   )
   use type_ <- decode.optional_field(
     "type",
     None,
-    decode.optional(valuesets.addresstype_decoder()),
+    decode.optional(valueset.address_type_decoder()),
   )
   use text <- decode_optional_string("text")
   use state <- decode_optional_string("state")
@@ -4674,7 +4690,7 @@ pub fn potatoage_decoder() -> Decoder(Potatoage) {
   use comparator <- decode.optional_field(
     "comparator",
     None,
-    decode.optional(valuesets.quantitycomparator_decoder()),
+    decode.optional(valueset.quantity_comparator_decoder()),
   )
   use code <- decode_optional_string("code")
   let placeholder = Potatoage(value:, unit:, system:, id:, comparator:, code:)
@@ -4772,12 +4788,12 @@ pub fn potatocontactpoint_decoder() -> Decoder(Potatocontactpoint) {
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.contactpointuse_decoder()),
+    decode.optional(valueset.contactpoint_use_decoder()),
   )
   use system <- decode.optional_field(
     "system",
     None,
-    decode.optional(valuesets.contactpointsystem_decoder()),
+    decode.optional(valueset.contactpoint_system_decoder()),
   )
   use rank <- decode.optional_field("rank", None, decode.optional(decode.int))
   use period <- decode.optional_field(
@@ -4960,7 +4976,7 @@ pub fn potatoduration_decoder() -> Decoder(Potatoduration) {
   use comparator <- decode.optional_field(
     "comparator",
     None,
-    decode.optional(valuesets.quantitycomparator_decoder()),
+    decode.optional(valueset.quantity_comparator_decoder()),
   )
   use code <- decode_optional_string("code")
   let placeholder =
@@ -4973,7 +4989,7 @@ pub fn potatohumanname_decoder() -> Decoder(Potatohumanname) {
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.nameuse_decoder()),
+    decode.optional(valueset.name_use_decoder()),
   )
   use text <- decode_optional_string("text")
   use suffix <- decode.optional_field("suffix", [], decode.list(decode.string))
@@ -5006,7 +5022,7 @@ pub fn potatoidentifier_decoder() -> Decoder(Potatoidentifier) {
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.identifieruse_decoder()),
+    decode.optional(valueset.identifier_use_decoder()),
   )
   use type_ <- decode.optional_field(
     "type",
@@ -5070,7 +5086,7 @@ pub fn potatometa_decoder() -> Decoder(Potatometa) {
 
 pub fn potatonarrative_decoder() -> Decoder(Potatonarrative) {
   use <- decode.recursive
-  use status <- decode.field("status", valuesets.narrativestatus_decoder())
+  use status <- decode.field("status", valueset.narrative_status_decoder())
   use id <- decode_optional_string("id")
   use div <- decode.field("div", decode.string)
   let placeholder = Potatonarrative(status:, id:, div:)
@@ -5107,7 +5123,7 @@ pub fn potatoquantity_decoder() -> Decoder(Potatoquantity) {
   use comparator <- decode.optional_field(
     "comparator",
     None,
-    decode.optional(valuesets.quantitycomparator_decoder()),
+    decode.optional(valueset.quantity_comparator_decoder()),
   )
   use code <- decode_optional_string("code")
   let placeholder =
@@ -5204,7 +5220,7 @@ pub fn potatotiming_repeat_decoder() -> Decoder(PotatotimingRepeat) {
   use when <- decode.optional_field(
     "when",
     [],
-    decode.list(valuesets.eventtiming_decoder()),
+    decode.list(valueset.event_timing_decoder()),
   )
   use time_of_day <- decode.optional_field(
     "timeOfDay",
@@ -5214,7 +5230,7 @@ pub fn potatotiming_repeat_decoder() -> Decoder(PotatotimingRepeat) {
   use period_unit <- decode.optional_field(
     "periodUnit",
     None,
-    decode.optional(valuesets.unitsoftime_decoder()),
+    decode.optional(valueset.units_of_time_decoder()),
   )
   use period_max <- decode.optional_field(
     "periodMax",
@@ -5245,7 +5261,7 @@ pub fn potatotiming_repeat_decoder() -> Decoder(PotatotimingRepeat) {
   use duration_unit <- decode.optional_field(
     "durationUnit",
     None,
-    decode.optional(valuesets.unitsoftime_decoder()),
+    decode.optional(valueset.units_of_time_decoder()),
   )
   use duration_max <- decode.optional_field(
     "durationMax",
@@ -5260,7 +5276,7 @@ pub fn potatotiming_repeat_decoder() -> Decoder(PotatotimingRepeat) {
   use day_of_week <- decode.optional_field(
     "dayOfWeek",
     [],
-    decode.list(valuesets.daysofweek_decoder()),
+    decode.list(valueset.days_of_week_decoder()),
   )
   use count_max <- decode.optional_field(
     "countMax",
@@ -5315,19 +5331,19 @@ pub fn potatotiming_decoder() -> Decoder(Potatotiming) {
   decode.success(placeholder)
 }
 
-pub fn address_potatopatient_address_decoder() -> Decoder(
-  AddressPotatopatientAddress,
+pub fn address_potato_patient_address_decoder() -> Decoder(
+  AddressPotatoPatientAddress,
 ) {
   use <- decode.recursive
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.addressuse_decoder()),
+    decode.optional(valueset.address_use_decoder()),
   )
   use type_ <- decode.optional_field(
     "type",
     None,
-    decode.optional(valuesets.addresstype_decoder()),
+    decode.optional(valueset.address_type_decoder()),
   )
   use text <- decode_optional_string("text")
   use state <- decode_optional_string("state")
@@ -5343,7 +5359,7 @@ pub fn address_potatopatient_address_decoder() -> Decoder(
   use country <- decode_optional_string("country")
   use city <- decode_optional_string("city")
   let placeholder =
-    AddressPotatopatientAddress(
+    AddressPotatoPatientAddress(
       use_:,
       type_:,
       text:,
@@ -5359,35 +5375,35 @@ pub fn address_potatopatient_address_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-type CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSliceAccumulator {
-  CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSliceAccumulator(
+type CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSliceAccumulator {
+  CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSliceAccumulator(
     required: List(
-      CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired,
+      CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-type CodeableconceptPotatoallergyintoleranceClinicalstatusParsedCodingSlice {
-  CodeableconceptPotatoallergyintoleranceClinicalstatusParsedCodingSliceRequired(
-    CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired,
+type CodeableconceptPotatoAllergyintoleranceClinicalstatusParsedCodingSlice {
+  CodeableconceptPotatoAllergyintoleranceClinicalstatusParsedCodingSliceRequired(
+    CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired,
   )
-  CodeableconceptPotatoallergyintoleranceClinicalstatusParsedCodingSliceOpen(
+  CodeableconceptPotatoAllergyintoleranceClinicalstatusParsedCodingSliceOpen(
     CodingOmitExtension,
   )
 }
 
-type CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSlices {
-  CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSlices(
+type CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSlices {
+  CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSlices(
     required: List1(
-      CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired,
+      CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_decoder() -> Decoder(
-  CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired,
+pub fn codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required_decoder() -> Decoder(
+  CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired,
 ) {
   use <- decode.recursive
   use binding_code <- decode.optional_field(
@@ -5403,7 +5419,7 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_d
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
       case
-        valuesets.allergyintoleranceclinical_from_code_and_system(code, system)
+        valueset.allergyintolerance_clinical_parse_code_and_system(code, system)
       {
         Ok(_) -> decode.success(Nil)
         Error(_) ->
@@ -5419,10 +5435,10 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_d
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.allergyintoleranceclinical_decoder()),
+    decode.optional(valueset.allergyintolerance_clinical_decoder()),
   )
   let placeholder =
-    CodeableconceptPotatoallergyintoleranceClinicalstatusCodingRequired(
+    CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingRequired(
       version:,
       user_selected:,
       system:,
@@ -5433,8 +5449,8 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_d
   decode.success(placeholder)
 }
 
-pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_decoder() -> Decoder(
-  CodeableconceptPotatoallergyintoleranceClinicalstatus,
+pub fn codeableconcept_potato_allergyintolerance_clinicalstatus_decoder() -> Decoder(
+  CodeableconceptPotatoAllergyintoleranceClinicalstatus,
 ) {
   use <- decode.recursive
   use binding_matches <- decode.field(
@@ -5446,7 +5462,7 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_decoder() -> Deco
           use system <- decode.field("system", decode.string)
           decode.success(
             result.is_ok(
-              valuesets.allergyintoleranceclinical_from_code_and_system(
+              valueset.allergyintolerance_clinical_parse_code_and_system(
                 code,
                 system,
               ),
@@ -5482,7 +5498,7 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_decoder() -> Deco
                   case
                     decode.run(
                       value,
-                      codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_decoder(),
+                      codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -5500,14 +5516,14 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_decoder() -> Deco
         }
       {
         DiscriminatorMatches ->
-          codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_decoder()
+          codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required_decoder()
           |> decode.map(
-            CodeableconceptPotatoallergyintoleranceClinicalstatusParsedCodingSliceRequired,
+            CodeableconceptPotatoAllergyintoleranceClinicalstatusParsedCodingSliceRequired,
           )
         DiscriminatorDifferent ->
           coding_omit_extension_decoder()
           |> decode.map(
-            CodeableconceptPotatoallergyintoleranceClinicalstatusParsedCodingSliceOpen,
+            CodeableconceptPotatoAllergyintoleranceClinicalstatusParsedCodingSliceOpen,
           )
       }
     }),
@@ -5515,23 +5531,23 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_decoder() -> Deco
   let coding_accumulator =
     list.index_fold(
       coding_base_values,
-      CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSliceAccumulator(
+      CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSliceAccumulator(
         [],
         [],
       ),
       fn(accumulator, parsed, _index) {
         case parsed {
-          CodeableconceptPotatoallergyintoleranceClinicalstatusParsedCodingSliceRequired(
+          CodeableconceptPotatoAllergyintoleranceClinicalstatusParsedCodingSliceRequired(
             value,
           ) ->
-            CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSliceAccumulator(
+            CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSliceAccumulator(
               ..accumulator,
               required: [value, ..accumulator.required],
             )
-          CodeableconceptPotatoallergyintoleranceClinicalstatusParsedCodingSliceOpen(
+          CodeableconceptPotatoAllergyintoleranceClinicalstatusParsedCodingSliceOpen(
             value,
           ) ->
-            CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSliceAccumulator(
+            CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -5554,7 +5570,7 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_decoder() -> Deco
     let open = Ok(list.reverse(accumulator.open))
     case required, open {
       Ok(required), Ok(open) ->
-        Ok(CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSlices(
+        Ok(CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSlices(
           required:,
           open:,
         ))
@@ -5571,19 +5587,19 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_decoder() -> Deco
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        CodeableconceptPotatoallergyintoleranceClinicalstatusCodingSlices(
+        CodeableconceptPotatoAllergyintoleranceClinicalstatusCodingSlices(
           required: List1(
-            first: codeableconcept_potatoallergyintolerance_clinicalstatus_coding_required_new(),
+            first: codeableconcept_potato_allergyintolerance_clinicalstatus_coding_required_new(),
             rest: [],
           ),
           open: [],
         ),
-        "CodeableconceptPotatoallergyintoleranceClinicalstatus slices",
+        "CodeableconceptPotatoAllergyintoleranceClinicalstatus slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
   use coding_slices <- decode.then(coding_slices_decoder)
-  decode.success(CodeableconceptPotatoallergyintoleranceClinicalstatus(
+  decode.success(CodeableconceptPotatoAllergyintoleranceClinicalstatus(
     text:,
     id:,
     required: coding_slices.required,
@@ -5591,35 +5607,35 @@ pub fn codeableconcept_potatoallergyintolerance_clinicalstatus_decoder() -> Deco
   ))
 }
 
-type CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSliceAccumulator {
-  CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSliceAccumulator(
+type CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSliceAccumulator {
+  CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSliceAccumulator(
     required: List(
-      CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired,
+      CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-type CodeableconceptPotatoallergyintoleranceVerificationstatusParsedCodingSlice {
-  CodeableconceptPotatoallergyintoleranceVerificationstatusParsedCodingSliceRequired(
-    CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired,
+type CodeableconceptPotatoAllergyintoleranceVerificationstatusParsedCodingSlice {
+  CodeableconceptPotatoAllergyintoleranceVerificationstatusParsedCodingSliceRequired(
+    CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired,
   )
-  CodeableconceptPotatoallergyintoleranceVerificationstatusParsedCodingSliceOpen(
+  CodeableconceptPotatoAllergyintoleranceVerificationstatusParsedCodingSliceOpen(
     CodingOmitExtension,
   )
 }
 
-type CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSlices {
-  CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSlices(
+type CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSlices {
+  CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSlices(
     required: List1(
-      CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired,
+      CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-pub fn codeableconcept_potatoallergyintolerance_verificationstatus_coding_required_decoder() -> Decoder(
-  CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired,
+pub fn codeableconcept_potato_allergyintolerance_verificationstatus_coding_required_decoder() -> Decoder(
+  CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired,
 ) {
   use <- decode.recursive
   use binding_code <- decode.optional_field(
@@ -5635,7 +5651,7 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_coding_requir
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
       case
-        valuesets.allergyintoleranceverification_from_code_and_system(
+        valueset.allergyintolerance_verification_parse_code_and_system(
           code,
           system,
         )
@@ -5654,10 +5670,10 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_coding_requir
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.allergyintoleranceverification_decoder()),
+    decode.optional(valueset.allergyintolerance_verification_decoder()),
   )
   let placeholder =
-    CodeableconceptPotatoallergyintoleranceVerificationstatusCodingRequired(
+    CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingRequired(
       version:,
       user_selected:,
       system:,
@@ -5668,8 +5684,8 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_coding_requir
   decode.success(placeholder)
 }
 
-pub fn codeableconcept_potatoallergyintolerance_verificationstatus_decoder() -> Decoder(
-  CodeableconceptPotatoallergyintoleranceVerificationstatus,
+pub fn codeableconcept_potato_allergyintolerance_verificationstatus_decoder() -> Decoder(
+  CodeableconceptPotatoAllergyintoleranceVerificationstatus,
 ) {
   use <- decode.recursive
   use binding_matches <- decode.field(
@@ -5681,7 +5697,7 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_decoder() -> 
           use system <- decode.field("system", decode.string)
           decode.success(
             result.is_ok(
-              valuesets.allergyintoleranceverification_from_code_and_system(
+              valueset.allergyintolerance_verification_parse_code_and_system(
                 code,
                 system,
               ),
@@ -5717,7 +5733,7 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_decoder() -> 
                   case
                     decode.run(
                       value,
-                      codeableconcept_potatoallergyintolerance_verificationstatus_coding_required_decoder(),
+                      codeableconcept_potato_allergyintolerance_verificationstatus_coding_required_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -5735,14 +5751,14 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_decoder() -> 
         }
       {
         DiscriminatorMatches ->
-          codeableconcept_potatoallergyintolerance_verificationstatus_coding_required_decoder()
+          codeableconcept_potato_allergyintolerance_verificationstatus_coding_required_decoder()
           |> decode.map(
-            CodeableconceptPotatoallergyintoleranceVerificationstatusParsedCodingSliceRequired,
+            CodeableconceptPotatoAllergyintoleranceVerificationstatusParsedCodingSliceRequired,
           )
         DiscriminatorDifferent ->
           coding_omit_extension_decoder()
           |> decode.map(
-            CodeableconceptPotatoallergyintoleranceVerificationstatusParsedCodingSliceOpen,
+            CodeableconceptPotatoAllergyintoleranceVerificationstatusParsedCodingSliceOpen,
           )
       }
     }),
@@ -5750,23 +5766,23 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_decoder() -> 
   let coding_accumulator =
     list.index_fold(
       coding_base_values,
-      CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSliceAccumulator(
+      CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSliceAccumulator(
         [],
         [],
       ),
       fn(accumulator, parsed, _index) {
         case parsed {
-          CodeableconceptPotatoallergyintoleranceVerificationstatusParsedCodingSliceRequired(
+          CodeableconceptPotatoAllergyintoleranceVerificationstatusParsedCodingSliceRequired(
             value,
           ) ->
-            CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSliceAccumulator(
+            CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSliceAccumulator(
               ..accumulator,
               required: [value, ..accumulator.required],
             )
-          CodeableconceptPotatoallergyintoleranceVerificationstatusParsedCodingSliceOpen(
+          CodeableconceptPotatoAllergyintoleranceVerificationstatusParsedCodingSliceOpen(
             value,
           ) ->
-            CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSliceAccumulator(
+            CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -5790,7 +5806,7 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_decoder() -> 
     case required, open {
       Ok(required), Ok(open) ->
         Ok(
-          CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSlices(
+          CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSlices(
             required:,
             open:,
           ),
@@ -5808,19 +5824,19 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_decoder() -> 
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        CodeableconceptPotatoallergyintoleranceVerificationstatusCodingSlices(
+        CodeableconceptPotatoAllergyintoleranceVerificationstatusCodingSlices(
           required: List1(
-            first: codeableconcept_potatoallergyintolerance_verificationstatus_coding_required_new(),
+            first: codeableconcept_potato_allergyintolerance_verificationstatus_coding_required_new(),
             rest: [],
           ),
           open: [],
         ),
-        "CodeableconceptPotatoallergyintoleranceVerificationstatus slices",
+        "CodeableconceptPotatoAllergyintoleranceVerificationstatus slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
   use coding_slices <- decode.then(coding_slices_decoder)
-  decode.success(CodeableconceptPotatoallergyintoleranceVerificationstatus(
+  decode.success(CodeableconceptPotatoAllergyintoleranceVerificationstatus(
     text:,
     id:,
     required: coding_slices.required,
@@ -5828,35 +5844,35 @@ pub fn codeableconcept_potatoallergyintolerance_verificationstatus_decoder() -> 
   ))
 }
 
-type CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSliceAccumulator {
-  CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSliceAccumulator(
+type CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSliceAccumulator {
+  CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSliceAccumulator(
     required: List(
-      CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired,
+      CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-type CodeableconceptPotatoconditionCategoryScreeningAssessmentParsedCodingSlice {
-  CodeableconceptPotatoconditionCategoryScreeningAssessmentParsedCodingSliceRequired(
-    CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired,
+type CodeableconceptPotatoConditionCategoryScreeningAssessmentParsedCodingSlice {
+  CodeableconceptPotatoConditionCategoryScreeningAssessmentParsedCodingSliceRequired(
+    CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired,
   )
-  CodeableconceptPotatoconditionCategoryScreeningAssessmentParsedCodingSliceOpen(
+  CodeableconceptPotatoConditionCategoryScreeningAssessmentParsedCodingSliceOpen(
     CodingOmitExtension,
   )
 }
 
-type CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSlices {
-  CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSlices(
+type CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSlices {
+  CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSlices(
     required: List1(
-      CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired,
+      CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-pub fn codeableconcept_potatocondition_category_screening_assessment_coding_required_decoder() -> Decoder(
-  CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired,
+pub fn codeableconcept_potato_condition_category_screening_assessment_coding_required_decoder() -> Decoder(
+  CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired,
 ) {
   use <- decode.recursive
   use binding_code <- decode.optional_field(
@@ -5872,7 +5888,7 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_coding_requ
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
       case
-        valuesets.uscorescreeningassessmentconditioncategory_from_code_and_system(
+        valueset.us_core_screening_assessment_condition_category_parse_code_and_system(
           code,
           system,
         )
@@ -5892,11 +5908,11 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_coding_requ
     "code",
     None,
     decode.optional(
-      valuesets.uscorescreeningassessmentconditioncategory_decoder(),
+      valueset.us_core_screening_assessment_condition_category_decoder(),
     ),
   )
   let placeholder =
-    CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingRequired(
+    CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingRequired(
       version:,
       user_selected:,
       system:,
@@ -5907,8 +5923,8 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_coding_requ
   decode.success(placeholder)
 }
 
-pub fn codeableconcept_potatocondition_category_screening_assessment_decoder() -> Decoder(
-  CodeableconceptPotatoconditionCategoryScreeningAssessment,
+pub fn codeableconcept_potato_condition_category_screening_assessment_decoder() -> Decoder(
+  CodeableconceptPotatoConditionCategoryScreeningAssessment,
 ) {
   use <- decode.recursive
   use binding_matches <- decode.field(
@@ -5920,7 +5936,7 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_decoder() -
           use system <- decode.field("system", decode.string)
           decode.success(
             result.is_ok(
-              valuesets.uscorescreeningassessmentconditioncategory_from_code_and_system(
+              valueset.us_core_screening_assessment_condition_category_parse_code_and_system(
                 code,
                 system,
               ),
@@ -5956,7 +5972,7 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_decoder() -
                   case
                     decode.run(
                       value,
-                      codeableconcept_potatocondition_category_screening_assessment_coding_required_decoder(),
+                      codeableconcept_potato_condition_category_screening_assessment_coding_required_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -5974,14 +5990,14 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_decoder() -
         }
       {
         DiscriminatorMatches ->
-          codeableconcept_potatocondition_category_screening_assessment_coding_required_decoder()
+          codeableconcept_potato_condition_category_screening_assessment_coding_required_decoder()
           |> decode.map(
-            CodeableconceptPotatoconditionCategoryScreeningAssessmentParsedCodingSliceRequired,
+            CodeableconceptPotatoConditionCategoryScreeningAssessmentParsedCodingSliceRequired,
           )
         DiscriminatorDifferent ->
           coding_omit_extension_decoder()
           |> decode.map(
-            CodeableconceptPotatoconditionCategoryScreeningAssessmentParsedCodingSliceOpen,
+            CodeableconceptPotatoConditionCategoryScreeningAssessmentParsedCodingSliceOpen,
           )
       }
     }),
@@ -5989,23 +6005,23 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_decoder() -
   let coding_accumulator =
     list.index_fold(
       coding_base_values,
-      CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSliceAccumulator(
+      CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSliceAccumulator(
         [],
         [],
       ),
       fn(accumulator, parsed, _index) {
         case parsed {
-          CodeableconceptPotatoconditionCategoryScreeningAssessmentParsedCodingSliceRequired(
+          CodeableconceptPotatoConditionCategoryScreeningAssessmentParsedCodingSliceRequired(
             value,
           ) ->
-            CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSliceAccumulator(
+            CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSliceAccumulator(
               ..accumulator,
               required: [value, ..accumulator.required],
             )
-          CodeableconceptPotatoconditionCategoryScreeningAssessmentParsedCodingSliceOpen(
+          CodeableconceptPotatoConditionCategoryScreeningAssessmentParsedCodingSliceOpen(
             value,
           ) ->
-            CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSliceAccumulator(
+            CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -6029,7 +6045,7 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_decoder() -
     case required, open {
       Ok(required), Ok(open) ->
         Ok(
-          CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSlices(
+          CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSlices(
             required:,
             open:,
           ),
@@ -6047,19 +6063,19 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_decoder() -
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        CodeableconceptPotatoconditionCategoryScreeningAssessmentCodingSlices(
+        CodeableconceptPotatoConditionCategoryScreeningAssessmentCodingSlices(
           required: List1(
-            first: codeableconcept_potatocondition_category_screening_assessment_coding_required_new(),
+            first: codeableconcept_potato_condition_category_screening_assessment_coding_required_new(),
             rest: [],
           ),
           open: [],
         ),
-        "CodeableconceptPotatoconditionCategoryScreeningAssessment slices",
+        "CodeableconceptPotatoConditionCategoryScreeningAssessment slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
   use coding_slices <- decode.then(coding_slices_decoder)
-  decode.success(CodeableconceptPotatoconditionCategoryScreeningAssessment(
+  decode.success(CodeableconceptPotatoConditionCategoryScreeningAssessment(
     text:,
     id:,
     required: coding_slices.required,
@@ -6067,31 +6083,31 @@ pub fn codeableconcept_potatocondition_category_screening_assessment_decoder() -
   ))
 }
 
-type CodeableconceptPotatoconditionCategoryUsCoreCodingSliceAccumulator {
-  CodeableconceptPotatoconditionCategoryUsCoreCodingSliceAccumulator(
-    required: List(CodeableconceptPotatoconditionCategoryUsCoreCodingRequired),
+type CodeableconceptPotatoConditionCategoryUsCoreCodingSliceAccumulator {
+  CodeableconceptPotatoConditionCategoryUsCoreCodingSliceAccumulator(
+    required: List(CodeableconceptPotatoConditionCategoryUsCoreCodingRequired),
     open: List(CodingOmitExtension),
   )
 }
 
-type CodeableconceptPotatoconditionCategoryUsCoreParsedCodingSlice {
-  CodeableconceptPotatoconditionCategoryUsCoreParsedCodingSliceRequired(
-    CodeableconceptPotatoconditionCategoryUsCoreCodingRequired,
+type CodeableconceptPotatoConditionCategoryUsCoreParsedCodingSlice {
+  CodeableconceptPotatoConditionCategoryUsCoreParsedCodingSliceRequired(
+    CodeableconceptPotatoConditionCategoryUsCoreCodingRequired,
   )
-  CodeableconceptPotatoconditionCategoryUsCoreParsedCodingSliceOpen(
+  CodeableconceptPotatoConditionCategoryUsCoreParsedCodingSliceOpen(
     CodingOmitExtension,
   )
 }
 
-type CodeableconceptPotatoconditionCategoryUsCoreCodingSlices {
-  CodeableconceptPotatoconditionCategoryUsCoreCodingSlices(
-    required: List1(CodeableconceptPotatoconditionCategoryUsCoreCodingRequired),
+type CodeableconceptPotatoConditionCategoryUsCoreCodingSlices {
+  CodeableconceptPotatoConditionCategoryUsCoreCodingSlices(
+    required: List1(CodeableconceptPotatoConditionCategoryUsCoreCodingRequired),
     open: List(CodingOmitExtension),
   )
 }
 
-pub fn codeableconcept_potatocondition_category_us_core_coding_required_decoder() -> Decoder(
-  CodeableconceptPotatoconditionCategoryUsCoreCodingRequired,
+pub fn codeableconcept_potato_condition_category_us_core_coding_required_decoder() -> Decoder(
+  CodeableconceptPotatoConditionCategoryUsCoreCodingRequired,
 ) {
   use <- decode.recursive
   use binding_code <- decode.optional_field(
@@ -6107,7 +6123,7 @@ pub fn codeableconcept_potatocondition_category_us_core_coding_required_decoder(
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
       case
-        valuesets.uscoreproblemorhealthconcern_from_code_and_system(
+        valueset.us_core_problem_or_health_concern_parse_code_and_system(
           code,
           system,
         )
@@ -6126,10 +6142,10 @@ pub fn codeableconcept_potatocondition_category_us_core_coding_required_decoder(
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.uscoreproblemorhealthconcern_decoder()),
+    decode.optional(valueset.us_core_problem_or_health_concern_decoder()),
   )
   let placeholder =
-    CodeableconceptPotatoconditionCategoryUsCoreCodingRequired(
+    CodeableconceptPotatoConditionCategoryUsCoreCodingRequired(
       version:,
       user_selected:,
       system:,
@@ -6140,8 +6156,8 @@ pub fn codeableconcept_potatocondition_category_us_core_coding_required_decoder(
   decode.success(placeholder)
 }
 
-pub fn codeableconcept_potatocondition_category_us_core_decoder() -> Decoder(
-  CodeableconceptPotatoconditionCategoryUsCore,
+pub fn codeableconcept_potato_condition_category_us_core_decoder() -> Decoder(
+  CodeableconceptPotatoConditionCategoryUsCore,
 ) {
   use <- decode.recursive
   use binding_matches <- decode.field(
@@ -6153,7 +6169,7 @@ pub fn codeableconcept_potatocondition_category_us_core_decoder() -> Decoder(
           use system <- decode.field("system", decode.string)
           decode.success(
             result.is_ok(
-              valuesets.uscoreproblemorhealthconcern_from_code_and_system(
+              valueset.us_core_problem_or_health_concern_parse_code_and_system(
                 code,
                 system,
               ),
@@ -6189,7 +6205,7 @@ pub fn codeableconcept_potatocondition_category_us_core_decoder() -> Decoder(
                   case
                     decode.run(
                       value,
-                      codeableconcept_potatocondition_category_us_core_coding_required_decoder(),
+                      codeableconcept_potato_condition_category_us_core_coding_required_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -6207,14 +6223,14 @@ pub fn codeableconcept_potatocondition_category_us_core_decoder() -> Decoder(
         }
       {
         DiscriminatorMatches ->
-          codeableconcept_potatocondition_category_us_core_coding_required_decoder()
+          codeableconcept_potato_condition_category_us_core_coding_required_decoder()
           |> decode.map(
-            CodeableconceptPotatoconditionCategoryUsCoreParsedCodingSliceRequired,
+            CodeableconceptPotatoConditionCategoryUsCoreParsedCodingSliceRequired,
           )
         DiscriminatorDifferent ->
           coding_omit_extension_decoder()
           |> decode.map(
-            CodeableconceptPotatoconditionCategoryUsCoreParsedCodingSliceOpen,
+            CodeableconceptPotatoConditionCategoryUsCoreParsedCodingSliceOpen,
           )
       }
     }),
@@ -6222,20 +6238,20 @@ pub fn codeableconcept_potatocondition_category_us_core_decoder() -> Decoder(
   let coding_accumulator =
     list.index_fold(
       coding_base_values,
-      CodeableconceptPotatoconditionCategoryUsCoreCodingSliceAccumulator([], []),
+      CodeableconceptPotatoConditionCategoryUsCoreCodingSliceAccumulator([], []),
       fn(accumulator, parsed, _index) {
         case parsed {
-          CodeableconceptPotatoconditionCategoryUsCoreParsedCodingSliceRequired(
+          CodeableconceptPotatoConditionCategoryUsCoreParsedCodingSliceRequired(
             value,
           ) ->
-            CodeableconceptPotatoconditionCategoryUsCoreCodingSliceAccumulator(
+            CodeableconceptPotatoConditionCategoryUsCoreCodingSliceAccumulator(
               ..accumulator,
               required: [value, ..accumulator.required],
             )
-          CodeableconceptPotatoconditionCategoryUsCoreParsedCodingSliceOpen(
+          CodeableconceptPotatoConditionCategoryUsCoreParsedCodingSliceOpen(
             value,
           ) ->
-            CodeableconceptPotatoconditionCategoryUsCoreCodingSliceAccumulator(
+            CodeableconceptPotatoConditionCategoryUsCoreCodingSliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -6258,7 +6274,7 @@ pub fn codeableconcept_potatocondition_category_us_core_decoder() -> Decoder(
     let open = Ok(list.reverse(accumulator.open))
     case required, open {
       Ok(required), Ok(open) ->
-        Ok(CodeableconceptPotatoconditionCategoryUsCoreCodingSlices(
+        Ok(CodeableconceptPotatoConditionCategoryUsCoreCodingSlices(
           required:,
           open:,
         ))
@@ -6275,19 +6291,19 @@ pub fn codeableconcept_potatocondition_category_us_core_decoder() -> Decoder(
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        CodeableconceptPotatoconditionCategoryUsCoreCodingSlices(
+        CodeableconceptPotatoConditionCategoryUsCoreCodingSlices(
           required: List1(
-            first: codeableconcept_potatocondition_category_us_core_coding_required_new(),
+            first: codeableconcept_potato_condition_category_us_core_coding_required_new(),
             rest: [],
           ),
           open: [],
         ),
-        "CodeableconceptPotatoconditionCategoryUsCore slices",
+        "CodeableconceptPotatoConditionCategoryUsCore slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
   use coding_slices <- decode.then(coding_slices_decoder)
-  decode.success(CodeableconceptPotatoconditionCategoryUsCore(
+  decode.success(CodeableconceptPotatoConditionCategoryUsCore(
     text:,
     id:,
     required: coding_slices.required,
@@ -6295,31 +6311,31 @@ pub fn codeableconcept_potatocondition_category_us_core_decoder() -> Decoder(
   ))
 }
 
-type CodeableconceptPotatoconditionClinicalstatusCodingSliceAccumulator {
-  CodeableconceptPotatoconditionClinicalstatusCodingSliceAccumulator(
-    required: List(CodeableconceptPotatoconditionClinicalstatusCodingRequired),
+type CodeableconceptPotatoConditionClinicalstatusCodingSliceAccumulator {
+  CodeableconceptPotatoConditionClinicalstatusCodingSliceAccumulator(
+    required: List(CodeableconceptPotatoConditionClinicalstatusCodingRequired),
     open: List(CodingOmitExtension),
   )
 }
 
-type CodeableconceptPotatoconditionClinicalstatusParsedCodingSlice {
-  CodeableconceptPotatoconditionClinicalstatusParsedCodingSliceRequired(
-    CodeableconceptPotatoconditionClinicalstatusCodingRequired,
+type CodeableconceptPotatoConditionClinicalstatusParsedCodingSlice {
+  CodeableconceptPotatoConditionClinicalstatusParsedCodingSliceRequired(
+    CodeableconceptPotatoConditionClinicalstatusCodingRequired,
   )
-  CodeableconceptPotatoconditionClinicalstatusParsedCodingSliceOpen(
+  CodeableconceptPotatoConditionClinicalstatusParsedCodingSliceOpen(
     CodingOmitExtension,
   )
 }
 
-type CodeableconceptPotatoconditionClinicalstatusCodingSlices {
-  CodeableconceptPotatoconditionClinicalstatusCodingSlices(
-    required: List1(CodeableconceptPotatoconditionClinicalstatusCodingRequired),
+type CodeableconceptPotatoConditionClinicalstatusCodingSlices {
+  CodeableconceptPotatoConditionClinicalstatusCodingSlices(
+    required: List1(CodeableconceptPotatoConditionClinicalstatusCodingRequired),
     open: List(CodingOmitExtension),
   )
 }
 
-pub fn codeableconcept_potatocondition_clinicalstatus_coding_required_decoder() -> Decoder(
-  CodeableconceptPotatoconditionClinicalstatusCodingRequired,
+pub fn codeableconcept_potato_condition_clinicalstatus_coding_required_decoder() -> Decoder(
+  CodeableconceptPotatoConditionClinicalstatusCodingRequired,
 ) {
   use <- decode.recursive
   use binding_code <- decode.optional_field(
@@ -6334,7 +6350,7 @@ pub fn codeableconcept_potatocondition_clinicalstatus_coding_required_decoder() 
   )
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
-      case valuesets.conditionclinical_from_code_and_system(code, system) {
+      case valueset.condition_clinical_parse_code_and_system(code, system) {
         Ok(_) -> decode.success(Nil)
         Error(_) ->
           decode.failure(Nil, "need code + system from required ValueSet")
@@ -6349,10 +6365,10 @@ pub fn codeableconcept_potatocondition_clinicalstatus_coding_required_decoder() 
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.conditionclinical_decoder()),
+    decode.optional(valueset.condition_clinical_decoder()),
   )
   let placeholder =
-    CodeableconceptPotatoconditionClinicalstatusCodingRequired(
+    CodeableconceptPotatoConditionClinicalstatusCodingRequired(
       version:,
       user_selected:,
       system:,
@@ -6363,8 +6379,8 @@ pub fn codeableconcept_potatocondition_clinicalstatus_coding_required_decoder() 
   decode.success(placeholder)
 }
 
-pub fn codeableconcept_potatocondition_clinicalstatus_decoder() -> Decoder(
-  CodeableconceptPotatoconditionClinicalstatus,
+pub fn codeableconcept_potato_condition_clinicalstatus_decoder() -> Decoder(
+  CodeableconceptPotatoConditionClinicalstatus,
 ) {
   use <- decode.recursive
   use binding_matches <- decode.field(
@@ -6375,7 +6391,7 @@ pub fn codeableconcept_potatocondition_clinicalstatus_decoder() -> Decoder(
           use code <- decode.field("code", decode.string)
           use system <- decode.field("system", decode.string)
           decode.success(
-            result.is_ok(valuesets.conditionclinical_from_code_and_system(
+            result.is_ok(valueset.condition_clinical_parse_code_and_system(
               code,
               system,
             )),
@@ -6410,7 +6426,7 @@ pub fn codeableconcept_potatocondition_clinicalstatus_decoder() -> Decoder(
                   case
                     decode.run(
                       value,
-                      codeableconcept_potatocondition_clinicalstatus_coding_required_decoder(),
+                      codeableconcept_potato_condition_clinicalstatus_coding_required_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -6428,14 +6444,14 @@ pub fn codeableconcept_potatocondition_clinicalstatus_decoder() -> Decoder(
         }
       {
         DiscriminatorMatches ->
-          codeableconcept_potatocondition_clinicalstatus_coding_required_decoder()
+          codeableconcept_potato_condition_clinicalstatus_coding_required_decoder()
           |> decode.map(
-            CodeableconceptPotatoconditionClinicalstatusParsedCodingSliceRequired,
+            CodeableconceptPotatoConditionClinicalstatusParsedCodingSliceRequired,
           )
         DiscriminatorDifferent ->
           coding_omit_extension_decoder()
           |> decode.map(
-            CodeableconceptPotatoconditionClinicalstatusParsedCodingSliceOpen,
+            CodeableconceptPotatoConditionClinicalstatusParsedCodingSliceOpen,
           )
       }
     }),
@@ -6443,20 +6459,20 @@ pub fn codeableconcept_potatocondition_clinicalstatus_decoder() -> Decoder(
   let coding_accumulator =
     list.index_fold(
       coding_base_values,
-      CodeableconceptPotatoconditionClinicalstatusCodingSliceAccumulator([], []),
+      CodeableconceptPotatoConditionClinicalstatusCodingSliceAccumulator([], []),
       fn(accumulator, parsed, _index) {
         case parsed {
-          CodeableconceptPotatoconditionClinicalstatusParsedCodingSliceRequired(
+          CodeableconceptPotatoConditionClinicalstatusParsedCodingSliceRequired(
             value,
           ) ->
-            CodeableconceptPotatoconditionClinicalstatusCodingSliceAccumulator(
+            CodeableconceptPotatoConditionClinicalstatusCodingSliceAccumulator(
               ..accumulator,
               required: [value, ..accumulator.required],
             )
-          CodeableconceptPotatoconditionClinicalstatusParsedCodingSliceOpen(
+          CodeableconceptPotatoConditionClinicalstatusParsedCodingSliceOpen(
             value,
           ) ->
-            CodeableconceptPotatoconditionClinicalstatusCodingSliceAccumulator(
+            CodeableconceptPotatoConditionClinicalstatusCodingSliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -6479,7 +6495,7 @@ pub fn codeableconcept_potatocondition_clinicalstatus_decoder() -> Decoder(
     let open = Ok(list.reverse(accumulator.open))
     case required, open {
       Ok(required), Ok(open) ->
-        Ok(CodeableconceptPotatoconditionClinicalstatusCodingSlices(
+        Ok(CodeableconceptPotatoConditionClinicalstatusCodingSlices(
           required:,
           open:,
         ))
@@ -6496,19 +6512,19 @@ pub fn codeableconcept_potatocondition_clinicalstatus_decoder() -> Decoder(
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        CodeableconceptPotatoconditionClinicalstatusCodingSlices(
+        CodeableconceptPotatoConditionClinicalstatusCodingSlices(
           required: List1(
-            first: codeableconcept_potatocondition_clinicalstatus_coding_required_new(),
+            first: codeableconcept_potato_condition_clinicalstatus_coding_required_new(),
             rest: [],
           ),
           open: [],
         ),
-        "CodeableconceptPotatoconditionClinicalstatus slices",
+        "CodeableconceptPotatoConditionClinicalstatus slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
   use coding_slices <- decode.then(coding_slices_decoder)
-  decode.success(CodeableconceptPotatoconditionClinicalstatus(
+  decode.success(CodeableconceptPotatoConditionClinicalstatus(
     text:,
     id:,
     required: coding_slices.required,
@@ -6516,35 +6532,35 @@ pub fn codeableconcept_potatocondition_clinicalstatus_decoder() -> Decoder(
   ))
 }
 
-type CodeableconceptPotatoconditionVerificationstatusCodingSliceAccumulator {
-  CodeableconceptPotatoconditionVerificationstatusCodingSliceAccumulator(
+type CodeableconceptPotatoConditionVerificationstatusCodingSliceAccumulator {
+  CodeableconceptPotatoConditionVerificationstatusCodingSliceAccumulator(
     required: List(
-      CodeableconceptPotatoconditionVerificationstatusCodingRequired,
+      CodeableconceptPotatoConditionVerificationstatusCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-type CodeableconceptPotatoconditionVerificationstatusParsedCodingSlice {
-  CodeableconceptPotatoconditionVerificationstatusParsedCodingSliceRequired(
-    CodeableconceptPotatoconditionVerificationstatusCodingRequired,
+type CodeableconceptPotatoConditionVerificationstatusParsedCodingSlice {
+  CodeableconceptPotatoConditionVerificationstatusParsedCodingSliceRequired(
+    CodeableconceptPotatoConditionVerificationstatusCodingRequired,
   )
-  CodeableconceptPotatoconditionVerificationstatusParsedCodingSliceOpen(
+  CodeableconceptPotatoConditionVerificationstatusParsedCodingSliceOpen(
     CodingOmitExtension,
   )
 }
 
-type CodeableconceptPotatoconditionVerificationstatusCodingSlices {
-  CodeableconceptPotatoconditionVerificationstatusCodingSlices(
+type CodeableconceptPotatoConditionVerificationstatusCodingSlices {
+  CodeableconceptPotatoConditionVerificationstatusCodingSlices(
     required: List1(
-      CodeableconceptPotatoconditionVerificationstatusCodingRequired,
+      CodeableconceptPotatoConditionVerificationstatusCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-pub fn codeableconcept_potatocondition_verificationstatus_coding_required_decoder() -> Decoder(
-  CodeableconceptPotatoconditionVerificationstatusCodingRequired,
+pub fn codeableconcept_potato_condition_verificationstatus_coding_required_decoder() -> Decoder(
+  CodeableconceptPotatoConditionVerificationstatusCodingRequired,
 ) {
   use <- decode.recursive
   use binding_code <- decode.optional_field(
@@ -6559,7 +6575,7 @@ pub fn codeableconcept_potatocondition_verificationstatus_coding_required_decode
   )
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
-      case valuesets.conditionverstatus_from_code_and_system(code, system) {
+      case valueset.condition_ver_status_parse_code_and_system(code, system) {
         Ok(_) -> decode.success(Nil)
         Error(_) ->
           decode.failure(Nil, "need code + system from required ValueSet")
@@ -6574,10 +6590,10 @@ pub fn codeableconcept_potatocondition_verificationstatus_coding_required_decode
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.conditionverstatus_decoder()),
+    decode.optional(valueset.condition_ver_status_decoder()),
   )
   let placeholder =
-    CodeableconceptPotatoconditionVerificationstatusCodingRequired(
+    CodeableconceptPotatoConditionVerificationstatusCodingRequired(
       version:,
       user_selected:,
       system:,
@@ -6588,8 +6604,8 @@ pub fn codeableconcept_potatocondition_verificationstatus_coding_required_decode
   decode.success(placeholder)
 }
 
-pub fn codeableconcept_potatocondition_verificationstatus_decoder() -> Decoder(
-  CodeableconceptPotatoconditionVerificationstatus,
+pub fn codeableconcept_potato_condition_verificationstatus_decoder() -> Decoder(
+  CodeableconceptPotatoConditionVerificationstatus,
 ) {
   use <- decode.recursive
   use binding_matches <- decode.field(
@@ -6600,7 +6616,7 @@ pub fn codeableconcept_potatocondition_verificationstatus_decoder() -> Decoder(
           use code <- decode.field("code", decode.string)
           use system <- decode.field("system", decode.string)
           decode.success(
-            result.is_ok(valuesets.conditionverstatus_from_code_and_system(
+            result.is_ok(valueset.condition_ver_status_parse_code_and_system(
               code,
               system,
             )),
@@ -6635,7 +6651,7 @@ pub fn codeableconcept_potatocondition_verificationstatus_decoder() -> Decoder(
                   case
                     decode.run(
                       value,
-                      codeableconcept_potatocondition_verificationstatus_coding_required_decoder(),
+                      codeableconcept_potato_condition_verificationstatus_coding_required_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -6653,14 +6669,14 @@ pub fn codeableconcept_potatocondition_verificationstatus_decoder() -> Decoder(
         }
       {
         DiscriminatorMatches ->
-          codeableconcept_potatocondition_verificationstatus_coding_required_decoder()
+          codeableconcept_potato_condition_verificationstatus_coding_required_decoder()
           |> decode.map(
-            CodeableconceptPotatoconditionVerificationstatusParsedCodingSliceRequired,
+            CodeableconceptPotatoConditionVerificationstatusParsedCodingSliceRequired,
           )
         DiscriminatorDifferent ->
           coding_omit_extension_decoder()
           |> decode.map(
-            CodeableconceptPotatoconditionVerificationstatusParsedCodingSliceOpen,
+            CodeableconceptPotatoConditionVerificationstatusParsedCodingSliceOpen,
           )
       }
     }),
@@ -6668,23 +6684,23 @@ pub fn codeableconcept_potatocondition_verificationstatus_decoder() -> Decoder(
   let coding_accumulator =
     list.index_fold(
       coding_base_values,
-      CodeableconceptPotatoconditionVerificationstatusCodingSliceAccumulator(
+      CodeableconceptPotatoConditionVerificationstatusCodingSliceAccumulator(
         [],
         [],
       ),
       fn(accumulator, parsed, _index) {
         case parsed {
-          CodeableconceptPotatoconditionVerificationstatusParsedCodingSliceRequired(
+          CodeableconceptPotatoConditionVerificationstatusParsedCodingSliceRequired(
             value,
           ) ->
-            CodeableconceptPotatoconditionVerificationstatusCodingSliceAccumulator(
+            CodeableconceptPotatoConditionVerificationstatusCodingSliceAccumulator(
               ..accumulator,
               required: [value, ..accumulator.required],
             )
-          CodeableconceptPotatoconditionVerificationstatusParsedCodingSliceOpen(
+          CodeableconceptPotatoConditionVerificationstatusParsedCodingSliceOpen(
             value,
           ) ->
-            CodeableconceptPotatoconditionVerificationstatusCodingSliceAccumulator(
+            CodeableconceptPotatoConditionVerificationstatusCodingSliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -6707,7 +6723,7 @@ pub fn codeableconcept_potatocondition_verificationstatus_decoder() -> Decoder(
     let open = Ok(list.reverse(accumulator.open))
     case required, open {
       Ok(required), Ok(open) ->
-        Ok(CodeableconceptPotatoconditionVerificationstatusCodingSlices(
+        Ok(CodeableconceptPotatoConditionVerificationstatusCodingSlices(
           required:,
           open:,
         ))
@@ -6724,19 +6740,19 @@ pub fn codeableconcept_potatocondition_verificationstatus_decoder() -> Decoder(
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        CodeableconceptPotatoconditionVerificationstatusCodingSlices(
+        CodeableconceptPotatoConditionVerificationstatusCodingSlices(
           required: List1(
-            first: codeableconcept_potatocondition_verificationstatus_coding_required_new(),
+            first: codeableconcept_potato_condition_verificationstatus_coding_required_new(),
             rest: [],
           ),
           open: [],
         ),
-        "CodeableconceptPotatoconditionVerificationstatus slices",
+        "CodeableconceptPotatoConditionVerificationstatus slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
   use coding_slices <- decode.then(coding_slices_decoder)
-  decode.success(CodeableconceptPotatoconditionVerificationstatus(
+  decode.success(CodeableconceptPotatoConditionVerificationstatus(
     text:,
     id:,
     required: coding_slices.required,
@@ -6744,35 +6760,35 @@ pub fn codeableconcept_potatocondition_verificationstatus_decoder() -> Decoder(
   ))
 }
 
-type CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSliceAccumulator {
-  CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSliceAccumulator(
+type CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSliceAccumulator {
+  CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSliceAccumulator(
     required: List(
-      CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired,
+      CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-type CodeableconceptPotatodocumentreferenceCategoryUscoreParsedCodingSlice {
-  CodeableconceptPotatodocumentreferenceCategoryUscoreParsedCodingSliceRequired(
-    CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired,
+type CodeableconceptPotatoDocumentreferenceCategoryUscoreParsedCodingSlice {
+  CodeableconceptPotatoDocumentreferenceCategoryUscoreParsedCodingSliceRequired(
+    CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired,
   )
-  CodeableconceptPotatodocumentreferenceCategoryUscoreParsedCodingSliceOpen(
+  CodeableconceptPotatoDocumentreferenceCategoryUscoreParsedCodingSliceOpen(
     CodingOmitExtension,
   )
 }
 
-type CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSlices {
-  CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSlices(
+type CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSlices {
+  CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSlices(
     required: List1(
-      CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired,
+      CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-pub fn codeableconcept_potatodocumentreference_category_uscore_coding_required_decoder() -> Decoder(
-  CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired,
+pub fn codeableconcept_potato_documentreference_category_uscore_coding_required_decoder() -> Decoder(
+  CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired,
 ) {
   use <- decode.recursive
   use binding_code <- decode.optional_field(
@@ -6788,7 +6804,7 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_coding_required_d
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
       case
-        valuesets.uscoredocumentreferencecategory_from_code_and_system(
+        valueset.us_core_documentreference_category_parse_code_and_system(
           code,
           system,
         )
@@ -6807,10 +6823,10 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_coding_required_d
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.uscoredocumentreferencecategory_decoder()),
+    decode.optional(valueset.us_core_documentreference_category_decoder()),
   )
   let placeholder =
-    CodeableconceptPotatodocumentreferenceCategoryUscoreCodingRequired(
+    CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingRequired(
       version:,
       user_selected:,
       system:,
@@ -6821,8 +6837,8 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_coding_required_d
   decode.success(placeholder)
 }
 
-pub fn codeableconcept_potatodocumentreference_category_uscore_decoder() -> Decoder(
-  CodeableconceptPotatodocumentreferenceCategoryUscore,
+pub fn codeableconcept_potato_documentreference_category_uscore_decoder() -> Decoder(
+  CodeableconceptPotatoDocumentreferenceCategoryUscore,
 ) {
   use <- decode.recursive
   use binding_matches <- decode.field(
@@ -6834,7 +6850,7 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_decoder() -> Deco
           use system <- decode.field("system", decode.string)
           decode.success(
             result.is_ok(
-              valuesets.uscoredocumentreferencecategory_from_code_and_system(
+              valueset.us_core_documentreference_category_parse_code_and_system(
                 code,
                 system,
               ),
@@ -6870,7 +6886,7 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_decoder() -> Deco
                   case
                     decode.run(
                       value,
-                      codeableconcept_potatodocumentreference_category_uscore_coding_required_decoder(),
+                      codeableconcept_potato_documentreference_category_uscore_coding_required_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -6888,14 +6904,14 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_decoder() -> Deco
         }
       {
         DiscriminatorMatches ->
-          codeableconcept_potatodocumentreference_category_uscore_coding_required_decoder()
+          codeableconcept_potato_documentreference_category_uscore_coding_required_decoder()
           |> decode.map(
-            CodeableconceptPotatodocumentreferenceCategoryUscoreParsedCodingSliceRequired,
+            CodeableconceptPotatoDocumentreferenceCategoryUscoreParsedCodingSliceRequired,
           )
         DiscriminatorDifferent ->
           coding_omit_extension_decoder()
           |> decode.map(
-            CodeableconceptPotatodocumentreferenceCategoryUscoreParsedCodingSliceOpen,
+            CodeableconceptPotatoDocumentreferenceCategoryUscoreParsedCodingSliceOpen,
           )
       }
     }),
@@ -6903,23 +6919,23 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_decoder() -> Deco
   let coding_accumulator =
     list.index_fold(
       coding_base_values,
-      CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSliceAccumulator(
+      CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSliceAccumulator(
         [],
         [],
       ),
       fn(accumulator, parsed, _index) {
         case parsed {
-          CodeableconceptPotatodocumentreferenceCategoryUscoreParsedCodingSliceRequired(
+          CodeableconceptPotatoDocumentreferenceCategoryUscoreParsedCodingSliceRequired(
             value,
           ) ->
-            CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSliceAccumulator(
+            CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSliceAccumulator(
               ..accumulator,
               required: [value, ..accumulator.required],
             )
-          CodeableconceptPotatodocumentreferenceCategoryUscoreParsedCodingSliceOpen(
+          CodeableconceptPotatoDocumentreferenceCategoryUscoreParsedCodingSliceOpen(
             value,
           ) ->
-            CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSliceAccumulator(
+            CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -6942,7 +6958,7 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_decoder() -> Deco
     let open = Ok(list.reverse(accumulator.open))
     case required, open {
       Ok(required), Ok(open) ->
-        Ok(CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSlices(
+        Ok(CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSlices(
           required:,
           open:,
         ))
@@ -6959,19 +6975,19 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_decoder() -> Deco
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        CodeableconceptPotatodocumentreferenceCategoryUscoreCodingSlices(
+        CodeableconceptPotatoDocumentreferenceCategoryUscoreCodingSlices(
           required: List1(
-            first: codeableconcept_potatodocumentreference_category_uscore_coding_required_new(),
+            first: codeableconcept_potato_documentreference_category_uscore_coding_required_new(),
             rest: [],
           ),
           open: [],
         ),
-        "CodeableconceptPotatodocumentreferenceCategoryUscore slices",
+        "CodeableconceptPotatoDocumentreferenceCategoryUscore slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
   use coding_slices <- decode.then(coding_slices_decoder)
-  decode.success(CodeableconceptPotatodocumentreferenceCategoryUscore(
+  decode.success(CodeableconceptPotatoDocumentreferenceCategoryUscore(
     text:,
     id:,
     required: coding_slices.required,
@@ -6979,35 +6995,35 @@ pub fn codeableconcept_potatodocumentreference_category_uscore_decoder() -> Deco
   ))
 }
 
-type CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSliceAccumulator {
-  CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSliceAccumulator(
+type CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSliceAccumulator {
+  CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSliceAccumulator(
     required: List(
-      CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired,
+      CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-type CodeableconceptPotatomedicationrequestCategoryUsCoreParsedCodingSlice {
-  CodeableconceptPotatomedicationrequestCategoryUsCoreParsedCodingSliceRequired(
-    CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired,
+type CodeableconceptPotatoMedicationrequestCategoryUsCoreParsedCodingSlice {
+  CodeableconceptPotatoMedicationrequestCategoryUsCoreParsedCodingSliceRequired(
+    CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired,
   )
-  CodeableconceptPotatomedicationrequestCategoryUsCoreParsedCodingSliceOpen(
+  CodeableconceptPotatoMedicationrequestCategoryUsCoreParsedCodingSliceOpen(
     CodingOmitExtension,
   )
 }
 
-type CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSlices {
-  CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSlices(
+type CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSlices {
+  CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSlices(
     required: List1(
-      CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired,
+      CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired,
     ),
     open: List(CodingOmitExtension),
   )
 }
 
-pub fn codeableconcept_potatomedicationrequest_category_us_core_coding_required_decoder() -> Decoder(
-  CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired,
+pub fn codeableconcept_potato_medicationrequest_category_us_core_coding_required_decoder() -> Decoder(
+  CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired,
 ) {
   use <- decode.recursive
   use binding_code <- decode.optional_field(
@@ -7023,7 +7039,7 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_coding_required_
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
       case
-        valuesets.medicationrequestcategory_from_code_and_system(code, system)
+        valueset.medicationrequest_category_parse_code_and_system(code, system)
       {
         Ok(_) -> decode.success(Nil)
         Error(_) ->
@@ -7039,10 +7055,10 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_coding_required_
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.medicationrequestcategory_decoder()),
+    decode.optional(valueset.medicationrequest_category_decoder()),
   )
   let placeholder =
-    CodeableconceptPotatomedicationrequestCategoryUsCoreCodingRequired(
+    CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingRequired(
       version:,
       user_selected:,
       system:,
@@ -7053,8 +7069,8 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_coding_required_
   decode.success(placeholder)
 }
 
-pub fn codeableconcept_potatomedicationrequest_category_us_core_decoder() -> Decoder(
-  CodeableconceptPotatomedicationrequestCategoryUsCore,
+pub fn codeableconcept_potato_medicationrequest_category_us_core_decoder() -> Decoder(
+  CodeableconceptPotatoMedicationrequestCategoryUsCore,
 ) {
   use <- decode.recursive
   use binding_matches <- decode.field(
@@ -7066,7 +7082,7 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_decoder() -> Dec
           use system <- decode.field("system", decode.string)
           decode.success(
             result.is_ok(
-              valuesets.medicationrequestcategory_from_code_and_system(
+              valueset.medicationrequest_category_parse_code_and_system(
                 code,
                 system,
               ),
@@ -7102,7 +7118,7 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_decoder() -> Dec
                   case
                     decode.run(
                       value,
-                      codeableconcept_potatomedicationrequest_category_us_core_coding_required_decoder(),
+                      codeableconcept_potato_medicationrequest_category_us_core_coding_required_decoder(),
                     )
                   {
                     Ok(_) -> True
@@ -7120,14 +7136,14 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_decoder() -> Dec
         }
       {
         DiscriminatorMatches ->
-          codeableconcept_potatomedicationrequest_category_us_core_coding_required_decoder()
+          codeableconcept_potato_medicationrequest_category_us_core_coding_required_decoder()
           |> decode.map(
-            CodeableconceptPotatomedicationrequestCategoryUsCoreParsedCodingSliceRequired,
+            CodeableconceptPotatoMedicationrequestCategoryUsCoreParsedCodingSliceRequired,
           )
         DiscriminatorDifferent ->
           coding_omit_extension_decoder()
           |> decode.map(
-            CodeableconceptPotatomedicationrequestCategoryUsCoreParsedCodingSliceOpen,
+            CodeableconceptPotatoMedicationrequestCategoryUsCoreParsedCodingSliceOpen,
           )
       }
     }),
@@ -7135,23 +7151,23 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_decoder() -> Dec
   let coding_accumulator =
     list.index_fold(
       coding_base_values,
-      CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSliceAccumulator(
+      CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSliceAccumulator(
         [],
         [],
       ),
       fn(accumulator, parsed, _index) {
         case parsed {
-          CodeableconceptPotatomedicationrequestCategoryUsCoreParsedCodingSliceRequired(
+          CodeableconceptPotatoMedicationrequestCategoryUsCoreParsedCodingSliceRequired(
             value,
           ) ->
-            CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSliceAccumulator(
+            CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSliceAccumulator(
               ..accumulator,
               required: [value, ..accumulator.required],
             )
-          CodeableconceptPotatomedicationrequestCategoryUsCoreParsedCodingSliceOpen(
+          CodeableconceptPotatoMedicationrequestCategoryUsCoreParsedCodingSliceOpen(
             value,
           ) ->
-            CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSliceAccumulator(
+            CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSliceAccumulator(
               ..accumulator,
               open: [value, ..accumulator.open],
             )
@@ -7174,7 +7190,7 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_decoder() -> Dec
     let open = Ok(list.reverse(accumulator.open))
     case required, open {
       Ok(required), Ok(open) ->
-        Ok(CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSlices(
+        Ok(CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSlices(
           required:,
           open:,
         ))
@@ -7191,19 +7207,19 @@ pub fn codeableconcept_potatomedicationrequest_category_us_core_decoder() -> Dec
     Ok(value) -> decode.success(value)
     Error(errors) ->
       decode.failure(
-        CodeableconceptPotatomedicationrequestCategoryUsCoreCodingSlices(
+        CodeableconceptPotatoMedicationrequestCategoryUsCoreCodingSlices(
           required: List1(
-            first: codeableconcept_potatomedicationrequest_category_us_core_coding_required_new(),
+            first: codeableconcept_potato_medicationrequest_category_us_core_coding_required_new(),
             rest: [],
           ),
           open: [],
         ),
-        "CodeableconceptPotatomedicationrequestCategoryUsCore slices",
+        "CodeableconceptPotatoMedicationrequestCategoryUsCore slices",
       )
       |> decode.map_errors(fn(_) { errors })
   }
   use coding_slices <- decode.then(coding_slices_decoder)
-  decode.success(CodeableconceptPotatomedicationrequestCategoryUsCore(
+  decode.success(CodeableconceptPotatoMedicationrequestCategoryUsCore(
     text:,
     id:,
     required: coding_slices.required,
@@ -7227,7 +7243,7 @@ pub fn coding_potatoethnicity_extension_detailed_value_decoder() -> Decoder(
   )
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
-      case valuesets.detailedethnicity_from_code_and_system(code, system) {
+      case valueset.detailed_ethnicity_parse_code_and_system(code, system) {
         Ok(_) -> decode.success(Nil)
         Error(_) ->
           decode.failure(Nil, "need code + system from required ValueSet")
@@ -7242,7 +7258,7 @@ pub fn coding_potatoethnicity_extension_detailed_value_decoder() -> Decoder(
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.detailedethnicity_decoder()),
+    decode.optional(valueset.detailed_ethnicity_decoder()),
   )
   let placeholder =
     CodingPotatoethnicityExtensionDetailedValue(
@@ -7272,7 +7288,7 @@ pub fn coding_potatoethnicity_extension_ombcategory_value_decoder() -> Decoder(
   )
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
-      case valuesets.ombethnicitycategory_from_code_and_system(code, system) {
+      case valueset.omb_ethnicity_category_parse_code_and_system(code, system) {
         Ok(_) -> decode.success(Nil)
         Error(_) ->
           decode.failure(Nil, "need code + system from required ValueSet")
@@ -7287,7 +7303,7 @@ pub fn coding_potatoethnicity_extension_ombcategory_value_decoder() -> Decoder(
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.ombethnicitycategory_decoder()),
+    decode.optional(valueset.omb_ethnicity_category_decoder()),
   )
   let placeholder =
     CodingPotatoethnicityExtensionOmbcategoryValue(
@@ -7317,7 +7333,7 @@ pub fn coding_potatorace_extension_detailed_value_decoder() -> Decoder(
   )
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
-      case valuesets.detailedrace_from_code_and_system(code, system) {
+      case valueset.detailed_race_parse_code_and_system(code, system) {
         Ok(_) -> decode.success(Nil)
         Error(_) ->
           decode.failure(Nil, "need code + system from required ValueSet")
@@ -7332,7 +7348,7 @@ pub fn coding_potatorace_extension_detailed_value_decoder() -> Decoder(
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.detailedrace_decoder()),
+    decode.optional(valueset.detailed_race_decoder()),
   )
   let placeholder =
     CodingPotatoraceExtensionDetailedValue(
@@ -7362,7 +7378,7 @@ pub fn coding_potatorace_extension_ombcategory_value_decoder() -> Decoder(
   )
   use _ <- decode.then(case binding_code, binding_system {
     Some(code), Some(system) ->
-      case valuesets.ombracecategory_from_code_and_system(code, system) {
+      case valueset.omb_race_category_parse_code_and_system(code, system) {
         Ok(_) -> decode.success(Nil)
         Error(_) ->
           decode.failure(Nil, "need code + system from required ValueSet")
@@ -7377,7 +7393,7 @@ pub fn coding_potatorace_extension_ombcategory_value_decoder() -> Decoder(
   use code <- decode.optional_field(
     "code",
     None,
-    decode.optional(valuesets.ombracecategory_decoder()),
+    decode.optional(valueset.omb_race_category_decoder()),
   )
   let placeholder =
     CodingPotatoraceExtensionOmbcategoryValue(
@@ -7391,17 +7407,17 @@ pub fn coding_potatorace_extension_ombcategory_value_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn contactpoint_potatopatient_telecom_decoder() -> Decoder(
-  ContactpointPotatopatientTelecom,
+pub fn contactpoint_potato_patient_telecom_decoder() -> Decoder(
+  ContactpointPotatoPatientTelecom,
 ) {
   use <- decode.recursive
   use value <- decode.field("value", decode.string)
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.contactpointuse_decoder()),
+    decode.optional(valueset.contactpoint_use_decoder()),
   )
-  use system <- decode.field("system", valuesets.contactpointsystem_decoder())
+  use system <- decode.field("system", valueset.contactpoint_system_decoder())
   use rank <- decode.optional_field("rank", None, decode.optional(decode.int))
   use period <- decode.optional_field(
     "period",
@@ -7410,7 +7426,7 @@ pub fn contactpoint_potatopatient_telecom_decoder() -> Decoder(
   )
   use id <- decode_optional_string("id")
   let placeholder =
-    ContactpointPotatopatientTelecom(
+    ContactpointPotatoPatientTelecom(
       value:,
       use_:,
       system:,
@@ -7421,14 +7437,14 @@ pub fn contactpoint_potatopatient_telecom_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_bounds_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionTimingRepeatBounds,
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_bounds_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionTimingRepeatBounds,
 ) {
   decode.one_of(
     {
       use value <- decode.field("boundsDuration", potatoduration_decoder())
       decode.success(
-        DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsDuration(
+        DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsDuration(
           value,
         ),
       )
@@ -7437,7 +7453,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_bounds_dec
       {
         use value <- decode.field("boundsRange", potatorange_decoder())
         decode.success(
-          DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsRange(
+          DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsRange(
             value,
           ),
         )
@@ -7445,7 +7461,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_bounds_dec
       {
         use value <- decode.field("boundsPeriod", potatoperiod_decoder())
         decode.success(
-          DosagePotatomedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
+          DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
             value,
           ),
         )
@@ -7454,14 +7470,14 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_bounds_dec
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionTimingRepeat,
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionTimingRepeat,
 ) {
   use <- decode.recursive
   use when <- decode.optional_field(
     "when",
     [],
-    decode.list(valuesets.eventtiming_decoder()),
+    decode.list(valueset.event_timing_decoder()),
   )
   use time_of_day <- decode.optional_field(
     "timeOfDay",
@@ -7471,7 +7487,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_decoder() 
   use period_unit <- decode.optional_field(
     "periodUnit",
     None,
-    decode.optional(valuesets.unitsoftime_decoder()),
+    decode.optional(valueset.units_of_time_decoder()),
   )
   use period_max <- decode.optional_field(
     "periodMax",
@@ -7502,7 +7518,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_decoder() 
   use duration_unit <- decode.optional_field(
     "durationUnit",
     None,
-    decode.optional(valuesets.unitsoftime_decoder()),
+    decode.optional(valueset.units_of_time_decoder()),
   )
   use duration_max <- decode.optional_field(
     "durationMax",
@@ -7517,7 +7533,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_decoder() 
   use day_of_week <- decode.optional_field(
     "dayOfWeek",
     [],
-    decode.list(valuesets.daysofweek_decoder()),
+    decode.list(valueset.days_of_week_decoder()),
   )
   use count_max <- decode.optional_field(
     "countMax",
@@ -7527,11 +7543,11 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_decoder() 
   use count <- decode.optional_field("count", None, decode.optional(decode.int))
   use bounds <- decode.then(
     none_if_omitted(
-      dosage_potatomedicationrequest_dosageinstruction_timing_repeat_bounds_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_timing_repeat_bounds_decoder(),
     ),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionTimingRepeat(
+    DosagePotatoMedicationrequestDosageinstructionTimingRepeat(
       when:,
       time_of_day:,
       period_unit:,
@@ -7552,15 +7568,15 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_repeat_decoder() 
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_timing_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionTiming,
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionTiming,
 ) {
   use <- decode.recursive
   use repeat <- decode.optional_field(
     "repeat",
     None,
     decode.optional(
-      dosage_potatomedicationrequest_dosageinstruction_timing_repeat_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_timing_repeat_decoder(),
     ),
   )
   use id <- decode_optional_string("id")
@@ -7575,7 +7591,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_decoder() -> Deco
     decode.optional(potatocodeableconcept_decoder()),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionTiming(
+    DosagePotatoMedicationrequestDosageinstructionTiming(
       repeat:,
       id:,
       event:,
@@ -7584,8 +7600,8 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_timing_decoder() -> Deco
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_site_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionSite,
+pub fn dosage_potato_medicationrequest_dosageinstruction_site_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionSite,
 ) {
   use <- decode.recursive
   use text <- decode_optional_string("text")
@@ -7596,12 +7612,12 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_site_decoder() -> Decode
     decode.list(potatocoding_decoder()),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionSite(text:, id:, coding:)
+    DosagePotatoMedicationrequestDosageinstructionSite(text:, id:, coding:)
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_route_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionRoute,
+pub fn dosage_potato_medicationrequest_dosageinstruction_route_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionRoute,
 ) {
   use <- decode.recursive
   use text <- decode_optional_string("text")
@@ -7612,12 +7628,12 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_route_decoder() -> Decod
     decode.list(potatocoding_decoder()),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionRoute(text:, id:, coding:)
+    DosagePotatoMedicationrequestDosageinstructionRoute(text:, id:, coding:)
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_method_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionMethod,
+pub fn dosage_potato_medicationrequest_dosageinstruction_method_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionMethod,
 ) {
   use <- decode.recursive
   use text <- decode_optional_string("text")
@@ -7628,12 +7644,12 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_method_decoder() -> Deco
     decode.list(potatocoding_decoder()),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionMethod(text:, id:, coding:)
+    DosagePotatoMedicationrequestDosageinstructionMethod(text:, id:, coding:)
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionMaxdoseperperiod,
+pub fn dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionMaxdoseperperiod,
 ) {
   use <- decode.recursive
   use numerator <- decode.optional_field(
@@ -7648,7 +7664,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod_decoder
     decode.optional(potatoquantity_decoder()),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionMaxdoseperperiod(
+    DosagePotatoMedicationrequestDosageinstructionMaxdoseperperiod(
       numerator:,
       id:,
       denominator:,
@@ -7656,8 +7672,8 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod_decoder
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_type_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionDoseandrateType,
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_type_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateType,
 ) {
   use <- decode.recursive
   use text <- decode_optional_string("text")
@@ -7668,7 +7684,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_type_decoder
     decode.list(potatocoding_decoder()),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionDoseandrateType(
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateType(
       text:,
       id:,
       coding:,
@@ -7676,14 +7692,14 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_type_decoder
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_rate_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionDoseandrateRate,
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_rate_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateRate,
 ) {
   decode.one_of(
     {
       use value <- decode.field("rateRatio", potatoratio_decoder())
       decode.success(
-        DosagePotatomedicationrequestDosageinstructionDoseandrateRateRatio(
+        DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRatio(
           value,
         ),
       )
@@ -7692,7 +7708,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_rate_decoder
       {
         use value <- decode.field("rateRange", potatorange_decoder())
         decode.success(
-          DosagePotatomedicationrequestDosageinstructionDoseandrateRateRange(
+          DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRange(
             value,
           ),
         )
@@ -7703,7 +7719,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_rate_decoder
           potatosimplequantity_decoder(),
         )
         decode.success(
-          DosagePotatomedicationrequestDosageinstructionDoseandrateRateQuantity(
+          DosagePotatoMedicationrequestDosageinstructionDoseandrateRateQuantity(
             value,
           ),
         )
@@ -7712,14 +7728,14 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_rate_decoder
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_dose_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionDoseandrateDose,
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_dose_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionDoseandrateDose,
 ) {
   decode.one_of(
     {
       use value <- decode.field("doseQuantity", potatosimplequantity_decoder())
       decode.success(
-        DosagePotatomedicationrequestDosageinstructionDoseandrateDoseQuantity(
+        DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseQuantity(
           value,
         ),
       )
@@ -7728,7 +7744,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_dose_decoder
       {
         use value <- decode.field("doseRange", potatorange_decoder())
         decode.success(
-          DosagePotatomedicationrequestDosageinstructionDoseandrateDoseRange(
+          DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseRange(
             value,
           ),
         )
@@ -7737,30 +7753,30 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_dose_decoder
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionDoseandrate,
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionDoseandrate,
 ) {
   use <- decode.recursive
   use type_ <- decode.optional_field(
     "type",
     None,
     decode.optional(
-      dosage_potatomedicationrequest_dosageinstruction_doseandrate_type_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_doseandrate_type_decoder(),
     ),
   )
   use rate <- decode.then(
     none_if_omitted(
-      dosage_potatomedicationrequest_dosageinstruction_doseandrate_rate_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_doseandrate_rate_decoder(),
     ),
   )
   use id <- decode_optional_string("id")
   use dose <- decode.then(
     none_if_omitted(
-      dosage_potatomedicationrequest_dosageinstruction_doseandrate_dose_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_doseandrate_dose_decoder(),
     ),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionDoseandrate(
+    DosagePotatoMedicationrequestDosageinstructionDoseandrate(
       type_:,
       rate:,
       id:,
@@ -7769,8 +7785,8 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_doseandrate_decoder() ->
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_additionalinstruction_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionAdditionalinstruction,
+pub fn dosage_potato_medicationrequest_dosageinstruction_additionalinstruction_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionAdditionalinstruction,
 ) {
   use <- decode.recursive
   use text <- decode_optional_string("text")
@@ -7781,7 +7797,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_additionalinstruction_de
     decode.list(potatocoding_decoder()),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstructionAdditionalinstruction(
+    DosagePotatoMedicationrequestDosageinstructionAdditionalinstruction(
       text:,
       id:,
       coding:,
@@ -7789,14 +7805,14 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_additionalinstruction_de
   decode.success(placeholder)
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_asneeded_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstructionAsneeded,
+pub fn dosage_potato_medicationrequest_dosageinstruction_asneeded_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstructionAsneeded,
 ) {
   decode.one_of(
     {
       use value <- decode.field("asNeededBoolean", decode.bool)
       decode.success(
-        DosagePotatomedicationrequestDosageinstructionAsneededBoolean(value),
+        DosagePotatoMedicationrequestDosageinstructionAsneededBoolean(value),
       )
     },
     [
@@ -7806,7 +7822,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_asneeded_decoder() -> De
           potatocodeableconcept_decoder(),
         )
         decode.success(
-          DosagePotatomedicationrequestDosageinstructionAsneededCodeableconcept(
+          DosagePotatoMedicationrequestDosageinstructionAsneededCodeableconcept(
             value,
           ),
         )
@@ -7815,15 +7831,15 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_asneeded_decoder() -> De
   )
 }
 
-pub fn dosage_potatomedicationrequest_dosageinstruction_decoder() -> Decoder(
-  DosagePotatomedicationrequestDosageinstruction,
+pub fn dosage_potato_medicationrequest_dosageinstruction_decoder() -> Decoder(
+  DosagePotatoMedicationrequestDosageinstruction,
 ) {
   use <- decode.recursive
   use timing <- decode.optional_field(
     "timing",
     None,
     decode.optional(
-      dosage_potatomedicationrequest_dosageinstruction_timing_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_timing_decoder(),
     ),
   )
   use text <- decode_optional_string("text")
@@ -7831,7 +7847,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_decoder() -> Decoder(
     "site",
     None,
     decode.optional(
-      dosage_potatomedicationrequest_dosageinstruction_site_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_site_decoder(),
     ),
   )
   use sequence <- decode.optional_field(
@@ -7843,7 +7859,7 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_decoder() -> Decoder(
     "route",
     None,
     decode.optional(
-      dosage_potatomedicationrequest_dosageinstruction_route_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_route_decoder(),
     ),
   )
   use patient_instruction <- decode_optional_string("patientInstruction")
@@ -7851,14 +7867,14 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_decoder() -> Decoder(
     "method",
     None,
     decode.optional(
-      dosage_potatomedicationrequest_dosageinstruction_method_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_method_decoder(),
     ),
   )
   use max_dose_per_period <- decode.optional_field(
     "maxDosePerPeriod",
     None,
     decode.optional(
-      dosage_potatomedicationrequest_dosageinstruction_maxdoseperperiod_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_maxdoseperperiod_decoder(),
     ),
   )
   use max_dose_per_lifetime <- decode.optional_field(
@@ -7876,23 +7892,23 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_decoder() -> Decoder(
     "doseAndRate",
     [],
     decode.list(
-      dosage_potatomedicationrequest_dosageinstruction_doseandrate_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_doseandrate_decoder(),
     ),
   )
   use as_needed <- decode.then(
     none_if_omitted(
-      dosage_potatomedicationrequest_dosageinstruction_asneeded_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_asneeded_decoder(),
     ),
   )
   use additional_instruction <- decode.optional_field(
     "additionalInstruction",
     [],
     decode.list(
-      dosage_potatomedicationrequest_dosageinstruction_additionalinstruction_decoder(),
+      dosage_potato_medicationrequest_dosageinstruction_additionalinstruction_decoder(),
     ),
   )
   let placeholder =
-    DosagePotatomedicationrequestDosageinstruction(
+    DosagePotatoMedicationrequestDosageinstruction(
       timing:,
       text:,
       site:,
@@ -7911,14 +7927,14 @@ pub fn dosage_potatomedicationrequest_dosageinstruction_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn humanname_potatopatient_name_decoder() -> Decoder(
-  HumannamePotatopatientName,
+pub fn humanname_potato_patient_name_decoder() -> Decoder(
+  HumannamePotatoPatientName,
 ) {
   use <- decode.recursive
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.nameuse_decoder()),
+    decode.optional(valueset.name_use_decoder()),
   )
   use text <- decode_optional_string("text")
   use suffix <- decode.optional_field("suffix", [], decode.list(decode.string))
@@ -7932,7 +7948,7 @@ pub fn humanname_potatopatient_name_decoder() -> Decoder(
   use given <- decode.optional_field("given", [], decode.list(decode.string))
   use family <- decode_optional_string("family")
   let placeholder =
-    HumannamePotatopatientName(
+    HumannamePotatoPatientName(
       use_:,
       text:,
       suffix:,
@@ -7945,8 +7961,8 @@ pub fn humanname_potatopatient_name_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn identifier_potatoencounter_identifier_type_decoder() -> Decoder(
-  IdentifierPotatoencounterIdentifierType,
+pub fn identifier_potato_encounter_identifier_type_decoder() -> Decoder(
+  IdentifierPotatoEncounterIdentifierType,
 ) {
   use <- decode.recursive
   use text <- decode_optional_string("text")
@@ -7956,12 +7972,12 @@ pub fn identifier_potatoencounter_identifier_type_decoder() -> Decoder(
     [],
     decode.list(potatocoding_decoder()),
   )
-  let placeholder = IdentifierPotatoencounterIdentifierType(text:, id:, coding:)
+  let placeholder = IdentifierPotatoEncounterIdentifierType(text:, id:, coding:)
   decode.success(placeholder)
 }
 
-pub fn identifier_potatoencounter_identifier_assigner_decoder() -> Decoder(
-  IdentifierPotatoencounterIdentifierAssigner,
+pub fn identifier_potato_encounter_identifier_assigner_decoder() -> Decoder(
+  IdentifierPotatoEncounterIdentifierAssigner,
 ) {
   use <- decode.recursive
   use type_ <- decode_optional_string("type")
@@ -7974,7 +7990,7 @@ pub fn identifier_potatoencounter_identifier_assigner_decoder() -> Decoder(
   use id <- decode_optional_string("id")
   use display <- decode_optional_string("display")
   let placeholder =
-    IdentifierPotatoencounterIdentifierAssigner(
+    IdentifierPotatoEncounterIdentifierAssigner(
       type_:,
       reference:,
       identifier:,
@@ -7984,20 +8000,20 @@ pub fn identifier_potatoencounter_identifier_assigner_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn identifier_potatoencounter_identifier_decoder() -> Decoder(
-  IdentifierPotatoencounterIdentifier,
+pub fn identifier_potato_encounter_identifier_decoder() -> Decoder(
+  IdentifierPotatoEncounterIdentifier,
 ) {
   use <- decode.recursive
   use value <- decode.field("value", decode.string)
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.identifieruse_decoder()),
+    decode.optional(valueset.identifier_use_decoder()),
   )
   use type_ <- decode.optional_field(
     "type",
     None,
-    decode.optional(identifier_potatoencounter_identifier_type_decoder()),
+    decode.optional(identifier_potato_encounter_identifier_type_decoder()),
   )
   use system <- decode.field("system", decode.string)
   use period <- decode.optional_field(
@@ -8009,10 +8025,10 @@ pub fn identifier_potatoencounter_identifier_decoder() -> Decoder(
   use assigner <- decode.optional_field(
     "assigner",
     None,
-    decode.optional(identifier_potatoencounter_identifier_assigner_decoder()),
+    decode.optional(identifier_potato_encounter_identifier_assigner_decoder()),
   )
   let placeholder =
-    IdentifierPotatoencounterIdentifier(
+    IdentifierPotatoEncounterIdentifier(
       value:,
       use_:,
       type_:,
@@ -8024,8 +8040,8 @@ pub fn identifier_potatoencounter_identifier_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn identifier_potatopatient_identifier_type_decoder() -> Decoder(
-  IdentifierPotatopatientIdentifierType,
+pub fn identifier_potato_patient_identifier_type_decoder() -> Decoder(
+  IdentifierPotatoPatientIdentifierType,
 ) {
   use <- decode.recursive
   use text <- decode_optional_string("text")
@@ -8035,12 +8051,12 @@ pub fn identifier_potatopatient_identifier_type_decoder() -> Decoder(
     [],
     decode.list(potatocoding_decoder()),
   )
-  let placeholder = IdentifierPotatopatientIdentifierType(text:, id:, coding:)
+  let placeholder = IdentifierPotatoPatientIdentifierType(text:, id:, coding:)
   decode.success(placeholder)
 }
 
-pub fn identifier_potatopatient_identifier_assigner_decoder() -> Decoder(
-  IdentifierPotatopatientIdentifierAssigner,
+pub fn identifier_potato_patient_identifier_assigner_decoder() -> Decoder(
+  IdentifierPotatoPatientIdentifierAssigner,
 ) {
   use <- decode.recursive
   use type_ <- decode_optional_string("type")
@@ -8053,7 +8069,7 @@ pub fn identifier_potatopatient_identifier_assigner_decoder() -> Decoder(
   use id <- decode_optional_string("id")
   use display <- decode_optional_string("display")
   let placeholder =
-    IdentifierPotatopatientIdentifierAssigner(
+    IdentifierPotatoPatientIdentifierAssigner(
       type_:,
       reference:,
       identifier:,
@@ -8063,20 +8079,20 @@ pub fn identifier_potatopatient_identifier_assigner_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn identifier_potatopatient_identifier_decoder() -> Decoder(
-  IdentifierPotatopatientIdentifier,
+pub fn identifier_potato_patient_identifier_decoder() -> Decoder(
+  IdentifierPotatoPatientIdentifier,
 ) {
   use <- decode.recursive
   use value <- decode.field("value", decode.string)
   use use_ <- decode.optional_field(
     "use",
     None,
-    decode.optional(valuesets.identifieruse_decoder()),
+    decode.optional(valueset.identifier_use_decoder()),
   )
   use type_ <- decode.optional_field(
     "type",
     None,
-    decode.optional(identifier_potatopatient_identifier_type_decoder()),
+    decode.optional(identifier_potato_patient_identifier_type_decoder()),
   )
   use system <- decode.field("system", decode.string)
   use period <- decode.optional_field(
@@ -8088,10 +8104,10 @@ pub fn identifier_potatopatient_identifier_decoder() -> Decoder(
   use assigner <- decode.optional_field(
     "assigner",
     None,
-    decode.optional(identifier_potatopatient_identifier_assigner_decoder()),
+    decode.optional(identifier_potato_patient_identifier_assigner_decoder()),
   )
   let placeholder =
-    IdentifierPotatopatientIdentifier(
+    IdentifierPotatoPatientIdentifier(
       value:,
       use_:,
       type_:,
@@ -8103,7 +8119,7 @@ pub fn identifier_potatopatient_identifier_decoder() -> Decoder(
   decode.success(placeholder)
 }
 
-pub fn meta_potatocondition_meta_decoder() -> Decoder(MetaPotatoconditionMeta) {
+pub fn meta_potato_condition_meta_decoder() -> Decoder(MetaPotatoConditionMeta) {
   use <- decode.recursive
   use version_id <- decode_optional_string("versionId")
   use tag <- decode.optional_field(
@@ -8129,7 +8145,7 @@ pub fn meta_potatocondition_meta_decoder() -> Decoder(MetaPotatoconditionMeta) {
   )
   use id <- decode_optional_string("id")
   let placeholder =
-    MetaPotatoconditionMeta(
+    MetaPotatoConditionMeta(
       version_id:,
       tag:,
       source:,
@@ -8141,7 +8157,7 @@ pub fn meta_potatocondition_meta_decoder() -> Decoder(MetaPotatoconditionMeta) {
   decode.success(placeholder)
 }
 
-pub fn meta_potatoencounter_meta_decoder() -> Decoder(MetaPotatoencounterMeta) {
+pub fn meta_potato_encounter_meta_decoder() -> Decoder(MetaPotatoEncounterMeta) {
   use <- decode.recursive
   use version_id <- decode_optional_string("versionId")
   use tag <- decode.optional_field(
@@ -8167,7 +8183,7 @@ pub fn meta_potatoencounter_meta_decoder() -> Decoder(MetaPotatoencounterMeta) {
   )
   use id <- decode_optional_string("id")
   let placeholder =
-    MetaPotatoencounterMeta(
+    MetaPotatoEncounterMeta(
       version_id:,
       tag:,
       source:,

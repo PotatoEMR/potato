@@ -1,6 +1,6 @@
 import fhir/potato_client_1_0_0/client_rsvp
-import fhir/potato_client_1_0_0/resources
-import fhir/potato_client_1_0_0/search_params
+import fhir/potato_client_1_0_0/resource
+import fhir/potato_client_1_0_0/search_param
 import glaze/oat/table
 import gleam/list
 import gleam/option.{None, Some}
@@ -31,7 +31,7 @@ pub type SearchPatient {
 }
 
 pub type SearchPatientResults {
-  SearchPatientResultsPats(pats: List(resources.Potatopatient))
+  SearchPatientResultsPats(pats: List(resource.PotatoPatient))
   SearchPatientResultsErrMsg(err_msg: String)
   SearchPatientResultsLoadingMsg
   SearchPatientResultsEmptyMsg
@@ -42,9 +42,9 @@ pub type SearchPatientResults {
 pub type Msg {
   UserTypedSearchPatient(String)
   ServerReturnedSearchPatients(
-    Result(List(resources.Potatopatient), client_rsvp.Err),
+    Result(List(resource.PotatoPatient), client_rsvp.Err),
   )
-  UserClickedPatient(patient: resources.Potatopatient)
+  UserClickedPatient(patient: resource.PotatoPatient)
 }
 
 // in addition to returning a search patient model and effect,
@@ -55,7 +55,7 @@ pub fn update(
   msg: Msg,
   client: client_rsvp.FhirClient,
   client_err_msg: fn(client_rsvp.Err) -> String,
-) -> #(Model, Effect(Msg), option.Option(resources.Potatopatient)) {
+) -> #(Model, Effect(Msg), option.Option(resource.PotatoPatient)) {
   case msg {
     UserTypedSearchPatient(search_text) -> {
       case search_text {
@@ -67,9 +67,9 @@ pub fn update(
         }
         _ -> {
           let search: Effect(Msg) =
-            client_rsvp.potatopatient_search(
-              search_params.Potatopatient(
-                ..search_params.potatopatient_new(),
+            client_rsvp.potato_patient_search(
+              search_param.PotatoPatient(
+                ..search_param.potato_patient_new(),
                 name: Some(search_text),
               ),
               client,
@@ -188,10 +188,7 @@ fn patient_column_headers(headers: List(String)) {
   list.map(headers, fn(header) { table.th([], [h.text(header)]) })
 }
 
-fn clickable_patient_row(
-  patient: resources.Potatopatient,
-  items: List(String),
-) {
+fn clickable_patient_row(patient: resource.PotatoPatient, items: List(String)) {
   table.tr(
     [],
     list.map(items, fn(item) {
