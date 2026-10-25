@@ -4,7 +4,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 
-pub fn to_string(params) {
+pub fn to_string(params: List(#(String, Option(String)))) -> String {
   list.fold(
     from: [],
     over: params,
@@ -60,15 +60,15 @@ pub type Patient {
   )
 }
 
-pub fn bundle_new() {
+pub fn bundle_new() -> Bundle {
   Bundle(None, None, None, None, None)
 }
 
-pub fn operationoutcome_new() {
+pub fn operationoutcome_new() -> Operationoutcome {
   Operationoutcome
 }
 
-pub fn patient_new() {
+pub fn patient_new() -> Patient {
   Patient(
     None,
     None,

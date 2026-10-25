@@ -1,11 +1,11 @@
 ////[https://hl7.org/fhir/r4](https://hl7.org/fhir/r4) resources
 
-import fhir/r4/complex_types.{
+import fhir/r4/complex_type.{
   type List1, decode_optional_bool, decode_optional_string, list1_decoder,
   list1_to_json, none_if_omitted,
 } as ct
-import fhir/r4/primitive_types.{type Date, type DateTime} as pt
-import fhir/r4/valuesets
+import fhir/r4/primitive_type.{type Date, type DateTime} as pt
+import fhir/r4/valueset
 import gleam/bool
 import gleam/dynamic/decode.{type Decoder}
 import gleam/json.{type Json}
@@ -36,19 +36,19 @@ pub fn bundle_entry_new() -> BundleEntry {
 ///[http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource](http://hl7.org/fhir/r4/StructureDefinition/Bundle#resource)
 pub type Bundle {
   Bundle(
-    type_: valuesets.Bundletype,
+    type_: valueset.BundleType,
     link: List(BundleLink),
     entry: List(BundleEntry),
   )
 }
 
-pub fn bundle_new(type_ type_: valuesets.Bundletype) -> Bundle {
+pub fn bundle_new(type_ type_: valueset.BundleType) -> Bundle {
   Bundle(entry: [], link: [], type_:)
 }
 
 pub fn bundle_to_json(bundle: Bundle) -> Json {
   let fields = [
-    #("type", valuesets.bundletype_to_json(bundle.type_)),
+    #("type", valueset.bundle_type_to_json(bundle.type_)),
   ]
   let fields = case bundle.entry {
     [] -> fields
@@ -74,11 +74,11 @@ pub fn bundle_decoder() -> Decoder(Bundle) {
     [],
     decode.list(bundle_link_decoder()),
   )
-  use type_ <- decode.field("type", valuesets.bundletype_decoder())
+  use type_ <- decode.field("type", valueset.bundle_type_decoder())
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "Bundle",
+    resource_type != "Bundle",
     decode.failure(bundle_new(type_:), "resourceType"),
   )
   decode.success(Bundle(entry:, link:, type_:))
@@ -86,7 +86,7 @@ pub fn bundle_decoder() -> Decoder(Bundle) {
 
 pub type BundleForgiving {
   BundleForgiving(
-    type_: valuesets.Bundletype,
+    type_: valueset.BundleType,
     link: List(BundleLink),
     entry: List(BundleEntryForgiving),
   )
@@ -104,11 +104,11 @@ pub fn bundle_decoder_forgiving() -> Decoder(BundleForgiving) {
     [],
     decode.list(bundle_link_decoder()),
   )
-  use type_ <- decode.field("type", valuesets.bundletype_decoder())
+  use type_ <- decode.field("type", valueset.bundle_type_decoder())
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "Bundle",
+    resource_type != "Bundle",
     decode.failure(BundleForgiving(entry:, link:, type_:), "resourceType"),
   )
   decode.success(BundleForgiving(entry:, link:, type_:))
@@ -117,7 +117,7 @@ pub fn bundle_decoder_forgiving() -> Decoder(BundleForgiving) {
 pub fn bundle_entry_to_json(bundle_entry: BundleEntry) -> Json {
   let fields = []
   let fields = case bundle_entry.resource {
-    Some(v) -> [#("resource", resource_to_json(v)), ..fields]
+    Some(v) -> [#("resource", to_json(v)), ..fields]
     None -> fields
   }
   json.object(fields)
@@ -147,7 +147,9 @@ pub fn bundle_entry_decoder_forgiving() -> Decoder(BundleEntryForgiving) {
     decode.optional(
       decode.one_of(resource_decoder() |> decode.map(Ok), [
         decode.dynamic
-        |> decode.map(fn(res_json) { decode.run(res_json, resource_decoder()) }),
+        |> decode.map(fn(resource_json) {
+          decode.run(resource_json, resource_decoder())
+        }),
       ]),
     ),
   )
@@ -172,14 +174,14 @@ pub fn bundle_link_decoder() -> Decoder(BundleLink) {
 ///[http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource](http://hl7.org/fhir/r4/StructureDefinition/OperationOutcome#resource)
 pub type OperationoutcomeIssue {
   OperationoutcomeIssue(
-    severity: valuesets.Issueseverity,
-    code: valuesets.Issuetype,
+    severity: valueset.IssueSeverity,
+    code: valueset.IssueType,
   )
 }
 
 pub fn operationoutcome_issue_new(
-  code code: valuesets.Issuetype,
-  severity severity: valuesets.Issueseverity,
+  code code: valueset.IssueType,
+  severity severity: valueset.IssueSeverity,
 ) -> OperationoutcomeIssue {
   OperationoutcomeIssue(code:, severity:)
 }
@@ -210,9 +212,9 @@ pub fn operationoutcome_decoder() -> Decoder(Operationoutcome) {
   use <- decode.recursive
   use issue <- list1_decoder("issue", operationoutcome_issue_decoder())
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "OperationOutcome",
+    resource_type != "OperationOutcome",
     decode.failure(operationoutcome_new(issue:), "resourceType"),
   )
   decode.success(Operationoutcome(issue:))
@@ -222,10 +224,10 @@ pub fn operationoutcome_issue_to_json(
   operationoutcome_issue: OperationoutcomeIssue,
 ) -> Json {
   let fields = [
-    #("code", valuesets.issuetype_to_json(operationoutcome_issue.code)),
+    #("code", valueset.issue_type_to_json(operationoutcome_issue.code)),
     #(
       "severity",
-      valuesets.issueseverity_to_json(operationoutcome_issue.severity),
+      valueset.issue_severity_to_json(operationoutcome_issue.severity),
     ),
   ]
   json.object(fields)
@@ -233,8 +235,8 @@ pub fn operationoutcome_issue_to_json(
 
 pub fn operationoutcome_issue_decoder() -> Decoder(OperationoutcomeIssue) {
   use <- decode.recursive
-  use code <- decode.field("code", valuesets.issuetype_decoder())
-  use severity <- decode.field("severity", valuesets.issueseverity_decoder())
+  use code <- decode.field("code", valueset.issue_type_decoder())
+  use severity <- decode.field("severity", valueset.issue_severity_decoder())
   decode.success(OperationoutcomeIssue(code:, severity:))
 }
 
@@ -256,9 +258,9 @@ pub fn parameters_to_json(_parameters: Parameters) -> Json {
 pub fn parameters_decoder() -> Decoder(Parameters) {
   use <- decode.recursive
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "Parameters",
+    resource_type != "Parameters",
     decode.failure(parameters_new(), "resourceType"),
   )
   decode.success(Parameters)
@@ -271,12 +273,12 @@ pub type PatientLink {
     extension: List(ct.Extension),
     modifier_extension: List(ct.Extension),
     other: ct.Reference,
-    type_: valuesets.Linktype,
+    type_: valueset.LinkType,
   )
 }
 
 pub fn patient_link_new(
-  type_ type_: valuesets.Linktype,
+  type_ type_: valueset.LinkType,
   other other: ct.Reference,
 ) -> PatientLink {
   PatientLink(type_:, other:, modifier_extension: [], extension: [], id: None)
@@ -292,7 +294,7 @@ pub type PatientContact {
     name: Option(ct.Humanname),
     telecom: List(ct.Contactpoint),
     address: Option(ct.Address),
-    gender: Option(valuesets.Administrativegender),
+    gender: Option(valueset.AdministrativeGender),
     organization: Option(ct.Reference),
     period: Option(ct.Period),
   )
@@ -351,7 +353,7 @@ pub type Patient {
     active: Option(Bool),
     name: List(ct.Humanname),
     telecom: List(ct.Contactpoint),
-    gender: Option(valuesets.Administrativegender),
+    gender: Option(valueset.AdministrativeGender),
     birth_date: Option(Date),
     deceased: Option(PatientDeceased),
     address: List(ct.Address),
@@ -372,8 +374,8 @@ pub type PatientDeceased {
   PatientDeceasedDatetime(deceased: DateTime)
 }
 
-pub fn patient_deceased_to_json(elt: PatientDeceased) -> Json {
-  case elt {
+pub fn patient_deceased_to_json(element: PatientDeceased) -> Json {
+  case element {
     PatientDeceasedBoolean(v) -> json.bool(v)
     PatientDeceasedDatetime(v) -> pt.datetime_to_json(v)
   }
@@ -396,8 +398,8 @@ pub type PatientMultiplebirth {
   PatientMultiplebirthInteger(multiple_birth: Int)
 }
 
-pub fn patient_multiplebirth_to_json(elt: PatientMultiplebirth) -> Json {
-  case elt {
+pub fn patient_multiplebirth_to_json(element: PatientMultiplebirth) -> Json {
+  case element {
     PatientMultiplebirthBoolean(v) -> json.bool(v)
     PatientMultiplebirthInteger(v) -> json.int(v)
   }
@@ -532,7 +534,7 @@ pub fn patient_to_json(patient: Patient) -> Json {
   }
   let fields = case patient.gender {
     Some(v) -> [
-      #("gender", valuesets.administrativegender_to_json(v)),
+      #("gender", valueset.administrative_gender_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -578,10 +580,7 @@ pub fn patient_to_json(patient: Patient) -> Json {
   }
   let fields = case patient.contained {
     [] -> fields
-    _ -> [
-      #("contained", json.array(patient.contained, resource_to_json)),
-      ..fields
-    ]
+    _ -> [#("contained", json.array(patient.contained, to_json)), ..fields]
   }
   let fields = case patient.text {
     Some(v) -> [#("text", ct.narrative_to_json(v)), ..fields]
@@ -661,7 +660,7 @@ pub fn patient_decoder() -> Decoder(Patient) {
   use gender <- decode.optional_field(
     "gender",
     None,
-    decode.optional(valuesets.administrativegender_decoder()),
+    decode.optional(valueset.administrative_gender_decoder()),
   )
   use telecom <- decode.optional_field(
     "telecom",
@@ -708,9 +707,9 @@ pub fn patient_decoder() -> Decoder(Patient) {
   )
   use id <- decode_optional_string("id")
 
-  use rt <- decode.field("resourceType", decode.string)
+  use resource_type <- decode.field("resourceType", decode.string)
   use <- bool.guard(
-    rt != "Patient",
+    resource_type != "Patient",
     decode.failure(patient_new(), "resourceType"),
   )
   decode.success(Patient(
@@ -817,7 +816,7 @@ pub fn patient_contact_to_json(patient_contact: PatientContact) -> Json {
   }
   let fields = case patient_contact.gender {
     Some(v) -> [
-      #("gender", valuesets.administrativegender_to_json(v)),
+      #("gender", valueset.administrative_gender_to_json(v)),
       ..fields
     ]
     None -> fields
@@ -889,7 +888,7 @@ pub fn patient_contact_decoder() -> Decoder(PatientContact) {
   use gender <- decode.optional_field(
     "gender",
     None,
-    decode.optional(valuesets.administrativegender_decoder()),
+    decode.optional(valueset.administrative_gender_decoder()),
   )
   use address <- decode.optional_field(
     "address",
@@ -938,7 +937,7 @@ pub fn patient_contact_decoder() -> Decoder(PatientContact) {
 
 pub fn patient_link_to_json(patient_link: PatientLink) -> Json {
   let fields = [
-    #("type", valuesets.linktype_to_json(patient_link.type_)),
+    #("type", valueset.link_type_to_json(patient_link.type_)),
     #("other", ct.reference_to_json(patient_link.other)),
   ]
   let fields = case patient_link.modifier_extension {
@@ -967,7 +966,7 @@ pub fn patient_link_to_json(patient_link: PatientLink) -> Json {
 
 pub fn patient_link_decoder() -> Decoder(PatientLink) {
   use <- decode.recursive
-  use type_ <- decode.field("type", valuesets.linktype_decoder())
+  use type_ <- decode.field("type", valueset.link_type_decoder())
   use other <- decode.field("other", ct.reference_decoder())
   use modifier_extension <- decode.optional_field(
     "modifierExtension",
@@ -990,18 +989,18 @@ pub fn patient_link_decoder() -> Decoder(PatientLink) {
 }
 
 pub type ResourceType {
-  RtBundle
-  RtOperationoutcome
-  RtParameters
-  RtPatient
+  ResourceTypeBundle
+  ResourceTypeOperationoutcome
+  ResourceTypeParameters
+  ResourceTypePatient
 }
 
 pub fn resource_type_to_string(resource_type: ResourceType) -> String {
   case resource_type {
-    RtBundle -> "Bundle"
-    RtOperationoutcome -> "OperationOutcome"
-    RtParameters -> "Parameters"
-    RtPatient -> "Patient"
+    ResourceTypeBundle -> "Bundle"
+    ResourceTypeOperationoutcome -> "OperationOutcome"
+    ResourceTypeParameters -> "Parameters"
+    ResourceTypePatient -> "Patient"
   }
 }
 
@@ -1012,7 +1011,7 @@ pub type Resource {
   ResourcePatient(Patient)
 }
 
-pub fn resource_to_json(resource: Resource) {
+pub fn to_json(resource: Resource) -> Json {
   case resource {
     ResourceBundle(resource) -> bundle_to_json(resource)
     ResourceOperationoutcome(resource) -> operationoutcome_to_json(resource)

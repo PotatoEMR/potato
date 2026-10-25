@@ -4,7 +4,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 
-pub fn to_string(params) {
+pub fn to_string(params: List(#(String, Option(String)))) -> String {
   list.fold(
     from: [],
     over: params,
@@ -32,8 +32,8 @@ pub type Operationoutcome {
   Operationoutcome
 }
 
-pub type Potatoserverpractitioner {
-  Potatoserverpractitioner(
+pub type PotatoserverPractitioner {
+  PotatoserverPractitioner(
     identifier: Option(String),
     given: Option(String),
     address: Option(String),
@@ -54,16 +54,16 @@ pub type Potatoserverpractitioner {
   )
 }
 
-pub fn bundle_new() {
+pub fn bundle_new() -> Bundle {
   Bundle(None, None, None, None, None)
 }
 
-pub fn operationoutcome_new() {
+pub fn operationoutcome_new() -> Operationoutcome {
   Operationoutcome
 }
 
-pub fn potatoserverpractitioner_new() {
-  Potatoserverpractitioner(
+pub fn potatoserver_practitioner_new() -> PotatoserverPractitioner {
+  PotatoserverPractitioner(
     None,
     None,
     None,

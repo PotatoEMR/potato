@@ -15,8 +15,8 @@ pub type List1(a) {
   List1(first: a, rest: List(a))
 }
 
-pub fn list1_to_json(l: List1(a), tj: fn(a) -> Json) {
-  json.array([l.first, ..l.rest], tj)
+pub fn list1_to_json(l: List1(a), to_json: fn(a) -> Json) -> Json {
+  json.array([l.first, ..l.rest], to_json)
 }
 
 pub fn list1_decoder(
@@ -24,8 +24,8 @@ pub fn list1_decoder(
   inner: decode.Decoder(a),
   next: fn(List1(a)) -> decode.Decoder(b),
 ) -> decode.Decoder(b) {
-  use lst <- decode.field(name, decode.list(inner))
-  case lst {
+  use items <- decode.field(name, decode.list(inner))
+  case items {
     [first, ..rest] -> next(List1(first:, rest:))
     _ -> {
       use fail_decode_to_satisfy_gleam_type <- decode.field(name, inner)
