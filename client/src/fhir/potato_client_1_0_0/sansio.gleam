@@ -177,7 +177,8 @@ pub type ErrRequest {
   ErrNoId
 }
 
-pub const err_request_to_string = "the resource you're using has no id, but a resource id is needed for this operation"
+pub const err_request_to_string =
+  "the resource you're using has no id, but a resource id is needed for this operation"
 
 pub fn any_create_request(
   resource_json: Json,
@@ -559,7 +560,7 @@ pub fn bundle_to_groupedresources(
 ) -> GroupedResources {
   list.fold(
     from: groupedresources_new(),
-    over: bundle.entry,
+    over: list.reverse(bundle.entry),
     with: fn(acc, entry) {
       case entry.resource {
         None -> acc

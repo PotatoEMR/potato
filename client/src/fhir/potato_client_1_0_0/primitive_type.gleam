@@ -643,11 +643,8 @@ pub fn instant_to_string(instant: Instant) -> String {
   ])
 }
 
-pub const instant_failure_variant: Instant = Instant(
-  calendar.Date(1, calendar.January, 1),
-  Time(0, 0, 0, None),
-  Z,
-)
+pub const instant_failure_variant: Instant =
+  Instant(calendar.Date(1, calendar.January, 1), Time(0, 0, 0, None), Z)
 
 pub fn instant_decoder() -> decode.Decoder(Instant) {
   use s <- decode.then(decode.string)

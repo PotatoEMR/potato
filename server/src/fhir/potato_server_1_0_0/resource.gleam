@@ -143,12 +143,11 @@ pub fn bundle_entry_decoder_forgiving() -> Decoder(BundleEntryForgiving) {
     "resource",
     None,
     decode.optional(
-      decode.one_of(resource_decoder() |> decode.map(Ok), [
-        decode.dynamic
-        |> decode.map(fn(resource_json) {
-          decode.run(resource_json, resource_decoder())
-        }),
-      ]),
+      decode.dynamic
+      |> decode.map(fn(resource_json) {
+        // decode.run returns Ok(resource) or Error(errs) as forgiving bundle decoder wants to preserve errors instead of failing whole bundle decoder
+        decode.run(resource_json, resource_decoder())
+      }),
     ),
   )
   decode.success(BundleEntryForgiving(resource:))

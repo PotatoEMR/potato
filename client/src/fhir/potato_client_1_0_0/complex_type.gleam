@@ -758,26 +758,21 @@ pub fn potatoannotation_to_json(potatoannotation: Potatoannotation) -> Json {
     None -> fields
   }
   let fields = case potatoannotation.author {
-    Some(v) -> [
-      #(
-        "author"
-          <> case v {
-          PotatoannotationAuthorReference(_) -> "Reference"
-          PotatoannotationAuthorString(_) -> "String"
-        },
-        potatoannotation_author_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potatoannotation_author_to_json_field(v), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatoannotation_author_to_json(value: PotatoannotationAuthor) -> Json {
+pub fn potatoannotation_author_to_json_field(
+  value: PotatoannotationAuthor,
+) -> #(String, Json) {
   case value {
-    PotatoannotationAuthorReference(value) -> potatoreference_to_json(value)
-    PotatoannotationAuthorString(value) -> json.string(value)
+    PotatoannotationAuthorReference(value) -> #(
+      "authorReference",
+      potatoreference_to_json(value),
+    )
+    PotatoannotationAuthorString(value) -> #("authorString", json.string(value))
   }
 }
 
@@ -1112,17 +1107,7 @@ pub fn potatodosage_to_json(potatodosage: Potatodosage) -> Json {
     ]
   }
   let fields = case potatodosage.as_needed {
-    Some(v) -> [
-      #(
-        "asNeeded"
-          <> case v {
-          PotatodosageAsneededBoolean(_) -> "Boolean"
-          PotatodosageAsneededCodeableconcept(_) -> "CodeableConcept"
-        },
-        potatodosage_asneeded_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potatodosage_asneeded_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case potatodosage.additional_instruction {
@@ -1138,11 +1123,15 @@ pub fn potatodosage_to_json(potatodosage: Potatodosage) -> Json {
   json.object(fields)
 }
 
-pub fn potatodosage_asneeded_to_json(value: PotatodosageAsneeded) -> Json {
+pub fn potatodosage_asneeded_to_json_field(
+  value: PotatodosageAsneeded,
+) -> #(String, Json) {
   case value {
-    PotatodosageAsneededBoolean(value) -> json.bool(value)
-    PotatodosageAsneededCodeableconcept(value) ->
-      potatocodeableconcept_to_json(value)
+    PotatodosageAsneededBoolean(value) -> #("asNeededBoolean", json.bool(value))
+    PotatodosageAsneededCodeableconcept(value) -> #(
+      "asNeededCodeableConcept",
+      potatocodeableconcept_to_json(value),
+    )
   }
 }
 
@@ -1155,18 +1144,7 @@ pub fn potatodosage_doseandrate_to_json(
     None -> fields
   }
   let fields = case potatodosage_doseandrate.rate {
-    Some(v) -> [
-      #(
-        "rate"
-          <> case v {
-          PotatodosageDoseandrateRateRatio(_) -> "Ratio"
-          PotatodosageDoseandrateRateRange(_) -> "Range"
-          PotatodosageDoseandrateRateQuantity(_) -> "Quantity"
-        },
-        potatodosage_doseandrate_rate_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potatodosage_doseandrate_rate_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case potatodosage_doseandrate.id {
@@ -1174,40 +1152,43 @@ pub fn potatodosage_doseandrate_to_json(
     None -> fields
   }
   let fields = case potatodosage_doseandrate.dose {
-    Some(v) -> [
-      #(
-        "dose"
-          <> case v {
-          PotatodosageDoseandrateDoseRange(_) -> "Range"
-          PotatodosageDoseandrateDoseQuantity(_) -> "Quantity"
-        },
-        potatodosage_doseandrate_dose_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potatodosage_doseandrate_dose_to_json_field(v), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatodosage_doseandrate_dose_to_json(
+pub fn potatodosage_doseandrate_dose_to_json_field(
   value: PotatodosageDoseandrateDose,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatodosageDoseandrateDoseRange(value) -> potatorange_to_json(value)
-    PotatodosageDoseandrateDoseQuantity(value) ->
-      potatosimplequantity_to_json(value)
+    PotatodosageDoseandrateDoseRange(value) -> #(
+      "doseRange",
+      potatorange_to_json(value),
+    )
+    PotatodosageDoseandrateDoseQuantity(value) -> #(
+      "doseQuantity",
+      potatosimplequantity_to_json(value),
+    )
   }
 }
 
-pub fn potatodosage_doseandrate_rate_to_json(
+pub fn potatodosage_doseandrate_rate_to_json_field(
   value: PotatodosageDoseandrateRate,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatodosageDoseandrateRateRatio(value) -> potatoratio_to_json(value)
-    PotatodosageDoseandrateRateRange(value) -> potatorange_to_json(value)
-    PotatodosageDoseandrateRateQuantity(value) ->
-      potatosimplequantity_to_json(value)
+    PotatodosageDoseandrateRateRatio(value) -> #(
+      "rateRatio",
+      potatoratio_to_json(value),
+    )
+    PotatodosageDoseandrateRateRange(value) -> #(
+      "rateRange",
+      potatorange_to_json(value),
+    )
+    PotatodosageDoseandrateRateQuantity(value) -> #(
+      "rateQuantity",
+      potatosimplequantity_to_json(value),
+    )
   }
 }
 
@@ -1858,30 +1839,28 @@ pub fn potatotiming_repeat_to_json(
     None -> fields
   }
   let fields = case potatotiming_repeat.bounds {
-    Some(v) -> [
-      #(
-        "bounds"
-          <> case v {
-          PotatotimingRepeatBoundsDuration(_) -> "Duration"
-          PotatotimingRepeatBoundsRange(_) -> "Range"
-          PotatotimingRepeatBoundsPeriod(_) -> "Period"
-        },
-        potatotiming_repeat_bounds_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potatotiming_repeat_bounds_to_json_field(v), ..fields]
     None -> fields
   }
   json.object(fields)
 }
 
-pub fn potatotiming_repeat_bounds_to_json(
+pub fn potatotiming_repeat_bounds_to_json_field(
   value: PotatotimingRepeatBounds,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatotimingRepeatBoundsDuration(value) -> potatoduration_to_json(value)
-    PotatotimingRepeatBoundsRange(value) -> potatorange_to_json(value)
-    PotatotimingRepeatBoundsPeriod(value) -> potatoperiod_to_json(value)
+    PotatotimingRepeatBoundsDuration(value) -> #(
+      "boundsDuration",
+      potatoduration_to_json(value),
+    )
+    PotatotimingRepeatBoundsRange(value) -> #(
+      "boundsRange",
+      potatorange_to_json(value),
+    )
+    PotatotimingRepeatBoundsPeriod(value) -> #(
+      "boundsPeriod",
+      potatoperiod_to_json(value),
+    )
   }
 }
 
@@ -3679,16 +3658,8 @@ pub fn dosage_potato_medicationrequest_dosageinstruction_to_json(
     dosage_potato_medicationrequest_dosageinstruction.as_needed
   {
     Some(v) -> [
-      #(
-        "asNeeded"
-          <> case v {
-          DosagePotatoMedicationrequestDosageinstructionAsneededBoolean(_) ->
-            "Boolean"
-          DosagePotatoMedicationrequestDosageinstructionAsneededCodeableconcept(
-            _,
-          ) -> "CodeableConcept"
-        },
-        dosage_potato_medicationrequest_dosageinstruction_asneeded_to_json(v),
+      dosage_potato_medicationrequest_dosageinstruction_asneeded_to_json_field(
+        v,
       ),
       ..fields
     ]
@@ -3712,14 +3683,18 @@ pub fn dosage_potato_medicationrequest_dosageinstruction_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potato_medicationrequest_dosageinstruction_asneeded_to_json(
+pub fn dosage_potato_medicationrequest_dosageinstruction_asneeded_to_json_field(
   value: DosagePotatoMedicationrequestDosageinstructionAsneeded,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    DosagePotatoMedicationrequestDosageinstructionAsneededBoolean(value) ->
-      json.bool(value)
-    DosagePotatoMedicationrequestDosageinstructionAsneededCodeableconcept(value) ->
-      potatocodeableconcept_to_json(value)
+    DosagePotatoMedicationrequestDosageinstructionAsneededBoolean(value) -> #(
+      "asNeededBoolean",
+      json.bool(value),
+    )
+    DosagePotatoMedicationrequestDosageinstructionAsneededCodeableconcept(value) -> #(
+      "asNeededCodeableConcept",
+      potatocodeableconcept_to_json(value),
+    )
   }
 }
 
@@ -3770,20 +3745,8 @@ pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_to_json(
     dosage_potato_medicationrequest_dosageinstruction_doseandrate.rate
   {
     Some(v) -> [
-      #(
-        "rate"
-          <> case v {
-          DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRatio(_) ->
-            "Ratio"
-          DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRange(_) ->
-            "Range"
-          DosagePotatoMedicationrequestDosageinstructionDoseandrateRateQuantity(
-            _,
-          ) -> "Quantity"
-        },
-        dosage_potato_medicationrequest_dosageinstruction_doseandrate_rate_to_json(
-          v,
-        ),
+      dosage_potato_medicationrequest_dosageinstruction_doseandrate_rate_to_json_field(
+        v,
       ),
       ..fields
     ]
@@ -3799,18 +3762,8 @@ pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_to_json(
     dosage_potato_medicationrequest_dosageinstruction_doseandrate.dose
   {
     Some(v) -> [
-      #(
-        "dose"
-          <> case v {
-          DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseQuantity(
-            _,
-          ) -> "Quantity"
-          DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseRange(_) ->
-            "Range"
-        },
-        dosage_potato_medicationrequest_dosageinstruction_doseandrate_dose_to_json(
-          v,
-        ),
+      dosage_potato_medicationrequest_dosageinstruction_doseandrate_dose_to_json_field(
+        v,
       ),
       ..fields
     ]
@@ -3819,27 +3772,37 @@ pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_dose_to_json(
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_dose_to_json_field(
   value: DosagePotatoMedicationrequestDosageinstructionDoseandrateDose,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseQuantity(value) ->
-      potatosimplequantity_to_json(value)
-    DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseRange(value) ->
-      potatorange_to_json(value)
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseQuantity(value) -> #(
+      "doseQuantity",
+      potatosimplequantity_to_json(value),
+    )
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateDoseRange(value) -> #(
+      "doseRange",
+      potatorange_to_json(value),
+    )
   }
 }
 
-pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_rate_to_json(
+pub fn dosage_potato_medicationrequest_dosageinstruction_doseandrate_rate_to_json_field(
   value: DosagePotatoMedicationrequestDosageinstructionDoseandrateRate,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRatio(value) ->
-      potatoratio_to_json(value)
-    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRange(value) ->
-      potatorange_to_json(value)
-    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateQuantity(value) ->
-      potatosimplequantity_to_json(value)
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRatio(value) -> #(
+      "rateRatio",
+      potatoratio_to_json(value),
+    )
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateRange(value) -> #(
+      "rateRange",
+      potatorange_to_json(value),
+    )
+    DosagePotatoMedicationrequestDosageinstructionDoseandrateRateQuantity(value) -> #(
+      "rateQuantity",
+      potatosimplequantity_to_json(value),
+    )
   }
 }
 
@@ -4107,22 +4070,8 @@ pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_to_json(
     dosage_potato_medicationrequest_dosageinstruction_timing_repeat.bounds
   {
     Some(v) -> [
-      #(
-        "bounds"
-          <> case v {
-          DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsDuration(
-            _,
-          ) -> "Duration"
-          DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsRange(
-            _,
-          ) -> "Range"
-          DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
-            _,
-          ) -> "Period"
-        },
-        dosage_potato_medicationrequest_dosageinstruction_timing_repeat_bounds_to_json(
-          v,
-        ),
+      dosage_potato_medicationrequest_dosageinstruction_timing_repeat_bounds_to_json_field(
+        v,
       ),
       ..fields
     ]
@@ -4131,18 +4080,20 @@ pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_to_json(
   json.object(fields)
 }
 
-pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_bounds_to_json(
+pub fn dosage_potato_medicationrequest_dosageinstruction_timing_repeat_bounds_to_json_field(
   value: DosagePotatoMedicationrequestDosageinstructionTimingRepeatBounds,
-) -> Json {
+) -> #(String, Json) {
   case value {
     DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsDuration(
       value,
-    ) -> potatoduration_to_json(value)
-    DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsRange(value) ->
-      potatorange_to_json(value)
+    ) -> #("boundsDuration", potatoduration_to_json(value))
+    DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsRange(value) -> #(
+      "boundsRange",
+      potatorange_to_json(value),
+    )
     DosagePotatoMedicationrequestDosageinstructionTimingRepeatBoundsPeriod(
       value,
-    ) -> potatoperiod_to_json(value)
+    ) -> #("boundsPeriod", potatoperiod_to_json(value))
   }
 }
 

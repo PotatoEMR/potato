@@ -564,121 +564,94 @@ fn extension_simple_or_complex_to_json(
       "extension",
       json.array(children, extension_to_json),
     )
-    ExtensionSimple(value) -> extension_simple_to_json(value)
+    ExtensionSimple(value) -> extension_value_to_json_field(value)
   }
 }
 
-fn extension_simple_to_json(v: ExtensionValue) -> #(String, Json) {
-  #(
-    "value"
-      <> case v {
-      ExtensionValueBase64binary(_) -> "Base64Binary"
-      ExtensionValueBoolean(_) -> "Boolean"
-      ExtensionValueCanonical(_) -> "Canonical"
-      ExtensionValueCode(_) -> "Code"
-      ExtensionValueDate(_) -> "Date"
-      ExtensionValueDatetime(_) -> "DateTime"
-      ExtensionValueDecimal(_) -> "Decimal"
-      ExtensionValueId(_) -> "Id"
-      ExtensionValueInstant(_) -> "Instant"
-      ExtensionValueInteger(_) -> "Integer"
-      ExtensionValueMarkdown(_) -> "Markdown"
-      ExtensionValueOid(_) -> "Oid"
-      ExtensionValuePositiveint(_) -> "PositiveInt"
-      ExtensionValueString(_) -> "String"
-      ExtensionValueTime(_) -> "Time"
-      ExtensionValueUnsignedint(_) -> "UnsignedInt"
-      ExtensionValueUri(_) -> "Uri"
-      ExtensionValueUrl(_) -> "Url"
-      ExtensionValueUuid(_) -> "Uuid"
-      ExtensionValueAddress(_) -> "Address"
-      ExtensionValueAge(_) -> "Age"
-      ExtensionValueAnnotation(_) -> "Annotation"
-      ExtensionValueAttachment(_) -> "Attachment"
-      ExtensionValueCodeableconcept(_) -> "CodeableConcept"
-      ExtensionValueCoding(_) -> "Coding"
-      ExtensionValueContactpoint(_) -> "ContactPoint"
-      ExtensionValueCount(_) -> "Count"
-      ExtensionValueDistance(_) -> "Distance"
-      ExtensionValueDuration(_) -> "Duration"
-      ExtensionValueHumanname(_) -> "HumanName"
-      ExtensionValueIdentifier(_) -> "Identifier"
-      ExtensionValueMoney(_) -> "Money"
-      ExtensionValuePeriod(_) -> "Period"
-      ExtensionValueQuantity(_) -> "Quantity"
-      ExtensionValueRange(_) -> "Range"
-      ExtensionValueRatio(_) -> "Ratio"
-      ExtensionValueReference(_) -> "Reference"
-      ExtensionValueSampleddata(_) -> "SampledData"
-      ExtensionValueSignature(_) -> "Signature"
-      ExtensionValueTiming(_) -> "Timing"
-      ExtensionValueContactdetail(_) -> "ContactDetail"
-      ExtensionValueContributor(_) -> "Contributor"
-      ExtensionValueDatarequirement(_) -> "DataRequirement"
-      ExtensionValueExpression(_) -> "Expression"
-      ExtensionValueParameterdefinition(_) -> "ParameterDefinition"
-      ExtensionValueRelatedartifact(_) -> "RelatedArtifact"
-      ExtensionValueTriggerdefinition(_) -> "TriggerDefinition"
-      ExtensionValueUsagecontext(_) -> "UsageContext"
-      ExtensionValueDosage(_) -> "Dosage"
-      ExtensionValueMeta(_) -> "Meta"
-    },
-    extension_value_to_json(v),
-  )
-}
-
-pub fn extension_value_to_json(element: ExtensionValue) -> Json {
+pub fn extension_value_to_json_field(
+  element: ExtensionValue,
+) -> #(String, Json) {
   case element {
-    ExtensionValueBase64binary(v) -> json.string(v)
-    ExtensionValueBoolean(v) -> json.bool(v)
-    ExtensionValueCanonical(v) -> json.string(v)
-    ExtensionValueCode(v) -> json.string(v)
-    ExtensionValueDate(v) -> pt.date_to_json(v)
-    ExtensionValueDatetime(v) -> pt.datetime_to_json(v)
-    ExtensionValueDecimal(v) -> json.float(v)
-    ExtensionValueId(v) -> json.string(v)
-    ExtensionValueInstant(v) -> pt.instant_to_json(v)
-    ExtensionValueInteger(v) -> json.int(v)
-    ExtensionValueMarkdown(v) -> json.string(v)
-    ExtensionValueOid(v) -> json.string(v)
-    ExtensionValuePositiveint(v) -> json.int(v)
-    ExtensionValueString(v) -> json.string(v)
-    ExtensionValueTime(v) -> pt.time_to_json(v)
-    ExtensionValueUnsignedint(v) -> json.int(v)
-    ExtensionValueUri(v) -> json.string(v)
-    ExtensionValueUrl(v) -> json.string(v)
-    ExtensionValueUuid(v) -> json.string(v)
-    ExtensionValueAddress(v) -> address_to_json(v)
-    ExtensionValueAge(v) -> age_to_json(v)
-    ExtensionValueAnnotation(v) -> annotation_to_json(v)
-    ExtensionValueAttachment(v) -> attachment_to_json(v)
-    ExtensionValueCodeableconcept(v) -> codeableconcept_to_json(v)
-    ExtensionValueCoding(v) -> coding_to_json(v)
-    ExtensionValueContactpoint(v) -> contactpoint_to_json(v)
-    ExtensionValueCount(v) -> count_to_json(v)
-    ExtensionValueDistance(v) -> distance_to_json(v)
-    ExtensionValueDuration(v) -> duration_to_json(v)
-    ExtensionValueHumanname(v) -> humanname_to_json(v)
-    ExtensionValueIdentifier(v) -> identifier_to_json(v)
-    ExtensionValueMoney(v) -> money_to_json(v)
-    ExtensionValuePeriod(v) -> period_to_json(v)
-    ExtensionValueQuantity(v) -> quantity_to_json(v)
-    ExtensionValueRange(v) -> range_to_json(v)
-    ExtensionValueRatio(v) -> ratio_to_json(v)
-    ExtensionValueReference(v) -> reference_to_json(v)
-    ExtensionValueSampleddata(v) -> sampleddata_to_json(v)
-    ExtensionValueSignature(v) -> signature_to_json(v)
-    ExtensionValueTiming(v) -> timing_to_json(v)
-    ExtensionValueContactdetail(v) -> contactdetail_to_json(v)
-    ExtensionValueContributor(v) -> contributor_to_json(v)
-    ExtensionValueDatarequirement(v) -> datarequirement_to_json(v)
-    ExtensionValueExpression(v) -> expression_to_json(v)
-    ExtensionValueParameterdefinition(v) -> parameterdefinition_to_json(v)
-    ExtensionValueRelatedartifact(v) -> relatedartifact_to_json(v)
-    ExtensionValueTriggerdefinition(v) -> triggerdefinition_to_json(v)
-    ExtensionValueUsagecontext(v) -> usagecontext_to_json(v)
-    ExtensionValueDosage(v) -> dosage_to_json(v)
-    ExtensionValueMeta(v) -> meta_to_json(v)
+    ExtensionValueBase64binary(v) -> #("valueBase64Binary", json.string(v))
+    ExtensionValueBoolean(v) -> #("valueBoolean", json.bool(v))
+    ExtensionValueCanonical(v) -> #("valueCanonical", json.string(v))
+    ExtensionValueCode(v) -> #("valueCode", json.string(v))
+    ExtensionValueDate(v) -> #("valueDate", pt.date_to_json(v))
+    ExtensionValueDatetime(v) -> #("valueDateTime", pt.datetime_to_json(v))
+    ExtensionValueDecimal(v) -> #("valueDecimal", json.float(v))
+    ExtensionValueId(v) -> #("valueId", json.string(v))
+    ExtensionValueInstant(v) -> #("valueInstant", pt.instant_to_json(v))
+    ExtensionValueInteger(v) -> #("valueInteger", json.int(v))
+    ExtensionValueMarkdown(v) -> #("valueMarkdown", json.string(v))
+    ExtensionValueOid(v) -> #("valueOid", json.string(v))
+    ExtensionValuePositiveint(v) -> #("valuePositiveInt", json.int(v))
+    ExtensionValueString(v) -> #("valueString", json.string(v))
+    ExtensionValueTime(v) -> #("valueTime", pt.time_to_json(v))
+    ExtensionValueUnsignedint(v) -> #("valueUnsignedInt", json.int(v))
+    ExtensionValueUri(v) -> #("valueUri", json.string(v))
+    ExtensionValueUrl(v) -> #("valueUrl", json.string(v))
+    ExtensionValueUuid(v) -> #("valueUuid", json.string(v))
+    ExtensionValueAddress(v) -> #("valueAddress", address_to_json(v))
+    ExtensionValueAge(v) -> #("valueAge", age_to_json(v))
+    ExtensionValueAnnotation(v) -> #("valueAnnotation", annotation_to_json(v))
+    ExtensionValueAttachment(v) -> #("valueAttachment", attachment_to_json(v))
+    ExtensionValueCodeableconcept(v) -> #(
+      "valueCodeableConcept",
+      codeableconcept_to_json(v),
+    )
+    ExtensionValueCoding(v) -> #("valueCoding", coding_to_json(v))
+    ExtensionValueContactpoint(v) -> #(
+      "valueContactPoint",
+      contactpoint_to_json(v),
+    )
+    ExtensionValueCount(v) -> #("valueCount", count_to_json(v))
+    ExtensionValueDistance(v) -> #("valueDistance", distance_to_json(v))
+    ExtensionValueDuration(v) -> #("valueDuration", duration_to_json(v))
+    ExtensionValueHumanname(v) -> #("valueHumanName", humanname_to_json(v))
+    ExtensionValueIdentifier(v) -> #("valueIdentifier", identifier_to_json(v))
+    ExtensionValueMoney(v) -> #("valueMoney", money_to_json(v))
+    ExtensionValuePeriod(v) -> #("valuePeriod", period_to_json(v))
+    ExtensionValueQuantity(v) -> #("valueQuantity", quantity_to_json(v))
+    ExtensionValueRange(v) -> #("valueRange", range_to_json(v))
+    ExtensionValueRatio(v) -> #("valueRatio", ratio_to_json(v))
+    ExtensionValueReference(v) -> #("valueReference", reference_to_json(v))
+    ExtensionValueSampleddata(v) -> #(
+      "valueSampledData",
+      sampleddata_to_json(v),
+    )
+    ExtensionValueSignature(v) -> #("valueSignature", signature_to_json(v))
+    ExtensionValueTiming(v) -> #("valueTiming", timing_to_json(v))
+    ExtensionValueContactdetail(v) -> #(
+      "valueContactDetail",
+      contactdetail_to_json(v),
+    )
+    ExtensionValueContributor(v) -> #(
+      "valueContributor",
+      contributor_to_json(v),
+    )
+    ExtensionValueDatarequirement(v) -> #(
+      "valueDataRequirement",
+      datarequirement_to_json(v),
+    )
+    ExtensionValueExpression(v) -> #("valueExpression", expression_to_json(v))
+    ExtensionValueParameterdefinition(v) -> #(
+      "valueParameterDefinition",
+      parameterdefinition_to_json(v),
+    )
+    ExtensionValueRelatedartifact(v) -> #(
+      "valueRelatedArtifact",
+      relatedartifact_to_json(v),
+    )
+    ExtensionValueTriggerdefinition(v) -> #(
+      "valueTriggerDefinition",
+      triggerdefinition_to_json(v),
+    )
+    ExtensionValueUsagecontext(v) -> #(
+      "valueUsageContext",
+      usagecontext_to_json(v),
+    )
+    ExtensionValueDosage(v) -> #("valueDosage", dosage_to_json(v))
+    ExtensionValueMeta(v) -> #("valueMeta", meta_to_json(v))
   }
 }
 
@@ -1499,10 +1472,12 @@ pub type AnnotationAuthor {
   AnnotationAuthorString(author: String)
 }
 
-pub fn annotation_author_to_json(element: AnnotationAuthor) -> Json {
+pub fn annotation_author_to_json_field(
+  element: AnnotationAuthor,
+) -> #(String, Json) {
   case element {
-    AnnotationAuthorReference(v) -> reference_to_json(v)
-    AnnotationAuthorString(v) -> json.string(v)
+    AnnotationAuthorReference(v) -> #("authorReference", reference_to_json(v))
+    AnnotationAuthorString(v) -> #("authorString", json.string(v))
   }
 }
 
@@ -1530,17 +1505,7 @@ pub fn annotation_to_json(annotation: Annotation) -> Json {
     None -> fields
   }
   let fields = case annotation.author {
-    Some(v) -> [
-      #(
-        "author"
-          <> case v {
-          AnnotationAuthorReference(_) -> "Reference"
-          AnnotationAuthorString(_) -> "String"
-        },
-        annotation_author_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [annotation_author_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case annotation.extension {
@@ -1898,12 +1863,18 @@ pub type DatarequirementSubject {
   DatarequirementSubjectReference(subject: Reference)
 }
 
-pub fn datarequirement_subject_to_json(
+pub fn datarequirement_subject_to_json_field(
   element: DatarequirementSubject,
-) -> Json {
+) -> #(String, Json) {
   case element {
-    DatarequirementSubjectCodeableconcept(v) -> codeableconcept_to_json(v)
-    DatarequirementSubjectReference(v) -> reference_to_json(v)
+    DatarequirementSubjectCodeableconcept(v) -> #(
+      "subjectCodeableConcept",
+      codeableconcept_to_json(v),
+    )
+    DatarequirementSubjectReference(v) -> #(
+      "subjectReference",
+      reference_to_json(v),
+    )
   }
 }
 
@@ -1986,17 +1957,7 @@ pub fn datarequirement_to_json(datarequirement: Datarequirement) -> Json {
     ]
   }
   let fields = case datarequirement.subject {
-    Some(v) -> [
-      #(
-        "subject"
-          <> case v {
-          DatarequirementSubjectCodeableconcept(_) -> "CodeableConcept"
-          DatarequirementSubjectReference(_) -> "Reference"
-        },
-        datarequirement_subject_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [datarequirement_subject_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case datarequirement.profile {
@@ -2194,10 +2155,15 @@ pub type DosageAsneeded {
   DosageAsneededCodeableconcept(as_needed: Codeableconcept)
 }
 
-pub fn dosage_asneeded_to_json(element: DosageAsneeded) -> Json {
+pub fn dosage_asneeded_to_json_field(
+  element: DosageAsneeded,
+) -> #(String, Json) {
   case element {
-    DosageAsneededBoolean(v) -> json.bool(v)
-    DosageAsneededCodeableconcept(v) -> codeableconcept_to_json(v)
+    DosageAsneededBoolean(v) -> #("asNeededBoolean", json.bool(v))
+    DosageAsneededCodeableconcept(v) -> #(
+      "asNeededCodeableConcept",
+      codeableconcept_to_json(v),
+    )
   }
 }
 
@@ -2274,17 +2240,7 @@ pub fn dosage_to_json(dosage: Dosage) -> Json {
     None -> fields
   }
   let fields = case dosage.as_needed {
-    Some(v) -> [
-      #(
-        "asNeeded"
-          <> case v {
-          DosageAsneededBoolean(_) -> "Boolean"
-          DosageAsneededCodeableconcept(_) -> "CodeableConcept"
-        },
-        dosage_asneeded_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [dosage_asneeded_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case dosage.timing {
@@ -3414,14 +3370,20 @@ pub type TriggerdefinitionTiming {
   TriggerdefinitionTimingDatetime(timing: DateTime)
 }
 
-pub fn triggerdefinition_timing_to_json(
+pub fn triggerdefinition_timing_to_json_field(
   element: TriggerdefinitionTiming,
-) -> Json {
+) -> #(String, Json) {
   case element {
-    TriggerdefinitionTimingTiming(v) -> timing_to_json(v)
-    TriggerdefinitionTimingReference(v) -> reference_to_json(v)
-    TriggerdefinitionTimingDate(v) -> pt.date_to_json(v)
-    TriggerdefinitionTimingDatetime(v) -> pt.datetime_to_json(v)
+    TriggerdefinitionTimingTiming(v) -> #("timingTiming", timing_to_json(v))
+    TriggerdefinitionTimingReference(v) -> #(
+      "timingReference",
+      reference_to_json(v),
+    )
+    TriggerdefinitionTimingDate(v) -> #("timingDate", pt.date_to_json(v))
+    TriggerdefinitionTimingDatetime(v) -> #(
+      "timingDateTime",
+      pt.datetime_to_json(v),
+    )
   }
 }
 
@@ -3470,19 +3432,7 @@ pub fn triggerdefinition_to_json(triggerdefinition: Triggerdefinition) -> Json {
     ]
   }
   let fields = case triggerdefinition.timing {
-    Some(v) -> [
-      #(
-        "timing"
-          <> case v {
-          TriggerdefinitionTimingTiming(_) -> "Timing"
-          TriggerdefinitionTimingReference(_) -> "Reference"
-          TriggerdefinitionTimingDate(_) -> "Date"
-          TriggerdefinitionTimingDatetime(_) -> "DateTime"
-        },
-        triggerdefinition_timing_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [triggerdefinition_timing_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case triggerdefinition.name {
@@ -3553,12 +3503,17 @@ pub type UsagecontextValue {
   UsagecontextValueReference(value: Reference)
 }
 
-pub fn usagecontext_value_to_json(element: UsagecontextValue) -> Json {
+pub fn usagecontext_value_to_json_field(
+  element: UsagecontextValue,
+) -> #(String, Json) {
   case element {
-    UsagecontextValueCodeableconcept(v) -> codeableconcept_to_json(v)
-    UsagecontextValueQuantity(v) -> quantity_to_json(v)
-    UsagecontextValueRange(v) -> range_to_json(v)
-    UsagecontextValueReference(v) -> reference_to_json(v)
+    UsagecontextValueCodeableconcept(v) -> #(
+      "valueCodeableConcept",
+      codeableconcept_to_json(v),
+    )
+    UsagecontextValueQuantity(v) -> #("valueQuantity", quantity_to_json(v))
+    UsagecontextValueRange(v) -> #("valueRange", range_to_json(v))
+    UsagecontextValueReference(v) -> #("valueReference", reference_to_json(v))
   }
 }
 
@@ -3590,16 +3545,7 @@ pub fn usagecontext_new(
 
 pub fn usagecontext_to_json(usagecontext: Usagecontext) -> Json {
   let fields = [
-    #(
-      "value"
-        <> case usagecontext.value {
-        UsagecontextValueCodeableconcept(_) -> "CodeableConcept"
-        UsagecontextValueQuantity(_) -> "Quantity"
-        UsagecontextValueRange(_) -> "Range"
-        UsagecontextValueReference(_) -> "Reference"
-      },
-      usagecontext_value_to_json(usagecontext.value),
-    ),
+    usagecontext_value_to_json_field(usagecontext.value),
     #("code", coding_to_json(usagecontext.code)),
   ]
   let fields = case usagecontext.extension {
@@ -3664,13 +3610,22 @@ pub type DatarequirementDatefilterValue {
   DatarequirementDatefilterValueDuration(value: Duration)
 }
 
-pub fn datarequirement_datefilter_value_to_json(
+pub fn datarequirement_datefilter_value_to_json_field(
   element: DatarequirementDatefilterValue,
-) -> Json {
+) -> #(String, Json) {
   case element {
-    DatarequirementDatefilterValueDatetime(v) -> pt.datetime_to_json(v)
-    DatarequirementDatefilterValuePeriod(v) -> period_to_json(v)
-    DatarequirementDatefilterValueDuration(v) -> duration_to_json(v)
+    DatarequirementDatefilterValueDatetime(v) -> #(
+      "valueDateTime",
+      pt.datetime_to_json(v),
+    )
+    DatarequirementDatefilterValuePeriod(v) -> #(
+      "valuePeriod",
+      period_to_json(v),
+    )
+    DatarequirementDatefilterValueDuration(v) -> #(
+      "valueDuration",
+      duration_to_json(v),
+    )
   }
 }
 
@@ -3791,18 +3746,7 @@ pub fn datarequirement_datefilter_to_json(
 ) -> Json {
   let fields = []
   let fields = case datarequirement_datefilter.value {
-    Some(v) -> [
-      #(
-        "value"
-          <> case v {
-          DatarequirementDatefilterValueDatetime(_) -> "DateTime"
-          DatarequirementDatefilterValuePeriod(_) -> "Period"
-          DatarequirementDatefilterValueDuration(_) -> "Duration"
-        },
-        datarequirement_datefilter_value_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [datarequirement_datefilter_value_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case datarequirement_datefilter.search_param {
@@ -3911,10 +3855,12 @@ pub type DosageDoseandrateDose {
   DosageDoseandrateDoseQuantity(dose: Quantity)
 }
 
-pub fn dosage_doseandrate_dose_to_json(element: DosageDoseandrateDose) -> Json {
+pub fn dosage_doseandrate_dose_to_json_field(
+  element: DosageDoseandrateDose,
+) -> #(String, Json) {
   case element {
-    DosageDoseandrateDoseRange(v) -> range_to_json(v)
-    DosageDoseandrateDoseQuantity(v) -> quantity_to_json(v)
+    DosageDoseandrateDoseRange(v) -> #("doseRange", range_to_json(v))
+    DosageDoseandrateDoseQuantity(v) -> #("doseQuantity", quantity_to_json(v))
   }
 }
 
@@ -3936,11 +3882,13 @@ pub type DosageDoseandrateRate {
   DosageDoseandrateRateQuantity(rate: Quantity)
 }
 
-pub fn dosage_doseandrate_rate_to_json(element: DosageDoseandrateRate) -> Json {
+pub fn dosage_doseandrate_rate_to_json_field(
+  element: DosageDoseandrateRate,
+) -> #(String, Json) {
   case element {
-    DosageDoseandrateRateRatio(v) -> ratio_to_json(v)
-    DosageDoseandrateRateRange(v) -> range_to_json(v)
-    DosageDoseandrateRateQuantity(v) -> quantity_to_json(v)
+    DosageDoseandrateRateRatio(v) -> #("rateRatio", ratio_to_json(v))
+    DosageDoseandrateRateRange(v) -> #("rateRange", range_to_json(v))
+    DosageDoseandrateRateQuantity(v) -> #("rateQuantity", quantity_to_json(v))
   }
 }
 
@@ -3972,32 +3920,11 @@ pub fn dosage_doseandrate_to_json(
 ) -> Json {
   let fields = []
   let fields = case dosage_doseandrate.rate {
-    Some(v) -> [
-      #(
-        "rate"
-          <> case v {
-          DosageDoseandrateRateRatio(_) -> "Ratio"
-          DosageDoseandrateRateRange(_) -> "Range"
-          DosageDoseandrateRateQuantity(_) -> "Quantity"
-        },
-        dosage_doseandrate_rate_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [dosage_doseandrate_rate_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case dosage_doseandrate.dose {
-    Some(v) -> [
-      #(
-        "dose"
-          <> case v {
-          DosageDoseandrateDoseRange(_) -> "Range"
-          DosageDoseandrateDoseQuantity(_) -> "Quantity"
-        },
-        dosage_doseandrate_dose_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [dosage_doseandrate_dose_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case dosage_doseandrate.type_ {
@@ -4069,11 +3996,13 @@ pub type TimingRepeatBounds {
   TimingRepeatBoundsPeriod(bounds: Period)
 }
 
-pub fn timing_repeat_bounds_to_json(element: TimingRepeatBounds) -> Json {
+pub fn timing_repeat_bounds_to_json_field(
+  element: TimingRepeatBounds,
+) -> #(String, Json) {
   case element {
-    TimingRepeatBoundsDuration(v) -> duration_to_json(v)
-    TimingRepeatBoundsRange(v) -> range_to_json(v)
-    TimingRepeatBoundsPeriod(v) -> period_to_json(v)
+    TimingRepeatBoundsDuration(v) -> #("boundsDuration", duration_to_json(v))
+    TimingRepeatBoundsRange(v) -> #("boundsRange", range_to_json(v))
+    TimingRepeatBoundsPeriod(v) -> #("boundsPeriod", period_to_json(v))
   }
 }
 
@@ -4183,18 +4112,7 @@ pub fn timing_repeat_to_json(timing_repeat: TimingRepeat) -> Json {
     None -> fields
   }
   let fields = case timing_repeat.bounds {
-    Some(v) -> [
-      #(
-        "bounds"
-          <> case v {
-          TimingRepeatBoundsDuration(_) -> "Duration"
-          TimingRepeatBoundsRange(_) -> "Range"
-          TimingRepeatBoundsPeriod(_) -> "Period"
-        },
-        timing_repeat_bounds_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [timing_repeat_bounds_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case timing_repeat.extension {

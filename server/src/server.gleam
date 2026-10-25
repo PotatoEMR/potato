@@ -10,6 +10,7 @@ import gleam/http.{Get, Post}
 import gleam/http/request
 import gleam/http/response
 import gleam/httpc
+import gleam/io
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -27,6 +28,8 @@ import wisp/wisp_mist
 const fhir_server_path: String = "fhir"
 
 const fhir_server_port: Int = 8080
+
+const localhost_fhir: String = "127.0.0.1:8080/fhir"
 
 type Role {
   Practitioner
@@ -70,6 +73,17 @@ fn user_decoder() -> decode.Decoder(User) {
 }
 
 pub fn main() -> Nil {
+  let assert Ok(client) = sansio.fhirclient_new(localhost_fhir)
+  case client_httpc.potatoserver_practitioner_read("", client) {
+    Error(client_httpc.ErrHttpc(httpc.FailedToConnect(_, _))) ->
+      io.println(
+        "couldn't connect to "
+        <> localhost_fhir
+        <> " make sure hapi is running ../hapi/download_and_run.sh",
+      )
+    _ -> Nil
+  }
+
   wisp.configure_logger()
   let secret_key_base = wisp.random_string(64)
 
@@ -443,7 +457,7 @@ fn as_list1(item: a) -> List1(a) {
 fn handle_signup(users: storail.Collection(User), req: Request) -> Response {
   use form <- wisp.require_form(req)
   use #(username, password) <- require_username_password(form)
-  let assert Ok(client) = sansio.fhirclient_new("127.0.0.1:8080/fhir")
+  let assert Ok(client) = sansio.fhirclient_new(localhost_fhir)
   let client =
     sansio.FhirClient(..client, print_sent_requests: sansio.LoggingOn)
   let potatoemr_username =

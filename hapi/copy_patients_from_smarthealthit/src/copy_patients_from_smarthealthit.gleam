@@ -1,5 +1,5 @@
 import fhir/r4/client_httpc
-import fhir/r4/resources
+import fhir/r4/resource
 import fhir/r4/sansio
 import gleam/int
 import gleam/io
@@ -9,16 +9,16 @@ import gleam/uri
 
 pub fn main() {
   let assert Ok(client) = sansio.fhirclient_new("https://r4.smarthealthit.org/")
-  io.println("downloading from: " <> client.baseurl |> uri.to_string)
+  io.println("downloading from: " <> client.base_url |> uri.to_string)
   io.println("downloading all patients, might take a bit")
   let assert Ok(patients) =
-    client_httpc.search_any_forgiving("", resources.RtPatient, client)
+    client_httpc.search_any_forgiving("", resource.ResourceTypePatient, client)
     |> client_httpc.all_pages_forgiving(client)
   let valid_patients =
     patients.entry
     |> list.filter_map(fn(entry) {
       case entry.resource {
-        Some(Ok(resources.ResourcePatient(pat))) -> Ok(pat)
+        Some(Ok(resource.ResourcePatient(pat))) -> Ok(pat)
         _ -> Error(Nil)
       }
     })
@@ -29,8 +29,8 @@ pub fn main() {
     |> list.map(fn(patient) {
       patient
       |> strip_references
-      |> resources.patient_to_json
-      |> sansio.any_create_req(resources.RtPatient, client)
+      |> resource.patient_to_json
+      |> sansio.any_create_request(resource.ResourceTypePatient, client)
     })
     |> client_httpc.batch(sansio.Transaction, client)
   let num = batch_patient_create.entry |> list.length |> int.to_string
@@ -39,8 +39,8 @@ pub fn main() {
 
 // not copying other references onto this server so hapi doesnt like if patient has them
 // might also be references in contact or whatever idk
-fn strip_references(from patient: resources.Patient) {
-  resources.Patient(
+fn strip_references(from patient: resource.Patient) {
+  resource.Patient(
     ..patient,
     general_practitioner: [],
     managing_organization: None,

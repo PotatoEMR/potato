@@ -149,12 +149,11 @@ pub fn bundle_entry_decoder_forgiving() -> Decoder(BundleEntryForgiving) {
     "resource",
     None,
     decode.optional(
-      decode.one_of(resource_decoder() |> decode.map(Ok), [
-        decode.dynamic
-        |> decode.map(fn(resource_json) {
-          decode.run(resource_json, resource_decoder())
-        }),
-      ]),
+      decode.dynamic
+      |> decode.map(fn(resource_json) {
+        // decode.run returns Ok(resource) or Error(errs) as forgiving bundle decoder wants to preserve errors instead of failing whole bundle decoder
+        decode.run(resource_json, resource_decoder())
+      }),
     ),
   )
   decode.success(BundleEntryForgiving(resource:))
@@ -421,20 +420,7 @@ pub fn potato_allergyintolerance_to_json(
     ]
   }
   let fields = case potato_allergyintolerance.onset {
-    Some(v) -> [
-      #(
-        "onset"
-          <> case v {
-          PotatoAllergyintoleranceOnsetDatetime(_) -> "DateTime"
-          PotatoAllergyintoleranceOnsetAge(_) -> "Age"
-          PotatoAllergyintoleranceOnsetPeriod(_) -> "Period"
-          PotatoAllergyintoleranceOnsetRange(_) -> "Range"
-          PotatoAllergyintoleranceOnsetString(_) -> "String"
-        },
-        potato_allergyintolerance_onset_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potato_allergyintolerance_onset_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case potato_allergyintolerance.note {
@@ -514,15 +500,30 @@ pub fn potato_allergyintolerance_to_json(
   json.object(fields)
 }
 
-pub fn potato_allergyintolerance_onset_to_json(
+pub fn potato_allergyintolerance_onset_to_json_field(
   value: PotatoAllergyintoleranceOnset,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoAllergyintoleranceOnsetDatetime(value) -> pt.datetime_to_json(value)
-    PotatoAllergyintoleranceOnsetAge(value) -> ct.potatoage_to_json(value)
-    PotatoAllergyintoleranceOnsetPeriod(value) -> ct.potatoperiod_to_json(value)
-    PotatoAllergyintoleranceOnsetRange(value) -> ct.potatorange_to_json(value)
-    PotatoAllergyintoleranceOnsetString(value) -> json.string(value)
+    PotatoAllergyintoleranceOnsetDatetime(value) -> #(
+      "onsetDateTime",
+      pt.datetime_to_json(value),
+    )
+    PotatoAllergyintoleranceOnsetAge(value) -> #(
+      "onsetAge",
+      ct.potatoage_to_json(value),
+    )
+    PotatoAllergyintoleranceOnsetPeriod(value) -> #(
+      "onsetPeriod",
+      ct.potatoperiod_to_json(value),
+    )
+    PotatoAllergyintoleranceOnsetRange(value) -> #(
+      "onsetRange",
+      ct.potatorange_to_json(value),
+    )
+    PotatoAllergyintoleranceOnsetString(value) -> #(
+      "onsetString",
+      json.string(value),
+    )
   }
 }
 
@@ -1028,20 +1029,7 @@ pub fn potato_condition_to_json(potato_condition: PotatoCondition) -> Json {
     None -> fields
   }
   let fields = case potato_condition.onset {
-    Some(v) -> [
-      #(
-        "onset"
-          <> case v {
-          PotatoConditionOnsetDatetime(_) -> "DateTime"
-          PotatoConditionOnsetAge(_) -> "Age"
-          PotatoConditionOnsetPeriod(_) -> "Period"
-          PotatoConditionOnsetRange(_) -> "Range"
-          PotatoConditionOnsetString(_) -> "String"
-        },
-        potato_condition_onset_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potato_condition_onset_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case potato_condition.note {
@@ -1156,45 +1144,58 @@ pub fn potato_condition_to_json(potato_condition: PotatoCondition) -> Json {
     None -> fields
   }
   let fields = case potato_condition.abatement {
-    Some(v) -> [
-      #(
-        "abatement"
-          <> case v {
-          PotatoConditionAbatementDatetime(_) -> "DateTime"
-          PotatoConditionAbatementAge(_) -> "Age"
-          PotatoConditionAbatementPeriod(_) -> "Period"
-          PotatoConditionAbatementRange(_) -> "Range"
-          PotatoConditionAbatementString(_) -> "String"
-        },
-        potato_condition_abatement_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potato_condition_abatement_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = [#("resourceType", json.string("Condition")), ..fields]
   json.object(fields)
 }
 
-pub fn potato_condition_abatement_to_json(
+pub fn potato_condition_abatement_to_json_field(
   value: PotatoConditionAbatement,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoConditionAbatementDatetime(value) -> pt.datetime_to_json(value)
-    PotatoConditionAbatementAge(value) -> ct.potatoage_to_json(value)
-    PotatoConditionAbatementPeriod(value) -> ct.potatoperiod_to_json(value)
-    PotatoConditionAbatementRange(value) -> ct.potatorange_to_json(value)
-    PotatoConditionAbatementString(value) -> json.string(value)
+    PotatoConditionAbatementDatetime(value) -> #(
+      "abatementDateTime",
+      pt.datetime_to_json(value),
+    )
+    PotatoConditionAbatementAge(value) -> #(
+      "abatementAge",
+      ct.potatoage_to_json(value),
+    )
+    PotatoConditionAbatementPeriod(value) -> #(
+      "abatementPeriod",
+      ct.potatoperiod_to_json(value),
+    )
+    PotatoConditionAbatementRange(value) -> #(
+      "abatementRange",
+      ct.potatorange_to_json(value),
+    )
+    PotatoConditionAbatementString(value) -> #(
+      "abatementString",
+      json.string(value),
+    )
   }
 }
 
-pub fn potato_condition_onset_to_json(value: PotatoConditionOnset) -> Json {
+pub fn potato_condition_onset_to_json_field(
+  value: PotatoConditionOnset,
+) -> #(String, Json) {
   case value {
-    PotatoConditionOnsetDatetime(value) -> pt.datetime_to_json(value)
-    PotatoConditionOnsetAge(value) -> ct.potatoage_to_json(value)
-    PotatoConditionOnsetPeriod(value) -> ct.potatoperiod_to_json(value)
-    PotatoConditionOnsetRange(value) -> ct.potatorange_to_json(value)
-    PotatoConditionOnsetString(value) -> json.string(value)
+    PotatoConditionOnsetDatetime(value) -> #(
+      "onsetDateTime",
+      pt.datetime_to_json(value),
+    )
+    PotatoConditionOnsetAge(value) -> #("onsetAge", ct.potatoage_to_json(value))
+    PotatoConditionOnsetPeriod(value) -> #(
+      "onsetPeriod",
+      ct.potatoperiod_to_json(value),
+    )
+    PotatoConditionOnsetRange(value) -> #(
+      "onsetRange",
+      ct.potatorange_to_json(value),
+    )
+    PotatoConditionOnsetString(value) -> #("onsetString", json.string(value))
   }
 }
 
@@ -2325,14 +2326,7 @@ pub fn potato_immunization_to_json(
       valueset.immunization_status_to_json(potato_immunization.status),
     ),
     #("patient", ct.potatoreference_to_json(potato_immunization.patient)),
-    #(
-      "occurrence"
-        <> case potato_immunization.occurrence {
-        PotatoImmunizationOccurrenceDatetime(_) -> "DateTime"
-        PotatoImmunizationOccurrenceString(_) -> "String"
-      },
-      potato_immunization_occurrence_to_json(potato_immunization.occurrence),
-    ),
+    potato_immunization_occurrence_to_json_field(potato_immunization.occurrence),
   ]
   let fields = case potato_immunization.text {
     Some(v) -> [#("text", ct.potatonarrative_to_json(v)), ..fields]
@@ -2503,12 +2497,18 @@ pub fn potato_immunization_to_json(
   json.object(fields)
 }
 
-pub fn potato_immunization_occurrence_to_json(
+pub fn potato_immunization_occurrence_to_json_field(
   value: PotatoImmunizationOccurrence,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoImmunizationOccurrenceDatetime(value) -> pt.datetime_to_json(value)
-    PotatoImmunizationOccurrenceString(value) -> json.string(value)
+    PotatoImmunizationOccurrenceDatetime(value) -> #(
+      "occurrenceDateTime",
+      pt.datetime_to_json(value),
+    )
+    PotatoImmunizationOccurrenceString(value) -> #(
+      "occurrenceString",
+      json.string(value),
+    )
   }
 }
 
@@ -2560,16 +2560,8 @@ pub fn potato_immunization_protocolapplied_to_json(
   potato_immunization_protocolapplied: PotatoImmunizationProtocolapplied,
 ) -> Json {
   let fields = [
-    #(
-      "doseNumber"
-        <> case potato_immunization_protocolapplied.dose_number {
-        PotatoImmunizationProtocolappliedDosenumberPositiveint(_) ->
-          "PositiveInt"
-        PotatoImmunizationProtocolappliedDosenumberString(_) -> "String"
-      },
-      potato_immunization_protocolapplied_dosenumber_to_json(
-        potato_immunization_protocolapplied.dose_number,
-      ),
+    potato_immunization_protocolapplied_dosenumber_to_json_field(
+      potato_immunization_protocolapplied.dose_number,
     ),
   ]
   let fields = case potato_immunization_protocolapplied.target_disease {
@@ -2581,15 +2573,7 @@ pub fn potato_immunization_protocolapplied_to_json(
   }
   let fields = case potato_immunization_protocolapplied.series_doses {
     Some(v) -> [
-      #(
-        "seriesDoses"
-          <> case v {
-          PotatoImmunizationProtocolappliedSeriesdosesPositiveint(_) ->
-            "PositiveInt"
-          PotatoImmunizationProtocolappliedSeriesdosesString(_) -> "String"
-        },
-        potato_immunization_protocolapplied_seriesdoses_to_json(v),
-      ),
+      potato_immunization_protocolapplied_seriesdoses_to_json_field(v),
       ..fields
     ]
     None -> fields
@@ -2609,25 +2593,33 @@ pub fn potato_immunization_protocolapplied_to_json(
   json.object(fields)
 }
 
-pub fn potato_immunization_protocolapplied_dosenumber_to_json(
+pub fn potato_immunization_protocolapplied_dosenumber_to_json_field(
   value: PotatoImmunizationProtocolappliedDosenumber,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoImmunizationProtocolappliedDosenumberPositiveint(value) ->
-      json.int(value)
-    PotatoImmunizationProtocolappliedDosenumberString(value) ->
-      json.string(value)
+    PotatoImmunizationProtocolappliedDosenumberPositiveint(value) -> #(
+      "doseNumberPositiveInt",
+      json.int(value),
+    )
+    PotatoImmunizationProtocolappliedDosenumberString(value) -> #(
+      "doseNumberString",
+      json.string(value),
+    )
   }
 }
 
-pub fn potato_immunization_protocolapplied_seriesdoses_to_json(
+pub fn potato_immunization_protocolapplied_seriesdoses_to_json_field(
   value: PotatoImmunizationProtocolappliedSeriesdoses,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoImmunizationProtocolappliedSeriesdosesPositiveint(value) ->
-      json.int(value)
-    PotatoImmunizationProtocolappliedSeriesdosesString(value) ->
-      json.string(value)
+    PotatoImmunizationProtocolappliedSeriesdosesPositiveint(value) -> #(
+      "seriesDosesPositiveInt",
+      json.int(value),
+    )
+    PotatoImmunizationProtocolappliedSeriesdosesString(value) -> #(
+      "seriesDosesString",
+      json.string(value),
+    )
   }
 }
 
@@ -2838,15 +2830,8 @@ pub fn potato_medicationrequest_to_json(
       "status",
       valueset.medicationrequest_status_to_json(potato_medicationrequest.status),
     ),
-    #(
-      "medication"
-        <> case potato_medicationrequest.medication {
-        PotatoMedicationrequestMedicationCodeableconcept(_) -> "CodeableConcept"
-        PotatoMedicationrequestMedicationReference(_) -> "Reference"
-      },
-      potato_medicationrequest_medication_to_json(
-        potato_medicationrequest.medication,
-      ),
+    potato_medicationrequest_medication_to_json_field(
+      potato_medicationrequest.medication,
     ),
     #(
       "intent",
@@ -2883,17 +2868,7 @@ pub fn potato_medicationrequest_to_json(
     None -> fields
   }
   let fields = case potato_medicationrequest.reported {
-    Some(v) -> [
-      #(
-        "reported"
-          <> case v {
-          PotatoMedicationrequestReportedBoolean(_) -> "Boolean"
-          PotatoMedicationrequestReportedReference(_) -> "Reference"
-        },
-        potato_medicationrequest_reported_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potato_medicationrequest_reported_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case potato_medicationrequest.recorder {
@@ -3082,24 +3057,33 @@ pub fn potato_medicationrequest_to_json(
   json.object(fields)
 }
 
-pub fn potato_medicationrequest_medication_to_json(
+pub fn potato_medicationrequest_medication_to_json_field(
   value: PotatoMedicationrequestMedication,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoMedicationrequestMedicationCodeableconcept(value) ->
-      ct.potatocodeableconcept_to_json(value)
-    PotatoMedicationrequestMedicationReference(value) ->
-      ct.potatoreference_to_json(value)
+    PotatoMedicationrequestMedicationCodeableconcept(value) -> #(
+      "medicationCodeableConcept",
+      ct.potatocodeableconcept_to_json(value),
+    )
+    PotatoMedicationrequestMedicationReference(value) -> #(
+      "medicationReference",
+      ct.potatoreference_to_json(value),
+    )
   }
 }
 
-pub fn potato_medicationrequest_reported_to_json(
+pub fn potato_medicationrequest_reported_to_json_field(
   value: PotatoMedicationrequestReported,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoMedicationrequestReportedBoolean(value) -> json.bool(value)
-    PotatoMedicationrequestReportedReference(value) ->
-      ct.potatoreference_to_json(value)
+    PotatoMedicationrequestReportedBoolean(value) -> #(
+      "reportedBoolean",
+      json.bool(value),
+    )
+    PotatoMedicationrequestReportedReference(value) -> #(
+      "reportedReference",
+      ct.potatoreference_to_json(value),
+    )
   }
 }
 
@@ -3182,16 +3166,8 @@ pub fn potato_medicationrequest_substitution_to_json(
   potato_medicationrequest_substitution: PotatoMedicationrequestSubstitution,
 ) -> Json {
   let fields = [
-    #(
-      "allowed"
-        <> case potato_medicationrequest_substitution.allowed {
-        PotatoMedicationrequestSubstitutionAllowedBoolean(_) -> "Boolean"
-        PotatoMedicationrequestSubstitutionAllowedCodeableconcept(_) ->
-          "CodeableConcept"
-      },
-      potato_medicationrequest_substitution_allowed_to_json(
-        potato_medicationrequest_substitution.allowed,
-      ),
+    potato_medicationrequest_substitution_allowed_to_json_field(
+      potato_medicationrequest_substitution.allowed,
     ),
   ]
   let fields = case potato_medicationrequest_substitution.reason {
@@ -3205,13 +3181,18 @@ pub fn potato_medicationrequest_substitution_to_json(
   json.object(fields)
 }
 
-pub fn potato_medicationrequest_substitution_allowed_to_json(
+pub fn potato_medicationrequest_substitution_allowed_to_json_field(
   value: PotatoMedicationrequestSubstitutionAllowed,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoMedicationrequestSubstitutionAllowedBoolean(value) -> json.bool(value)
-    PotatoMedicationrequestSubstitutionAllowedCodeableconcept(value) ->
-      ct.potatocodeableconcept_to_json(value)
+    PotatoMedicationrequestSubstitutionAllowedBoolean(value) -> #(
+      "allowedBoolean",
+      json.bool(value),
+    )
+    PotatoMedicationrequestSubstitutionAllowedCodeableconcept(value) -> #(
+      "allowedCodeableConcept",
+      ct.potatocodeableconcept_to_json(value),
+    )
   }
 }
 
@@ -3303,16 +3284,8 @@ pub fn potato_medicationstatement_to_json(
         potato_medicationstatement.status,
       ),
     ),
-    #(
-      "medication"
-        <> case potato_medicationstatement.medication {
-        PotatoMedicationstatementMedicationCodeableconcept(_) ->
-          "CodeableConcept"
-        PotatoMedicationstatementMedicationReference(_) -> "Reference"
-      },
-      potato_medicationstatement_medication_to_json(
-        potato_medicationstatement.medication,
-      ),
+    potato_medicationstatement_medication_to_json_field(
+      potato_medicationstatement.medication,
     ),
   ]
   let fields = case potato_medicationstatement.text {
@@ -3382,17 +3355,7 @@ pub fn potato_medicationstatement_to_json(
     None -> fields
   }
   let fields = case potato_medicationstatement.effective {
-    Some(v) -> [
-      #(
-        "effective"
-          <> case v {
-          PotatoMedicationstatementEffectiveDatetime(_) -> "DateTime"
-          PotatoMedicationstatementEffectivePeriod(_) -> "Period"
-        },
-        potato_medicationstatement_effective_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potato_medicationstatement_effective_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case potato_medicationstatement.dosage {
@@ -3436,25 +3399,33 @@ pub fn potato_medicationstatement_to_json(
   json.object(fields)
 }
 
-pub fn potato_medicationstatement_effective_to_json(
+pub fn potato_medicationstatement_effective_to_json_field(
   value: PotatoMedicationstatementEffective,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoMedicationstatementEffectiveDatetime(value) ->
-      pt.datetime_to_json(value)
-    PotatoMedicationstatementEffectivePeriod(value) ->
-      ct.potatoperiod_to_json(value)
+    PotatoMedicationstatementEffectiveDatetime(value) -> #(
+      "effectiveDateTime",
+      pt.datetime_to_json(value),
+    )
+    PotatoMedicationstatementEffectivePeriod(value) -> #(
+      "effectivePeriod",
+      ct.potatoperiod_to_json(value),
+    )
   }
 }
 
-pub fn potato_medicationstatement_medication_to_json(
+pub fn potato_medicationstatement_medication_to_json_field(
   value: PotatoMedicationstatementMedication,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoMedicationstatementMedicationCodeableconcept(value) ->
-      ct.potatocodeableconcept_to_json(value)
-    PotatoMedicationstatementMedicationReference(value) ->
-      ct.potatoreference_to_json(value)
+    PotatoMedicationstatementMedicationCodeableconcept(value) -> #(
+      "medicationCodeableConcept",
+      ct.potatocodeableconcept_to_json(value),
+    )
+    PotatoMedicationstatementMedicationReference(value) -> #(
+      "medicationReference",
+      ct.potatoreference_to_json(value),
+    )
   }
 }
 
@@ -3638,17 +3609,7 @@ pub fn potato_patient_to_json(potato_patient: PotatoPatient) -> Json {
     ]
   }
   let fields = case potato_patient.multiple_birth {
-    Some(v) -> [
-      #(
-        "multipleBirth"
-          <> case v {
-          PotatoPatientMultiplebirthBoolean(_) -> "Boolean"
-          PotatoPatientMultiplebirthInteger(_) -> "Integer"
-        },
-        potato_patient_multiplebirth_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potato_patient_multiplebirth_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case potato_patient.meta {
@@ -3767,17 +3728,7 @@ pub fn potato_patient_to_json(potato_patient: PotatoPatient) -> Json {
     values -> [#("extension", json.preprocessed_array(values)), ..fields]
   }
   let fields = case potato_patient.deceased {
-    Some(v) -> [
-      #(
-        "deceased"
-          <> case v {
-          PotatoPatientDeceasedBoolean(_) -> "Boolean"
-          PotatoPatientDeceasedDatetime(_) -> "DateTime"
-        },
-        potato_patient_deceased_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [potato_patient_deceased_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case potato_patient.contained {
@@ -3823,19 +3774,33 @@ pub fn potato_patient_to_json(potato_patient: PotatoPatient) -> Json {
   json.object(fields)
 }
 
-pub fn potato_patient_deceased_to_json(value: PotatoPatientDeceased) -> Json {
+pub fn potato_patient_deceased_to_json_field(
+  value: PotatoPatientDeceased,
+) -> #(String, Json) {
   case value {
-    PotatoPatientDeceasedBoolean(value) -> json.bool(value)
-    PotatoPatientDeceasedDatetime(value) -> pt.datetime_to_json(value)
+    PotatoPatientDeceasedBoolean(value) -> #(
+      "deceasedBoolean",
+      json.bool(value),
+    )
+    PotatoPatientDeceasedDatetime(value) -> #(
+      "deceasedDateTime",
+      pt.datetime_to_json(value),
+    )
   }
 }
 
-pub fn potato_patient_multiplebirth_to_json(
+pub fn potato_patient_multiplebirth_to_json_field(
   value: PotatoPatientMultiplebirth,
-) -> Json {
+) -> #(String, Json) {
   case value {
-    PotatoPatientMultiplebirthBoolean(value) -> json.bool(value)
-    PotatoPatientMultiplebirthInteger(value) -> json.int(value)
+    PotatoPatientMultiplebirthBoolean(value) -> #(
+      "multipleBirthBoolean",
+      json.bool(value),
+    )
+    PotatoPatientMultiplebirthInteger(value) -> #(
+      "multipleBirthInteger",
+      json.int(value),
+    )
   }
 }
 

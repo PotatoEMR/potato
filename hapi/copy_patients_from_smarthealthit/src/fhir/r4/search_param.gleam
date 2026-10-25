@@ -2,7 +2,7 @@
 
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import gleam/string
+import gleam/uri
 
 pub fn to_string(params: List(#(String, Option(String)))) -> String {
   list.fold(
@@ -11,11 +11,12 @@ pub fn to_string(params: List(#(String, Option(String)))) -> String {
     with: fn(acc, param: #(String, Option(String))) {
       case param.1 {
         None -> acc
-        Some(p) -> [param.0 <> "=" <> p, ..acc]
+        Some(p) -> [#(param.0, p), ..acc]
       }
     },
   )
-  |> string.join("&")
+  |> list.reverse
+  |> uri.query_to_string
 }
 
 pub type Bundle {

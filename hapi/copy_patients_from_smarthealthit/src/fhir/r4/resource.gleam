@@ -145,12 +145,11 @@ pub fn bundle_entry_decoder_forgiving() -> Decoder(BundleEntryForgiving) {
     "resource",
     None,
     decode.optional(
-      decode.one_of(resource_decoder() |> decode.map(Ok), [
-        decode.dynamic
-        |> decode.map(fn(resource_json) {
-          decode.run(resource_json, resource_decoder())
-        }),
-      ]),
+      decode.dynamic
+      |> decode.map(fn(resource_json) {
+        // decode.run returns Ok(resource) or Error(errs) as forgiving bundle decoder wants to preserve errors instead of failing whole bundle decoder
+        decode.run(resource_json, resource_decoder())
+      }),
     ),
   )
   decode.success(BundleEntryForgiving(resource:))
@@ -374,10 +373,12 @@ pub type PatientDeceased {
   PatientDeceasedDatetime(deceased: DateTime)
 }
 
-pub fn patient_deceased_to_json(element: PatientDeceased) -> Json {
+pub fn patient_deceased_to_json_field(
+  element: PatientDeceased,
+) -> #(String, Json) {
   case element {
-    PatientDeceasedBoolean(v) -> json.bool(v)
-    PatientDeceasedDatetime(v) -> pt.datetime_to_json(v)
+    PatientDeceasedBoolean(v) -> #("deceasedBoolean", json.bool(v))
+    PatientDeceasedDatetime(v) -> #("deceasedDateTime", pt.datetime_to_json(v))
   }
 }
 
@@ -398,10 +399,12 @@ pub type PatientMultiplebirth {
   PatientMultiplebirthInteger(multiple_birth: Int)
 }
 
-pub fn patient_multiplebirth_to_json(element: PatientMultiplebirth) -> Json {
+pub fn patient_multiplebirth_to_json_field(
+  element: PatientMultiplebirth,
+) -> #(String, Json) {
   case element {
-    PatientMultiplebirthBoolean(v) -> json.bool(v)
-    PatientMultiplebirthInteger(v) -> json.int(v)
+    PatientMultiplebirthBoolean(v) -> #("multipleBirthBoolean", json.bool(v))
+    PatientMultiplebirthInteger(v) -> #("multipleBirthInteger", json.int(v))
   }
 }
 
@@ -490,17 +493,7 @@ pub fn patient_to_json(patient: Patient) -> Json {
     ]
   }
   let fields = case patient.multiple_birth {
-    Some(v) -> [
-      #(
-        "multipleBirth"
-          <> case v {
-          PatientMultiplebirthBoolean(_) -> "Boolean"
-          PatientMultiplebirthInteger(_) -> "Integer"
-        },
-        patient_multiplebirth_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [patient_multiplebirth_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case patient.marital_status {
@@ -515,17 +508,7 @@ pub fn patient_to_json(patient: Patient) -> Json {
     ]
   }
   let fields = case patient.deceased {
-    Some(v) -> [
-      #(
-        "deceased"
-          <> case v {
-          PatientDeceasedBoolean(_) -> "Boolean"
-          PatientDeceasedDatetime(_) -> "DateTime"
-        },
-        patient_deceased_to_json(v),
-      ),
-      ..fields
-    ]
+    Some(v) -> [patient_deceased_to_json_field(v), ..fields]
     None -> fields
   }
   let fields = case patient.birth_date {
